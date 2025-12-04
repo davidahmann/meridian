@@ -28,7 +28,7 @@ Run a self-contained script to see the API in action:
 python examples/quickstart.py
 ```
 
-**3. Define Features (`examples/features.py`)**
+**3. Define Features (`examples/basic_features.py`)**
 Or define features in a file to serve them:
 ```python
 from meridian.core import FeatureStore, entity, feature
@@ -47,7 +47,7 @@ def user_click_count(user_id: str) -> int:
 
 **4. Serve**
 ```bash
-meridian serve examples/features.py
+meridian serve examples/basic_features.py
 ```
 
 **5. Query**
