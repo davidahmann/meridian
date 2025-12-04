@@ -22,9 +22,17 @@ Meridian is a developer-first feature store designed to take you from a Jupyter 
 pip install meridian
 ```
 
-**2. Define Features (`features.py`)**
+**2. Try the Quickstart Script**
+Run a self-contained script to see the API in action:
+```bash
+python examples/quickstart.py
+```
+
+**3. Define Features (`examples/features.py`)**
+Or define features in a file to serve them:
 ```python
-from meridian import FeatureStore, entity, feature
+from meridian.core import FeatureStore, entity, feature
+from datetime import timedelta
 
 store = FeatureStore()
 
@@ -32,27 +40,23 @@ store = FeatureStore()
 class User:
     user_id: str
 
-@feature(entity=User, refresh="5m", materialize=True)
-def transaction_count_1h(user_id: str) -> int:
-    return sql("""
-        SELECT COUNT(*) FROM transactions
-        WHERE user_id = {user_id}
-        AND timestamp > NOW() - INTERVAL '1 hour'
-    """)
+@feature(entity=User, refresh=timedelta(minutes=5), materialize=True)
+def user_click_count(user_id: str) -> int:
+    return 42
 ```
 
-**3. Serve**
+**4. Serve**
 ```bash
-meridian serve features.py
+meridian serve examples/features.py
 ```
 
-**4. Query**
+**5. Query**
 ```bash
 curl -X POST http://localhost:8000/features \
   -H "Content-Type: application/json" \
-  -d '{"entity": {"user_id": "u123"}, "features": ["transaction_count_1h"]}'
+  -d '{"entity_name": "User", "entity_id": "u1", "features": ["user_click_count"]}'
 
-# {"user_id": "u123", "features": {"transaction_count_1h": 5}}
+# {"user_click_count": 100}
 ```
 
 ---

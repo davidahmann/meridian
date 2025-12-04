@@ -12,8 +12,15 @@ app = typer.Typer()
 console = Console()
 
 
-@app.command()
-def start(
+@app.callback()
+def callback() -> None:
+    """
+    Meridian CLI
+    """
+
+
+@app.command(name="serve")
+def serve(
     file: str = typer.Argument(
         ..., help="Path to the feature definition file (e.g., features.py)"
     ),
@@ -35,7 +42,7 @@ def start(
         Panel(
             f"Starting Meridian on http://{host}:{port}",
             title="Meridian",
-            style="bold indigo",
+            style="bold blue",
         )
     )
 
