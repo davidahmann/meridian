@@ -32,6 +32,10 @@ dependencies = [
     "sqlglot>=18.0.0",
     "typer>=0.9.0",
     "rich>=13.0.0",
+    "pandas>=2.0.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "redis>=5.0.0",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +48,8 @@ dev = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.5.0",
     "pre-commit>=3.5.0",
+    "testcontainers>=3.7.1",
+    "pandas-stubs>=2.0.0",
 ]
 
 [project.scripts]
@@ -62,6 +68,14 @@ target-version = "py39"
 
 [tool.mypy]
 strict = true
+
+[[tool.mypy.overrides]]
+module = [
+    "apscheduler.*",
+    "testcontainers.*",
+    "duckdb.*"
+]
+ignore_missing_imports = true
 
 [tool.bandit]
 exclude_dirs = ["tests"]

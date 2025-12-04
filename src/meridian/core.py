@@ -1,7 +1,17 @@
-from typing import Any, Callable, Dict, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional, Type, Union, List
 from dataclasses import dataclass
 from datetime import timedelta
 import inspect
+import pandas as pd
+from .store import (
+    OfflineStore,
+    DuckDBOfflineStore,
+    OnlineStore,
+    InMemoryOnlineStore,
+    RedisOnlineStore,
+)
+from .scheduler import Scheduler
+from .scheduler_dist import DistributedScheduler
 
 
 @dataclass
@@ -35,8 +45,49 @@ class FeatureRegistry:
 
 
 class FeatureStore:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        offline_store: Optional[OfflineStore] = None,
+        online_store: Optional[OnlineStore] = None,
+    ) -> None:
         self.registry = FeatureRegistry()
+        self.offline_store = offline_store or DuckDBOfflineStore()
+        self.online_store = online_store or InMemoryOnlineStore()
+
+        self.scheduler: Union[Scheduler, DistributedScheduler]
+
+        # Select scheduler based on online store type
+        if isinstance(self.online_store, RedisOnlineStore):
+            self.scheduler = DistributedScheduler(self.online_store.client)
+        else:
+            self.scheduler = Scheduler()
+
+    def start(self) -> None:
+        """
+        Starts the scheduler and registers jobs for all materialized features.
+        """
+        for name, feature in self.registry.features.items():
+            if feature.materialize and feature.refresh:
+                self.scheduler.schedule_job(
+                    func=lambda: self._materialize_feature(name),
+                    interval_seconds=int(feature.refresh.total_seconds()),
+                    job_id=f"materialize_{name}",
+                )
+
+    def _materialize_feature(self, feature_name: str) -> None:
+        # TODO: Implement actual materialization logic (query offline -> write online)
+        # For now, just log that it ran.
+        print(f"Materializing feature: {feature_name}")
+
+    def get_training_data(
+        self, entity_df: pd.DataFrame, features: List[str]
+    ) -> pd.DataFrame:
+        return self.offline_store.get_training_data(entity_df, features)
+
+    def get_online_features(
+        self, entity_name: str, entity_id: str, features: List[str]
+    ) -> Dict[str, Any]:
+        return self.online_store.get_online_features(entity_name, entity_id, features)
 
     def register_entity(
         self, name: str, id_column: str, description: Optional[str] = None
