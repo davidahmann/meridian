@@ -46,8 +46,10 @@ class PostgresOfflineStore(OfflineStore):
             await conn.execute(text("DELETE FROM temp_entity_lookup"))
 
             # Insert values
-            # Note: This is inefficient for large dataframes.
-            # Real implementation should use COPY or asyncpg directly.
+            # Insert values
+            # Note: We use SQLAlchemy's parameter binding for batch insert (executemany).
+            # This is efficient for moderate sizes but slower than Postgres COPY for massive datasets.
+            # Production upgrade: Use asyncpg.copy_records_to_table().
             values = []
             for _, row in entity_df.iterrows():
                 values.append(
