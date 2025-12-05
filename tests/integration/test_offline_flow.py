@@ -35,14 +35,24 @@ async def test_hybrid_offline_retrieval() -> None:
     # In MVP DuckDBOfflineStore, we do: LEFT JOIN {feature} ON ...
     # So we need a table named 'total_spend' if the feature is named 'total_spend'.
     # Let's rename the table to match the feature.
+    # Let's rename the table to match the feature.
     offline_store.conn.execute("ALTER TABLE user_stats RENAME TO total_spend")
+    # Add timestamp column for PIT correctness
+    offline_store.conn.execute(
+        "ALTER TABLE total_spend ADD COLUMN timestamp TIMESTAMP DEFAULT '2024-01-01 00:00:00'"
+    )
 
     @feature(entity=User, sql="SELECT * FROM total_spend")
     def total_spend(user_id: str) -> int:
         return 0  # Stub for Python, but SQL should take precedence in retrieval
 
     # 3. Create Entity DataFrame
-    entity_df = pd.DataFrame({"user_id": ["u1", "u2"]})
+    entity_df = pd.DataFrame(
+        {
+            "user_id": ["u1", "u2"],
+            "timestamp": [pd.Timestamp("2024-01-02"), pd.Timestamp("2024-01-02")],
+        }
+    )
 
     # 4. Get Training Data
     training_df = await store.get_training_data(entity_df, ["name_len", "total_spend"])
