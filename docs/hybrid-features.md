@@ -1,6 +1,6 @@
 # Hybrid Features: Python + SQL
 
-Meridian v1.0.2 introduces **Hybrid Features**, allowing you to choose the best tool for the job: Python for complex logic, and SQL for heavy lifting.
+Meridian v1.1.0 introduces **Hybrid Features**, allowing you to choose the best tool for the job: Python for complex logic, and SQL for heavy lifting.
 
 ## The Two Modes
 

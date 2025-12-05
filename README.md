@@ -87,7 +87,7 @@ Meridian is built for the rest of us.
 * **No Magic:** Your code is your config. Explicit caching (`materialize=True`) and explicit refresh logic.
 * **Production Reliability:** Built-in circuit breakers, fallback chains (Cache -> Compute -> Default), and Prometheus metrics (`meridian_feature_requests_total`).
 * **Rich UI & TUI:** Includes a Streamlit dashboard and a production-grade Terminal UI for live monitoring.
-* **Hybrid Features (v1.0.2):** Mix Python logic (for complex math) and SQL (for heavy joins) in the same API.
+* **Hybrid Features (v1.1.0):** Mix Python logic (for complex math) and SQL (for heavy joins) in the same API.
 * **Point-in-Time Correctness (v1.1.0):** Zero data leakage using `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres).
 * **Write Once, Run Anywhere (v1.1.0):** Switch from Dev to Prod just by setting `MERIDIAN_ENV=production`. No code changes.
 

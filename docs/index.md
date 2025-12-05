@@ -62,7 +62,7 @@ We don't use YAML for configuration. Your code is your config.
 - **Deep Observability:** Prometheus metrics (`meridian_feature_requests_total`) and structured JSON logging out of the box.
 - **Async Core:** Fully async I/O for high-throughput serving.
 
-### 5. Hybrid Features (New in v1.0.2) 🏭
+### 5. Hybrid Features (New in v1.1.0) 🏭
 - **Python Features:** Use `@feature` with Python logic for complex math (e.g., Haversine distance).
 - **SQL Features:** Use `@feature(sql="...")` to delegate heavy joins to your warehouse (DuckDB/Postgres).
 - **Materialization:** Automatically run SQL queries and bulk-load results into Redis.
