@@ -21,7 +21,7 @@
 
 <div align="center">
   <p><b>Deploy to Cloud in 1 Click</b></p>
-  <a href="https://railway.app/new?template=https://github.com/davidahmann/meridian&plugins=postgresql,redis&envs=MERIDIAN_ENV&MERIDIAN_ENV=production">
+  <a href="https://railway.app/new?template=https://github.com/davidahmann/meridian&envs=MERIDIAN_ENV&MERIDIAN_ENV=production">
     <img src="https://railway.app/button.svg" alt="Deploy on Railway">
   </a>
   <a href="https://render.com/deploy?repo=https://github.com/davidahmann/meridian">
