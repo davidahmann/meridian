@@ -4,7 +4,6 @@ from datetime import timedelta
 import pandas as pd
 from .store import (
     OfflineStore,
-    DuckDBOfflineStore,
     OnlineStore,
     InMemoryOnlineStore,
     RedisOnlineStore,
@@ -83,6 +82,9 @@ class FeatureRegistry:
         return [f for f in self.features.values() if f.entity_name == entity_name]
 
 
+from meridian.config import get_store_factory  # noqa: E402
+
+
 class FeatureStore:
     def __init__(
         self,
@@ -90,8 +92,15 @@ class FeatureStore:
         online_store: Optional[OnlineStore] = None,
     ) -> None:
         self.registry = FeatureRegistry()
-        self.offline_store = offline_store or DuckDBOfflineStore()
-        self.online_store = online_store or InMemoryOnlineStore()
+
+        # Auto-configure stores if not provided
+        if offline_store is None or online_store is None:
+            default_offline, default_online = get_store_factory()
+            self.offline_store = offline_store or default_offline
+            self.online_store = online_store or default_online
+        else:
+            self.offline_store = offline_store
+            self.online_store = online_store or InMemoryOnlineStore()
 
         self.scheduler: Union[Scheduler, DistributedScheduler]
 
@@ -194,8 +203,8 @@ class FeatureStore:
 
         logger.info("materialize_start", feature=feature_name)
         try:
-            # 1. Execute SQL
-            df = self.offline_store.execute_sql(feature_def.sql)
+            # 1. Execute SQL against Offline Store
+            df = await self.offline_store.execute_sql(feature_def.sql)
 
             # 2. Write to Online Store
             # We assume the SQL returns [entity_id, feature_value] or similar.
@@ -273,8 +282,15 @@ class FeatureStore:
 
             # Pass the partially enriched dataframe (result_df) to offline store
             # so it can join SQL features onto it.
+            # We assume entity_df has a timestamp column named 'timestamp' or 'event_timestamp'
+            timestamp_col = (
+                "event_timestamp"
+                if "event_timestamp" in result_df.columns
+                else "timestamp"
+            )
+
             result_df = await self.offline_store.get_training_data(
-                result_df, sql_features, entity_id_col
+                result_df, sql_features, entity_id_col, timestamp_col
             )
 
         return result_df

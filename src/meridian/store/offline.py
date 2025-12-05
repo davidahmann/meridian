@@ -7,14 +7,18 @@ import pandas as pd
 class OfflineStore(ABC):
     @abstractmethod
     async def get_training_data(
-        self, entity_df: pd.DataFrame, features: List[str], entity_id_col: str
+        self,
+        entity_df: pd.DataFrame,
+        features: List[str],
+        entity_id_col: str,
+        timestamp_col: str = "timestamp",
     ) -> pd.DataFrame:
         """
         Generates training data by joining entity_df with feature data.
         """
 
     @abstractmethod
-    def execute_sql(self, query: str) -> pd.DataFrame:
+    async def execute_sql(self, query: str) -> pd.DataFrame:
         """
         Executes a SQL query against the offline store and returns a DataFrame.
         """
@@ -26,7 +30,11 @@ class DuckDBOfflineStore(OfflineStore):
         self.conn = duckdb.connect(database=database)
 
     async def get_training_data(
-        self, entity_df: pd.DataFrame, features: List[str], entity_id_col: str
+        self,
+        entity_df: pd.DataFrame,
+        features: List[str],
+        entity_id_col: str,
+        timestamp_col: str = "timestamp",
     ) -> pd.DataFrame:
         # For MVP, we'll assume features are just SQL queries that return (entity_id, timestamp, value)
         # In a real implementation, this would be much more complex (point-in-time joins).
@@ -88,21 +96,32 @@ class DuckDBOfflineStore(OfflineStore):
         # We also need to know the entity_id column name.
         # This is getting complicated without metadata.
 
-        # Simplest MVP approach:
-        # 1. We assume feature_name maps to a table `feature_name`.
-        # 2. We assume that table has `entity_id` and `feature_name` columns.
-        # 3. We join on `entity_id` (hardcoded for now, or we need to pass it).
+        # Register entity_df so it can be queried
+        self.conn.register("entity_df", entity_df)
+
+        # Construct query using ASOF JOIN for Point-in-Time Correctness
+        # SELECT e.*, f1.value as f1
+        # FROM entity_df e
+        # ASOF LEFT JOIN feature_table f1
+        # ON e.entity_id = f1.entity_id AND e.timestamp >= f1.timestamp
 
         query = "SELECT entity_df.*"
         joins = ""
 
         for feature in features:
-            # MVP Assumption: Table name = feature name
-            # MVP Assumption: Join column is 'entity_id' in the feature table
-            # But in the entity_df, it is 'entity_id_col'
+            # MVP Assumption: Feature table has columns [entity_id, timestamp, feature_name]
+            # We alias the feature table to its name for clarity
 
-            joins += f" LEFT JOIN {feature} ON entity_df.{entity_id_col} = {feature}.entity_id"
-            # MVP Assumption: The feature value column has the same name as the feature
+            # Note: DuckDB ASOF JOIN syntax:
+            # FROM A ASOF LEFT JOIN B ON A.id = B.id AND A.ts >= B.ts
+            # The inequality MUST be >= for ASOF behavior (find latest B where B.ts <= A.ts)
+
+            joins += f"""
+            ASOF LEFT JOIN {feature}
+            ON entity_df.{entity_id_col} = {feature}.entity_id
+            AND entity_df.{timestamp_col} >= {feature}.timestamp
+            """
+
             query += f", {feature}.{feature} AS {feature}"
 
         query += f" FROM entity_df {joins}"
@@ -114,5 +133,5 @@ class DuckDBOfflineStore(OfflineStore):
             print(f"Offline retrieval failed: {e}")
             return entity_df
 
-    def execute_sql(self, query: str) -> pd.DataFrame:
+    async def execute_sql(self, query: str) -> pd.DataFrame:
         return self.conn.execute(query).df()

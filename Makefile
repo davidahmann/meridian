@@ -48,5 +48,11 @@ docker-up:
 docker-down:
 	docker compose down
 
+prod-up:
+	docker-compose -f examples/production/docker-compose.prod.yml up --build
+
+prod-down:
+	docker-compose -f examples/production/docker-compose.prod.yml down
+
 pre-commit:
 	uv run pre-commit run --all-files

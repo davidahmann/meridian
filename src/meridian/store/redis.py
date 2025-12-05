@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Optional, cast
+from typing import Dict, Any, List, Optional
 import redis.asyncio as redis
 import json
 from .online import OnlineStore
@@ -11,27 +11,39 @@ class RedisOnlineStore(OnlineStore):
         port: int = 6379,
         db: int = 0,
         password: Optional[str] = None,
+        redis_url: Optional[str] = None,
     ) -> None:
-        self.connection_kwargs = {
-            "host": host,
-            "port": port,
-            "db": db,
-            "password": password,
-            "decode_responses": True,
-        }
-        self.client = redis.Redis(
-            host=host, port=port, db=db, password=password, decode_responses=True
-        )
+        self.connection_kwargs: Dict[str, Any]
+        if redis_url:
+            self.client = redis.Redis.from_url(redis_url, decode_responses=True)
+            # Parse URL for sync client recreation if needed, or store URL
+            self.connection_kwargs = {"url": redis_url}
+        else:
+            self.connection_kwargs = {
+                "host": host,
+                "port": port,
+                "db": db,
+                "password": password,
+                "decode_responses": True,
+            }
+            self.client = redis.Redis(
+                host=host, port=port, db=db, password=password, decode_responses=True
+            )
 
     def get_sync_client(self) -> Any:
         """Returns a synchronous Redis client for the scheduler."""
         import redis as sync_redis
 
+        if "url" in self.connection_kwargs:
+            return sync_redis.Redis.from_url(
+                self.connection_kwargs["url"], decode_responses=True
+            )
+
         return sync_redis.Redis(
-            host=cast(str, self.connection_kwargs["host"]),
-            port=cast(int, self.connection_kwargs["port"]),
-            db=cast(int, self.connection_kwargs["db"]),
-            password=cast(Optional[str], self.connection_kwargs["password"]),
+            host=self.connection_kwargs["host"],
+            port=self.connection_kwargs["port"],
+            db=self.connection_kwargs["db"],
+            password=self.connection_kwargs["password"],
             decode_responses=True,
         )
 
