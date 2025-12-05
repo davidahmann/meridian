@@ -18,13 +18,18 @@ Test in Jupyter. Iterate fast. Zero infrastructure.
 
 ## Step 2: Single-Server Production (Week 2)
 
-Same code, add 3 environment variables:
+Same code, just set environment variables:
 
+```bash
+export MERIDIAN_ENV=production
+export MERIDIAN_POSTGRES_URL="postgresql+asyncpg://prod-db/features"
+export MERIDIAN_REDIS_URL="redis://prod-cache:6379"
+```
+
+And initialize the store without arguments:
 ```python
-store = FeatureStore(
-    offline_store="postgresql://prod-db/features",
-    online_store="redis://prod-cache:6379"
-)
+# features.py
+store = FeatureStore()  # Auto-detects Prod
 ```
 
 Infrastructure needed:
@@ -49,28 +54,14 @@ Infrastructure:
 
 ## Step 4: Local Production (Docker Compose)
 
-We provide a `docker-compose.yml` to spin up a full stack (Meridian + Redis + Postgres + Prometheus) locally.
+We provide a `docker-compose.prod.yml` to spin up a full stack (Meridian + Redis + Postgres) locally.
 
 ```bash
 # Start the stack
-docker compose up -d
+make prod-up
 
 # Check health
-curl http://localhost:8005/docs
-
-# Check metrics
-curl http://localhost:9095/-/healthy
+curl http://localhost:8000/health
 ```
 
 This stack mimics a real production environment and is perfect for integration testing or small-scale deployments.
-
-## FAQ
-
-**Q: How do I migrate from local to production?**
-A: Change 2 lines of code (offline_store and online_store URLs). Everything else identical. Point-in-time correctness guaranteed in both modes.
-
-**Q: What if I outgrow single Postgres?**
-A: Switch offline_store to Snowflake/BigQuery. Online store stays Redis. No code changes beyond config.
-
-**Q: Do I need Kubernetes?**
-A: No. Heroku/Railway/ECS work fine. If you want K8s, we have Helm charts, but it's not required.

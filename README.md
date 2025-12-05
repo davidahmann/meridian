@@ -1,35 +1,39 @@
-# Meridian
+<div align="center">
+  <img src="https://via.placeholder.com/150" alt="Meridian Logo" width="120"/>
+  <h1>Meridian</h1>
+  <h3>The Heroku for ML Features</h3>
 
-<p align="center">
+  <p>
+    <a href="https://pypi.org/project/meridian-oss/"><img src="https://img.shields.io/pypi/v/meridian-oss?color=blue&label=pypi" alt="PyPI version" /></a>
+    <a href="https://github.com/davidahmann/meridian/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-green.svg" alt="License" /></a>
+    <a href="#"><img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python Version" /></a>
+    <a href="#"><img src="https://img.shields.io/badge/No-YAML-red.svg" alt="No YAML" /></a>
+  </p>
 
-  <br>
-  <b>Heroku for ML Features</b>
-  <br>
-  <a href="https://pypi.org/project/meridian-oss/"><img src="https://img.shields.io/pypi/v/meridian-oss?color=blue" alt="PyPI"></a>
-  <a href="https://github.com/davidahmann/meridian/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="License"></a>
-</p>
-
-> **"Define features in Python. Get training data and production serving for free."**
-
-Meridian is a developer-first feature store designed to take you from a Jupyter notebook to production in 30 seconds. It eliminates the infrastructure tax of existing tools—no Kubernetes, no Spark, no YAML. Just pure Python and SQL.
+  <p><b>Define features in Python. Get training data and production serving for free.</b></p>
+  <p>Stop paying the infrastructure tax. Meridian takes you from Jupyter to Production in 30 seconds.</p>
+</div>
 
 ---
 
-## ⚡ The 30-Second Quickstart
+### ⚡ The 30-Second Quickstart
 
-**1. Install**
+**Option A: The "I just want to see it work" (Clone & Run)**
+```bash
+git clone https://github.com/davidahmann/meridian.git
+cd meridian
+pip install -e ".[ui]"
+meridian serve examples/basic_features.py
+```
+
+**Option B: The "Builder" (Pip Install)**
+
+1.  **Install Meridian**
 ```bash
 pip install "meridian-oss[ui]"
 ```
 
-**2. Try the Quickstart Script**
-Run a self-contained script to see the API in action:
-```bash
-python examples/quickstart.py
-```
-
-**3. Define Features (`examples/basic_features.py`)**
-Or define features in a file to serve them:
+2.  **Create a file named `my_features.py`:**
 ```python
 from meridian.core import FeatureStore, entity, feature
 from datetime import timedelta
@@ -45,95 +49,92 @@ def user_click_count(user_id: str) -> int:
     return 42
 ```
 
-**4. Serve**
+3.  **Serve it immediately:**
 ```bash
-meridian serve examples/basic_features.py
+meridian serve my_features.py
+# 🚀 Meridian server running on http://localhost:8000
 ```
 
-**5. Query**
+4.  **Query it:**
 ```bash
 curl -X POST http://localhost:8000/features \
   -H "Content-Type: application/json" \
   -d '{"entity_name": "User", "entity_id": "u1", "features": ["user_click_count"]}'
-
-# {"user_click_count": 100}
-```
-
-**6. Visualize**
-Launch the built-in UI to explore your features interactively:
-```bash
-meridian ui examples/basic_features.py
-```
-Or see the rich terminal dashboard:
-```bash
-meridian serve examples/basic_features.py
-```
-
-**7. Deploy**
-Spin up a local production stack (Meridian + Redis + Postgres + Prometheus) in one command:
-```bash
-docker compose up -d
+# Output: {"user_click_count": 42}
 ```
 
 ---
 
-## 🚀 Why Meridian?
+### 🚀 Why Meridian?
 
-### 1. Local-First, Cloud-Ready
-Most feature stores require a platform team to set up. Meridian runs on your laptop with zero dependencies (DuckDB + In-Memory) and scales to production with boring technology (Postgres + Redis).
+Most feature stores are built for the 1% of companies (Uber, DoorDash) with platform teams. They require Kubernetes, Spark, and complex microservices.
 
-### 2. No Magic, Just Python
-We don't use YAML for configuration. Your code is your config.
-- **Explicit Caching:** Use `@feature(materialize=True)` to cache hot features.
-- **Explicit Refresh:** Use `@feature(refresh="5m")` to define freshness.
+Meridian is built for the rest of us.
 
-### 3. Instant Wow ✨
-- **Meridian UI:** A built-in Streamlit dashboard to explore your data.
-- **Rich Terminal:** Production-grade TUI with live metrics.
-- **Jupyter Integration:** Beautiful HTML representations of your feature store objects.
+| Feature | The "Old Way" | The Meridian Way |
+| :--- | :--- | :--- |
+| **Config** | 500 lines of YAML | Python Decorators (`@feature`) |
+| **Infra** | Kubernetes + Spark | Runs on your Laptop (DuckDB) |
+| **Serving** | Complex API Gateway | `meridian serve file.py` |
+| **Philosophy** | "Google Scale" | "Get it Shipped" |
 
-### 4. Production-Grade Reliability 🛡️
-- **Fallback Chain:** Cache -> Compute -> Default. If Redis fails, we compute on-demand.
-- **Circuit Breakers:** Built-in protection against cascading failures (fail fast).
-- **Deep Observability:** Prometheus metrics (`meridian_feature_requests_total`) and structured JSON logging out of the box.
-- **Async Core:** Fully async I/O for high-throughput serving.
+#### Key Features
 
-### 5. Hybrid Features (New in v1.0.2) 🏭
-- **Python Features:** Use `@feature` with Python logic for complex math (e.g., Haversine distance).
-- **SQL Features:** Use `@feature(sql="...")` to delegate heavy joins to your warehouse (DuckDB/Postgres).
-- **Materialization:** Automatically run SQL queries and bulk-load results into Redis.
+* **Local-First, Cloud-Ready:** Runs on your laptop with zero dependencies (DuckDB + In-Memory). Scales to production with boring technology (Postgres + Redis).
+* **No Magic:** Your code is your config. Explicit caching (`materialize=True`) and explicit refresh logic.
+* **Production Reliability:** Built-in circuit breakers, fallback chains (Cache -> Compute -> Default), and Prometheus metrics (`meridian_feature_requests_total`).
+* **Rich UI & TUI:** Includes a Streamlit dashboard and a production-grade Terminal UI for live monitoring.
+* **Hybrid Features (v1.0.2):** Mix Python logic (for complex math) and SQL (for heavy joins) in the same API.
+* **Point-in-Time Correctness (v1.1.0):** Zero data leakage using `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres).
+* **Write Once, Run Anywhere (v1.1.0):** Switch from Dev to Prod just by setting `MERIDIAN_ENV=production`. No code changes.
 
 ---
 
-## 🏗️ Architecture
+### 🏗️ Architecture
 
-### Tier 1: Local Development (The "Wedge")
-*Perfect for prototyping and single-developer projects.*
+Meridian is designed to grow with you.
+
+```mermaid
+graph TD
+    subgraph Dev [Tier 1: Local Development]
+        A[Laptop] -->|Uses| B(DuckDB)
+        A -->|Uses| C(In-Memory Dict)
+        style Dev fill:#e1f5fe,stroke:#01579b
+    end
+
+    subgraph Prod [Tier 2: Production]
+        D[API Pods] -->|Async| E[(Postgres)]
+        D -->|Async| F[(Redis)]
+        style Prod fill:#fff3e0,stroke:#ff6f00
+    end
+
+    Switch{MERIDIAN_ENV} -->|development| Dev
+    Switch -->|production| Prod
+```
+
+**Tier 1: Local Development (The "Wedge")**
+* *Perfect for prototyping and single-developer projects.*
 * **Offline Store:** DuckDB (Embedded)
 * **Online Store:** Python Dictionary (In-Memory)
-* **Scheduler:** APScheduler (Background Thread)
-* **Infrastructure:** None (Just `pip install`)
+* **Infra:** None (Just `pip install`)
 
-### Tier 2: Production (The "Standard")
-*Robust, scalable, and boring.*
+**Tier 2: Production (The "Standard")**
+* *Robust, scalable, and boring.*
 * **Offline Store:** Postgres / Snowflake / BigQuery
 * **Online Store:** Redis
-* **Scheduler:** Distributed Workers with Redis Locks
-* **Infrastructure:** 1x Postgres, 1x Redis, Nx API Pods
+* **Infra:** 1x Postgres, 1x Redis, Nx API Pods
 
 ---
 
-## 🗺️ Roadmap
+### 🗺️ Roadmap
 
-- **Phase 1 (Now):** Core API, DuckDB/Postgres support, Redis caching, FastAPI serving.
-- **Phase 2:** Drift detection, RBAC, and multi-region support.
+* ✅ **Phase 1 (Now):** Core API, DuckDB/Postgres support, Redis caching, FastAPI serving, PIT Correctness, Async I/O.
+* 🚧 **Phase 2:** Drift detection, RBAC, and multi-region support.
 
----
+### 🤝 Contributing
 
-## 🤝 Contributing
+We love contributions! This is a community-driven project. Please read our [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
-We love contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
-
-## 📄 License
+### 📄 License
 
 Apache 2.0

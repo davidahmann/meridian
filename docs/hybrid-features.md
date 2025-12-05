@@ -38,6 +38,9 @@ def user_txn_count(user_id: str) -> int:
 - **Materialization:** The Scheduler executes the SQL query periodically and bulk-loads the results into Redis.
 - **Online Serving:** The API serves the pre-computed value from Redis.
 
+> [!IMPORTANT]
+> **Point-in-Time Correctness:** For SQL features, your entity dataframe must have a timestamp column (default: `event_timestamp` or `timestamp`) to perform the ASOF join correctly.
+
 ## Mixing Both
 You can mix both types in the same request!
 

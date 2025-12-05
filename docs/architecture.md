@@ -29,7 +29,7 @@
 - **Infrastructure:** None (Just `pip install`)
 
 **Production Mode:**
-- **Offline:** Postgres 13+ (or Snowflake/BigQuery)
+- **Offline:** Postgres 13+ (Async with `asyncpg`)
 - **Online:** Redis 6+ (standalone or cluster)
 - **Scheduler:** Distributed Workers with Redis Locks
 - **Infrastructure:** 1x Postgres, 1x Redis, Nx API Pods
@@ -40,22 +40,25 @@ Training/serving skew is the #1 killer of ML models in production.
 
 **Problem:** Your model trains on Monday's features but serves Tuesday's features.
 
-**Solution:** Meridian's `get_training_data()` uses "as-of" joins:
+**Solution:** Meridian's `get_training_data()` uses "as-of" joins to ensure zero leakage.
+
+### DuckDB (Development)
+Uses native `ASOF JOIN` for high performance:
 ```sql
-SELECT features.*
-FROM events e
-LEFT JOIN features f ON e.user_id = f.user_id
-  AND f.valid_from <= e.timestamp
-  AND f.valid_to > e.timestamp
+SELECT e.*, f.value
+FROM entity_df e
+ASOF LEFT JOIN feature_table f
+ON e.entity_id = f.entity_id AND e.timestamp >= f.timestamp
 ```
 
-**Solution:** Meridian's `get_training_data()` uses "as-of" joins:
+### Postgres (Production)
+Uses `LATERAL JOIN` for standard SQL compatibility:
 ```sql
-SELECT features.*
-FROM events e
-LEFT JOIN features f ON e.user_id = f.user_id
-  AND f.valid_from <= e.timestamp
-  AND f.valid_to > e.timestamp
+LEFT JOIN LATERAL (
+    SELECT value FROM feature_table f
+    WHERE f.entity_id = e.entity_id AND f.timestamp <= e.timestamp
+    ORDER BY f.timestamp DESC LIMIT 1
+) f ON TRUE
 ```
 
 Same logic offline (training) and online (serving). Guaranteed consistency.

@@ -67,17 +67,30 @@ We don't use YAML for configuration. Your code is your config.
 - **SQL Features:** Use `@feature(sql="...")` to delegate heavy joins to your warehouse (DuckDB/Postgres).
 - **Materialization:** Automatically run SQL queries and bulk-load results into Redis.
 
+### 6. Point-in-Time Correctness (New in v1.1.0) 🕰️
+- **No Data Leakage:** We use `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres) to ensure training data reflects the world *exactly* as it was at the event time.
+- **Consistent:** Same logic for offline training and online serving.
+
+### 7. Write Once, Run Anywhere (New in v1.1.0) 🛠️
+- **Dev:** `MERIDIAN_ENV=development` (default) uses DuckDB + In-Memory.
+- **Prod:** `MERIDIAN_ENV=production` uses Async Postgres + Redis.
+- **Zero Code Changes:** Your feature definitions stay exactly the same.
+
 ---
 
 ## 📚 Documentation
 
 - **[Quickstart](quickstart.md):** Go from zero to served features in 30 seconds.
 - **[Philosophy & Trade-offs](philosophy.md):** Why we built this and who it's for.
-- **[Why Not Feast?](why-not-feast.md):** A honest comparison for small teams.
+- **[Meridian vs Feast](feast-alternative.md):** The lightweight alternative for ML engineers.
 - **[Local to Production](local-to-production.md):** How to migrate when you're ready.
 - **[Architecture](architecture.md):** Boring technology, properly applied.
-- **[Use Cases](use-cases/fraud-detection.md):** Real-world examples like Fraud Detection.
+- **[Use Cases](use-cases/fraud-detection.md):**
+    - [Fraud Detection](use-cases/fraud-detection.md)
+    - [Churn Prediction (PIT)](use-cases/churn-prediction.md)
+    - [Real-Time Recommendations (Async)](use-cases/real-time-recommendations.md)
 - **[Hybrid Features](hybrid-features.md):** Mixing Python logic and SQL power.
+- **[FAQ](faq.md):** Common questions about production, scaling, and comparisons.
 - **[Why We Built Meridian](why-we-built-meridian.md):** The story behind the "Heroku for ML Features".
 
 ---
