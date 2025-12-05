@@ -59,6 +59,10 @@ dev = [
     "httpx>=0.24.0",
     "prometheus-client>=0.17.0",
 ]
+ui = [
+    "streamlit",
+    "watchdog",
+]
 
 [project.scripts]
 meridian = "meridian.cli:app"

@@ -19,6 +19,15 @@ class Entity:
     id_column: str
     description: Optional[str] = None
 
+    def _repr_html_(self) -> str:
+        return f"""
+        <div style="font-family: sans-serif; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px; max-width: 600px;">
+            <h3 style="margin-top: 0; color: #333;">📦 Entity: {self.name}</h3>
+            <p><strong>ID Column:</strong> <code>{self.id_column}</code></p>
+            <p><strong>Description:</strong> {self.description or '<em>No description</em>'}</p>
+        </div>
+        """
+
 
 @dataclass
 class Feature:
@@ -42,6 +51,9 @@ class FeatureRegistry:
     def register_feature(self, feature: Feature) -> None:
         self.features[feature.name] = feature
 
+    def get_features_for_entity(self, entity_name: str) -> List[Feature]:
+        return [f for f in self.features.values() if f.entity_name == entity_name]
+
 
 class FeatureStore:
     def __init__(
@@ -60,6 +72,56 @@ class FeatureStore:
             self.scheduler = DistributedScheduler(self.online_store.client)
         else:
             self.scheduler = Scheduler()
+
+    def _repr_html_(self) -> str:
+        # Count entities and features
+        n_entities = len(self.registry.entities)
+        n_features = len(self.registry.features)
+
+        # Build Entity Table
+        entity_rows = ""
+        for name, ent in self.registry.entities.items():
+            entity_rows += f"<tr><td>{name}</td><td>{ent.id_column}</td><td>{ent.description or ''}</td></tr>"
+
+        # Build Feature Table (Top 5)
+        feature_rows = ""
+        for i, (name, feat) in enumerate(self.registry.features.items()):
+            if i >= 5:
+                feature_rows += f"<tr><td colspan='4'><em>... and {n_features - 5} more</em></td></tr>"
+                break
+            feature_rows += f"<tr><td>{name}</td><td>{feat.entity_name}</td><td>{feat.refresh}</td><td>{feat.materialize}</td></tr>"
+
+        return f"""
+        <div style="font-family: sans-serif; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px;">
+            <h2 style="margin-top: 0; color: #1f77b4;">🧭 Meridian Feature Store</h2>
+            <div style="display: flex; gap: 20px; margin-bottom: 10px;">
+                <div><strong>Entities:</strong> {n_entities}</div>
+                <div><strong>Features:</strong> {n_features}</div>
+                <div><strong>Offline:</strong> {self.offline_store.__class__.__name__}</div>
+                <div><strong>Online:</strong> {self.online_store.__class__.__name__}</div>
+            </div>
+
+            <h4>Entities</h4>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr><th style="text-align: left; padding: 5px;">Name</th><th style="text-align: left; padding: 5px;">ID Column</th><th style="text-align: left; padding: 5px;">Description</th></tr>
+                </thead>
+                <tbody>
+                    {entity_rows}
+                </tbody>
+            </table>
+
+            <h4>Features</h4>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead style="background-color: #f8f9fa;">
+                    <tr><th style="text-align: left; padding: 5px;">Name</th><th style="text-align: left; padding: 5px;">Entity</th><th style="text-align: left; padding: 5px;">Refresh</th><th style="text-align: left; padding: 5px;">Materialize</th></tr>
+                </thead>
+                <tbody>
+                    {feature_rows}
+                </tbody>
+            </table>
+        </div>
+        """
 
     def start(self) -> None:
         """
