@@ -16,10 +16,6 @@ import structlog
 from prometheus_client import Counter, Histogram
 import time
 
-# Circuit breaker for online store
-# Fail fast after 5 failures, try again after 60 seconds
-online_store_breaker = pybreaker.CircuitBreaker(fail_max=5, reset_timeout=60)
-
 # Metrics
 FEATURE_REQUESTS = Counter(
     "meridian_feature_requests_total", "Total feature requests", ["feature", "status"]
@@ -105,6 +101,12 @@ class FeatureStore:
         else:
             self.scheduler = Scheduler()
 
+        # Circuit breaker for online store
+        # Fail fast after 5 failures, try again after 60 seconds
+        self.online_store_breaker = pybreaker.CircuitBreaker(
+            fail_max=5, reset_timeout=60
+        )
+
     def _repr_html_(self) -> str:
         # Count entities and features
         n_entities = len(self.registry.entities)
@@ -189,7 +191,7 @@ class FeatureStore:
         try:
             with FEATURE_LATENCY.labels(feature="all", step="cache").time():
                 results = await async_breaker_call(
-                    online_store_breaker,
+                    self.online_store_breaker,
                     self.online_store.get_online_features,
                     entity_name,
                     entity_id,

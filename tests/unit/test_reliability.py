@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
-from meridian.core import FeatureStore, entity, feature, online_store_breaker
+from meridian.core import FeatureStore, entity, feature
 from meridian.store.online import InMemoryOnlineStore
 
 
@@ -40,14 +40,14 @@ async def test_fallback_to_default() -> None:
 
 @pytest.mark.asyncio
 async def test_circuit_breaker() -> None:
-    # Reset breaker
-    online_store_breaker.close()
-
     # Mock online store to fail
     mock_store = MagicMock()
     mock_store.get_online_features = AsyncMock(side_effect=Exception("Redis Down"))
 
     store = FeatureStore(online_store=mock_store)
+
+    # Reset breaker (it's new per instance, so it starts closed, but good to be explicit if needed)
+    store.online_store_breaker.close()
 
     @entity(store)
     class User:
@@ -68,7 +68,7 @@ async def test_circuit_breaker() -> None:
     # Next call should raise CircuitBreakerError internally, caught by our try/except,
     # and return default (since cache is skipped/failed).
     # We want to verify the breaker is OPEN.
-    assert online_store_breaker.current_state == "open"
+    assert store.online_store_breaker.current_state == "open"
 
     # Even with breaker open, we should get result from compute or default
     result = await store.get_online_features("User", "u1", ["simple_feature"])
