@@ -29,7 +29,7 @@ def load_feature_store(file_path: str) -> FeatureStore:
     st.stop()
 
 
-def main() -> None:
+async def main() -> None:
     st.title("🧭 Meridian Feature Store")
 
     # Get file path from command line args (passed via st.session_state or env var if needed,
@@ -81,7 +81,7 @@ def main() -> None:
                 st.warning("No features defined for this entity.")
             else:
                 # Fetch values
-                values = store.get_online_features(
+                values = await store.get_online_features(
                     entity_name=selected_entity_name,
                     entity_id=entity_id,
                     features=feature_names,
@@ -102,4 +102,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+
+    asyncio.run(main())

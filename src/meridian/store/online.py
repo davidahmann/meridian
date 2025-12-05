@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 
 class OnlineStore(ABC):
     @abstractmethod
-    def get_online_features(
+    async def get_online_features(
         self, entity_name: str, entity_id: str, feature_names: List[str]
     ) -> Dict[str, Any]:
         """
@@ -13,7 +13,7 @@ class OnlineStore(ABC):
         pass
 
     @abstractmethod
-    def set_online_features(
+    async def set_online_features(
         self, entity_name: str, entity_id: str, features: Dict[str, Any]
     ) -> None:
         """
@@ -27,14 +27,14 @@ class InMemoryOnlineStore(OnlineStore):
         # Structure: {entity_name: {entity_id: {feature_name: value}}}
         self._storage: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
-    def get_online_features(
+    async def get_online_features(
         self, entity_name: str, entity_id: str, feature_names: List[str]
     ) -> Dict[str, Any]:
         entity_storage = self._storage.get(entity_name, {})
         features = entity_storage.get(entity_id, {})
         return {name: features.get(name) for name in feature_names if name in features}
 
-    def set_online_features(
+    async def set_online_features(
         self, entity_name: str, entity_id: str, features: Dict[str, Any]
     ) -> None:
         if entity_name not in self._storage:

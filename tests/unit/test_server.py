@@ -1,10 +1,12 @@
-from fastapi.testclient import TestClient
+import pytest
+from httpx import AsyncClient, ASGITransport
 from meridian.server import create_app
 from meridian.core import FeatureStore, entity, feature
 from meridian.store.online import InMemoryOnlineStore
 
 
-def test_api_get_features() -> None:
+@pytest.mark.asyncio
+async def test_api_get_features() -> None:
     # 1. Setup Store
     store = FeatureStore(online_store=InMemoryOnlineStore())
 
@@ -17,19 +19,23 @@ def test_api_get_features() -> None:
         return 10
 
     # Pre-populate online store
-    store.online_store.set_online_features(
+    await store.online_store.set_online_features(
         entity_name="User", entity_id="u1", features={"user_clicks": 42}
     )
 
     # 2. Create App & Client
     app = create_app(store)
-    client = TestClient(app)
-
-    # 3. Request Features
-    response = client.post(
-        "/features",
-        json={"entity_name": "User", "entity_id": "u1", "features": ["user_clicks"]},
-    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 3. Request Features
+        response = await client.post(
+            "/features",
+            json={
+                "entity_name": "User",
+                "entity_id": "u1",
+                "features": ["user_clicks"],
+            },
+        )
 
     # 4. Assertions
     assert response.status_code == 200
@@ -37,11 +43,12 @@ def test_api_get_features() -> None:
     assert data["user_clicks"] == 42
 
 
-def test_api_health() -> None:
+@pytest.mark.asyncio
+async def test_api_health() -> None:
     store = FeatureStore()
     app = create_app(store)
-    client = TestClient(app)
-
-    response = client.get("/health")
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}

@@ -11,6 +11,35 @@ from .store import (
 )
 from .scheduler import Scheduler
 from .scheduler_dist import DistributedScheduler
+import pybreaker
+import structlog
+from prometheus_client import Counter, Histogram
+import time
+
+# Circuit breaker for online store
+# Fail fast after 5 failures, try again after 60 seconds
+online_store_breaker = pybreaker.CircuitBreaker(fail_max=5, reset_timeout=60)
+
+# Metrics
+FEATURE_REQUESTS = Counter(
+    "meridian_feature_requests_total", "Total feature requests", ["feature", "status"]
+)
+FEATURE_LATENCY = Histogram(
+    "meridian_feature_latency_seconds",
+    "Latency of feature retrieval",
+    ["feature", "step"],
+)
+
+logger = structlog.get_logger()
+
+
+async def async_breaker_call(
+    breaker: pybreaker.CircuitBreaker,
+    func: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    return await breaker.call_async(func, *args, **kwargs)  # type: ignore[no-untyped-call]
 
 
 @dataclass
@@ -38,6 +67,8 @@ class Feature:
     ttl: Optional[timedelta] = None
     materialize: bool = False
     description: Optional[str] = None
+    stale_tolerance: Optional[timedelta] = None
+    default_value: Any = None
 
 
 class FeatureRegistry:
@@ -68,8 +99,9 @@ class FeatureStore:
         self.scheduler: Union[Scheduler, DistributedScheduler]
 
         # Select scheduler based on online store type
+        # Select scheduler based on online store type
         if isinstance(self.online_store, RedisOnlineStore):
-            self.scheduler = DistributedScheduler(self.online_store.client)
+            self.scheduler = DistributedScheduler(self.online_store.get_sync_client())
         else:
             self.scheduler = Scheduler()
 
@@ -140,15 +172,96 @@ class FeatureStore:
         # For now, just log that it ran.
         print(f"Materializing feature: {feature_name}")
 
-    def get_training_data(
+    async def get_training_data(
         self, entity_df: pd.DataFrame, features: List[str]
     ) -> pd.DataFrame:
-        return self.offline_store.get_training_data(entity_df, features)
+        return await self.offline_store.get_training_data(entity_df, features)
 
-    def get_online_features(
+    async def get_online_features(
         self, entity_name: str, entity_id: str, features: List[str]
     ) -> Dict[str, Any]:
-        return self.online_store.get_online_features(entity_name, entity_id, features)
+        log = logger.bind(
+            entity_name=entity_name, entity_id=entity_id, features=features
+        )
+        start_time = time.perf_counter()
+
+        # 1. Try Cache (Online Store)
+        try:
+            with FEATURE_LATENCY.labels(feature="all", step="cache").time():
+                results = await async_breaker_call(
+                    online_store_breaker,
+                    self.online_store.get_online_features,
+                    entity_name,
+                    entity_id,
+                    features,
+                )
+        except Exception as e:
+            # If online store fails completely (e.g. Redis down) or BreakerOpen, treat all as missing
+            log.warning("online_store_failed", error=str(e))
+            results = {}
+
+        final_results = {}
+        missing_features = []
+
+        for feature_name in features:
+            if feature_name in results:
+                final_results[feature_name] = results[feature_name]
+                FEATURE_REQUESTS.labels(feature=feature_name, status="hit").inc()
+            else:
+                missing_features.append(feature_name)
+                FEATURE_REQUESTS.labels(feature=feature_name, status="miss").inc()
+
+        if missing_features:
+            log.info("cache_miss", missing_features=missing_features)
+
+        # 2. Try Compute (On-Demand)
+        for feature_name in missing_features:
+            feature_def = self.registry.features.get(feature_name)
+            if not feature_def:
+                FEATURE_REQUESTS.labels(feature=feature_name, status="unknown").inc()
+                continue
+
+            try:
+                # Execute the feature function
+                with FEATURE_LATENCY.labels(
+                    feature=feature_name, step="compute"
+                ).time():
+                    val = feature_def.func(entity_id)
+
+                final_results[feature_name] = val
+                FEATURE_REQUESTS.labels(
+                    feature=feature_name, status="compute_success"
+                ).inc()
+
+                # Optionally write back to cache?
+                # await self.online_store.set_online_features(entity_name, entity_id, {feature_name: val})
+
+            except Exception as e:
+                log.error("compute_failed", feature=feature_name, error=str(e))
+                FEATURE_REQUESTS.labels(
+                    feature=feature_name, status="compute_failure"
+                ).inc()
+
+                # 3. Try Default Value
+                if feature_def.default_value is not None:
+                    final_results[feature_name] = feature_def.default_value
+                    FEATURE_REQUESTS.labels(
+                        feature=feature_name, status="default"
+                    ).inc()
+                    log.info(
+                        "using_default",
+                        feature=feature_name,
+                        default_value=feature_def.default_value,
+                    )
+                else:
+                    FEATURE_REQUESTS.labels(feature=feature_name, status="error").inc()
+                    pass
+
+        duration = time.perf_counter() - start_time
+        log.info(
+            "get_online_features_complete", duration=duration, found=len(final_results)
+        )
+        return final_results
 
     def register_entity(
         self, name: str, id_column: str, description: Optional[str] = None
@@ -166,6 +279,8 @@ class FeatureStore:
         ttl: Optional[timedelta] = None,
         materialize: bool = False,
         description: Optional[str] = None,
+        stale_tolerance: Optional[timedelta] = None,
+        default_value: Any = None,
     ) -> Feature:
         feature = Feature(
             name=name,
@@ -175,6 +290,8 @@ class FeatureStore:
             ttl=ttl,
             materialize=materialize,
             description=description,
+            stale_tolerance=stale_tolerance,
+            default_value=default_value,
         )
         self.registry.register_feature(feature)
         return feature
@@ -210,6 +327,8 @@ def feature(
     refresh: Optional[Union[str, timedelta]] = None,
     ttl: Optional[Union[str, timedelta]] = None,
     materialize: bool = False,
+    stale_tolerance: Optional[Union[str, timedelta]] = None,
+    default_value: Any = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         # If store is not passed, we might need a way to find it.
@@ -245,6 +364,8 @@ def feature(
             ttl=ttl,  # type: ignore
             materialize=materialize,
             description=func.__doc__,
+            stale_tolerance=stale_tolerance,  # type: ignore
+            default_value=default_value,
         )
         return func
 

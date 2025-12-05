@@ -47,6 +47,23 @@ Infrastructure:
 **Total cost:** $500/month
 **Setup time:** 2 hours
 
+## Step 4: Local Production (Docker Compose)
+
+We provide a `docker-compose.yml` to spin up a full stack (Meridian + Redis + Postgres + Prometheus) locally.
+
+```bash
+# Start the stack
+docker compose up -d
+
+# Check health
+curl http://localhost:8005/docs
+
+# Check metrics
+curl http://localhost:9095/-/healthy
+```
+
+This stack mimics a real production environment and is perfect for integration testing or small-scale deployments.
+
 ## FAQ
 
 **Q: How do I migrate from local to production?**

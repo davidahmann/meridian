@@ -1,5 +1,5 @@
-from typing import Dict, Any, List, Optional
-import redis
+from typing import Dict, Any, List, Optional, cast
+import redis.asyncio as redis
 import json
 from .online import OnlineStore
 
@@ -12,18 +12,37 @@ class RedisOnlineStore(OnlineStore):
         db: int = 0,
         password: Optional[str] = None,
     ) -> None:
+        self.connection_kwargs = {
+            "host": host,
+            "port": port,
+            "db": db,
+            "password": password,
+            "decode_responses": True,
+        }
         self.client = redis.Redis(
             host=host, port=port, db=db, password=password, decode_responses=True
         )
 
-    def get_online_features(
+    def get_sync_client(self) -> Any:
+        """Returns a synchronous Redis client for the scheduler."""
+        import redis as sync_redis
+
+        return sync_redis.Redis(
+            host=cast(str, self.connection_kwargs["host"]),
+            port=cast(int, self.connection_kwargs["port"]),
+            db=cast(int, self.connection_kwargs["db"]),
+            password=cast(Optional[str], self.connection_kwargs["password"]),
+            decode_responses=True,
+        )
+
+    async def get_online_features(
         self, entity_name: str, entity_id: str, feature_names: List[str]
     ) -> Dict[str, Any]:
         # Key format: "entity_name:entity_id"
         key = f"{entity_name}:{entity_id}"
 
         # Use HMGET to fetch specific fields
-        values = self.client.hmget(key, feature_names)
+        values = await self.client.hmget(key, feature_names)
 
         result = {}
         for name, value in zip(feature_names, values):
@@ -36,7 +55,7 @@ class RedisOnlineStore(OnlineStore):
                     result[name] = value
         return result
 
-    def set_online_features(
+    async def set_online_features(
         self, entity_name: str, entity_id: str, features: Dict[str, Any]
     ) -> None:
         key = f"{entity_name}:{entity_id}"
@@ -47,4 +66,4 @@ class RedisOnlineStore(OnlineStore):
             serialized_features[k] = json.dumps(v)
 
         # Cast to Any to satisfy mypy's strict check on hset mapping
-        self.client.hset(key, mapping=serialized_features)  # type: ignore
+        await self.client.hset(key, mapping=serialized_features)  # type: ignore

@@ -69,6 +69,12 @@ Or see the rich terminal dashboard:
 meridian serve examples/basic_features.py
 ```
 
+**7. Deploy**
+Spin up a local production stack (Meridian + Redis + Postgres + Prometheus) in one command:
+```bash
+docker compose up -d
+```
+
 ---
 
 ## 🚀 Why Meridian?
@@ -86,10 +92,11 @@ We don't use YAML for configuration. Your code is your config.
 - **Rich Terminal:** Production-grade TUI with live metrics.
 - **Jupyter Integration:** Beautiful HTML representations of your feature store objects.
 
-### 4. Production-Grade Reliability
-- **Redis-Only Caching:** We avoid complex multi-tier caches to guarantee data consistency.
-- **Randomized Locking:** Our distributed scheduler is self-healing and requires no leader election.
-- **Zero-Code Serving:** Auto-generated FastAPI endpoints with built-in metrics and logging.
+### 4. Production-Grade Reliability 🛡️
+- **Fallback Chain:** Cache -> Compute -> Default. If Redis fails, we compute on-demand.
+- **Circuit Breakers:** Built-in protection against cascading failures (fail fast).
+- **Deep Observability:** Prometheus metrics (`meridian_feature_requests_total`) and structured JSON logging out of the box.
+- **Async Core:** Fully async I/O for high-throughput serving.
 
 ---
 

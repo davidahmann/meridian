@@ -4,7 +4,8 @@ from testcontainers.redis import RedisContainer
 
 
 @pytest.mark.integration
-def test_redis_online_store_basic() -> None:
+@pytest.mark.asyncio
+async def test_redis_online_store_basic() -> None:
     try:
         redis_container = RedisContainer("redis:7")
         redis_container.start()
@@ -17,14 +18,14 @@ def test_redis_online_store_basic() -> None:
         store = RedisOnlineStore(host=host, port=port)
 
         # 1. Set features
-        store.set_online_features(
+        await store.set_online_features(
             entity_name="User",
             entity_id="u1",
             features={"transaction_count": 5, "avg_spend": 100.0},
         )
 
         # 2. Get features
-        result = store.get_online_features(
+        result = await store.get_online_features(
             entity_name="User",
             entity_id="u1",
             feature_names=["transaction_count", "avg_spend", "missing"],

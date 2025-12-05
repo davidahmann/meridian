@@ -6,7 +6,8 @@ from testcontainers.postgres import PostgresContainer
 
 # Skip if Docker is not available or if we want to run fast tests only
 @pytest.mark.integration
-def test_postgres_offline_store_basic() -> None:
+@pytest.mark.asyncio
+async def test_postgres_offline_store_basic() -> None:
     # Use testcontainers to spin up a real Postgres instance
     try:
         postgres = PostgresContainer("postgres:15")
@@ -28,7 +29,7 @@ def test_postgres_offline_store_basic() -> None:
         )
 
         # 3. Get Training Data
-        training_df = store.get_training_data(
+        training_df = await store.get_training_data(
             entity_df, features=["user_transaction_count"]
         )
 

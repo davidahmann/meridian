@@ -56,11 +56,18 @@ We don't use YAML for configuration. Your code is your config.
 - **Rich Terminal:** Production-grade TUI with live metrics.
 - **Jupyter Integration:** Beautiful HTML representations of your feature store objects.
 
+### 4. Production-Grade Reliability 🛡️
+- **Fallback Chain:** Cache -> Compute -> Default. If Redis fails, we compute on-demand.
+- **Circuit Breakers:** Built-in protection against cascading failures (fail fast).
+- **Deep Observability:** Prometheus metrics (`meridian_feature_requests_total`) and structured JSON logging out of the box.
+- **Async Core:** Fully async I/O for high-throughput serving.
+
 ---
 
 ## 📚 Documentation
 
 - **[Quickstart](quickstart.md):** Go from zero to served features in 30 seconds.
+- **[Philosophy & Trade-offs](philosophy.md):** Why we built this and who it's for.
 - **[Why Not Feast?](why-not-feast.md):** A honest comparison for small teams.
 - **[Local to Production](local-to-production.md):** How to migrate when you're ready.
 - **[Architecture](architecture.md):** Boring technology, properly applied.

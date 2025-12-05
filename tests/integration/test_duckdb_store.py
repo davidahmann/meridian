@@ -1,9 +1,11 @@
+import pytest
 import pandas as pd
 from meridian.core import FeatureStore
 from meridian.store.offline import DuckDBOfflineStore
 
 
-def test_duckdb_offline_store_basic() -> None:
+@pytest.mark.asyncio
+async def test_duckdb_offline_store_basic() -> None:
     # 1. Setup Store
     store = FeatureStore(offline_store=DuckDBOfflineStore())
 
@@ -16,7 +18,7 @@ def test_duckdb_offline_store_basic() -> None:
     )
 
     # 3. Get Training Data (Mock implementation for now just returns entity_df)
-    training_df = store.get_training_data(
+    training_df = await store.get_training_data(
         entity_df, features=["user_transaction_count"]
     )
 

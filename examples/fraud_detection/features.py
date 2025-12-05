@@ -41,11 +41,18 @@ def merchant_risk_score(merchant_id: str) -> float:
 
 
 # Pre-load data for serving demo
-store.online_store.set_online_features(
-    "User",
-    "u123",
-    {"user_transaction_count_1h": 5, "user_avg_transaction_amount_7d": 125.50},
-)
-store.online_store.set_online_features(
-    "Merchant", "m999", {"merchant_risk_score": 0.85}
-)
+# Pre-load data for serving demo
+if __name__ == "__main__":
+    import asyncio
+
+    async def main() -> None:
+        await store.online_store.set_online_features(
+            "User",
+            "u123",
+            {"user_transaction_count_1h": 5, "user_avg_transaction_amount_7d": 125.50},
+        )
+        await store.online_store.set_online_features(
+            "Merchant", "m999", {"merchant_risk_score": 0.85}
+        )
+
+    asyncio.run(main())

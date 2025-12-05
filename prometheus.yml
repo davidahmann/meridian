@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'meridian'
+    static_configs:
+      - targets: ['meridian:8000']

@@ -1,6 +1,6 @@
 [project]
 name = "meridian-oss"
-version = "0.2.0"
+version = "1.0.0"
 description = "Heroku for ML Features"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -37,6 +37,7 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.0",
     "redis>=5.0.0",
+    "pybreaker>=1.0.0",
 ]
 
 [project.urls]
@@ -58,6 +59,7 @@ dev = [
     "pandas-stubs>=2.0.0",
     "httpx>=0.24.0",
     "prometheus-client>=0.17.0",
+    "pytest-asyncio>=0.23.0",
 ]
 ui = [
     "streamlit",
@@ -94,3 +96,6 @@ ignore_missing_imports = true
 [tool.bandit]
 exclude_dirs = ["tests"]
 targets = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

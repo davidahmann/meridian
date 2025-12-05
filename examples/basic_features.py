@@ -29,6 +29,12 @@ def user_is_active(user_id: str) -> bool:
 
 # Pre-load some data for demonstration purposes
 # In production, this would be done by the materialization scheduler.
-store.online_store.set_online_features(
-    "User", "u1", {"user_click_count": 100, "user_is_active": True}
-)
+if __name__ == "__main__":
+    import asyncio
+
+    async def main() -> None:
+        await store.online_store.set_online_features(
+            "User", "u1", {"user_click_count": 100, "user_is_active": True}
+        )
+
+    asyncio.run(main())

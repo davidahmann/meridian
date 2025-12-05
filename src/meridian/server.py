@@ -76,7 +76,7 @@ def create_app(store: FeatureStore) -> FastAPI:
         Retrieves online features for a specific entity.
         """
         try:
-            features = store.get_online_features(
+            features = await store.get_online_features(
                 entity_name=request.entity_name,
                 entity_id=request.entity_id,
                 features=request.features,

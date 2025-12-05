@@ -45,47 +45,55 @@ def merchant_risk_score(merchant_id: str) -> float:
 
 
 # --- Simulation ---
+# --- Simulation ---
 if __name__ == "__main__":
-    print("--- Fraud Detection Feature Store Example ---")
+    import asyncio
 
-    # Simulate materialization (populating online store)
-    print("Materializing features...")
-    store.online_store.set_online_features(
-        "User",
-        "u123",
-        {"user_transaction_count_1h": 5, "user_avg_transaction_amount_7d": 125.50},
-    )
-    store.online_store.set_online_features(
-        "Merchant", "m999", {"merchant_risk_score": 0.85}
-    )
+    async def main() -> None:
+        print("--- Fraud Detection Feature Store Example ---")
 
-    # Online Retrieval for a Transaction
-    print("\n--- Processing Transaction ---")
-    user_id = "u123"
-    merchant_id = "m999"
+        # Simulate materialization (populating online store)
+        print("Materializing features...")
+        await store.online_store.set_online_features(
+            "User",
+            "u123",
+            {"user_transaction_count_1h": 5, "user_avg_transaction_amount_7d": 125.50},
+        )
+        await store.online_store.set_online_features(
+            "Merchant", "m999", {"merchant_risk_score": 0.85}
+        )
 
-    user_features = store.get_online_features(
-        entity_name="User",
-        entity_id=user_id,
-        features=["user_transaction_count_1h", "user_avg_transaction_amount_7d"],
-    )
+        # Online Retrieval for a Transaction
+        print("\n--- Processing Transaction ---")
+        user_id = "u123"
+        merchant_id = "m999"
 
-    merchant_features = store.get_online_features(
-        entity_name="Merchant", entity_id=merchant_id, features=["merchant_risk_score"]
-    )
+        user_features = await store.get_online_features(
+            entity_name="User",
+            entity_id=user_id,
+            features=["user_transaction_count_1h", "user_avg_transaction_amount_7d"],
+        )
 
-    print(f"User Features ({user_id}): {user_features}")
-    print(f"Merchant Features ({merchant_id}): {merchant_features}")
+        merchant_features = await store.get_online_features(
+            entity_name="Merchant",
+            entity_id=merchant_id,
+            features=["merchant_risk_score"],
+        )
 
-    # Simple Fraud Logic
-    risk = 0.0
-    if user_features["user_transaction_count_1h"] > 10:
-        risk += 0.3
-    if merchant_features["merchant_risk_score"] > 0.7:
-        risk += 0.5
+        print(f"User Features ({user_id}): {user_features}")
+        print(f"Merchant Features ({merchant_id}): {merchant_features}")
 
-    print(f"\nCalculated Transaction Risk: {risk}")
-    if risk > 0.6:
-        print("🚨 TRANSACTION FLAGGED AS FRAUDULENT")
-    else:
-        print("✅ Transaction Approved")
+        # Simple Fraud Logic
+        risk = 0.0
+        if user_features["user_transaction_count_1h"] > 10:
+            risk += 0.3
+        if merchant_features["merchant_risk_score"] > 0.7:
+            risk += 0.5
+
+        print(f"\nCalculated Transaction Risk: {risk}")
+        if risk > 0.6:
+            print("🚨 TRANSACTION FLAGGED AS FRAUDULENT")
+        else:
+            print("✅ Transaction Approved")
+
+    asyncio.run(main())

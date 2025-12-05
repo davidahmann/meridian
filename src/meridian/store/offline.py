@@ -6,7 +6,7 @@ import pandas as pd
 
 class OfflineStore(ABC):
     @abstractmethod
-    def get_training_data(
+    async def get_training_data(
         self, entity_df: pd.DataFrame, features: List[str]
     ) -> pd.DataFrame:
         """
@@ -19,7 +19,7 @@ class DuckDBOfflineStore(OfflineStore):
     def __init__(self, database: str = ":memory:") -> None:
         self.conn = duckdb.connect(database=database)
 
-    def get_training_data(
+    async def get_training_data(
         self, entity_df: pd.DataFrame, features: List[str]
     ) -> pd.DataFrame:
         # For MVP, we'll assume features are just SQL queries that return (entity_id, timestamp, value)

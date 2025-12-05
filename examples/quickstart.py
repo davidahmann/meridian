@@ -37,25 +37,33 @@ def user_is_active(user_id: str) -> bool:
 # Create a DataFrame of entities to fetch historical features for.
 entity_df = pd.DataFrame({"user_id": ["u1", "u2", "u3"]})
 
-print("--- Offline Feature Retrieval (Training Data) ---")
-# In a real scenario, this would join with historical data in DuckDB.
-# Currently, our DuckDB store is a placeholder, so this will return the entity_df.
-training_data = store.get_training_data(
-    entity_df, features=["user_click_count", "user_is_active"]
-)
-print(training_data)
+if __name__ == "__main__":
+    import asyncio
 
-# 5. Simulate Online Data (Serving)
-# Pre-load some data into the online store (usually done by the scheduler/materializer).
-store.online_store.set_online_features(
-    "User", "u1", {"user_click_count": 100, "user_is_active": True}
-)
+    async def main() -> None:
+        print("--- Offline Feature Retrieval (Training Data) ---")
+        # In a real scenario, this would join with historical data in DuckDB.
+        # Currently, our DuckDB store is a placeholder, so this will return the entity_df.
+        training_data = await store.get_training_data(
+            entity_df, features=["user_click_count", "user_is_active"]
+        )
+        print(training_data)
 
-print("\n--- Online Feature Retrieval (Serving) ---")
-online_features = store.get_online_features(
-    entity_name="User", entity_id="u1", features=["user_click_count", "user_is_active"]
-)
-print(f"Features for User u1: {online_features}")
+        # 5. Simulate Online Data (Serving)
+        # Pre-load some data into the online store (usually done by the scheduler/materializer).
+        await store.online_store.set_online_features(
+            "User", "u1", {"user_click_count": 100, "user_is_active": True}
+        )
+
+        print("\n--- Online Feature Retrieval (Serving) ---")
+        online_features = await store.get_online_features(
+            entity_name="User",
+            entity_id="u1",
+            features=["user_click_count", "user_is_active"],
+        )
+        print(f"Features for User u1: {online_features}")
+
+    asyncio.run(main())
 
 # 6. Start the Scheduler (Optional)
 # This would start the background jobs to materialize features.
