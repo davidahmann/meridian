@@ -17,18 +17,7 @@
   </p>
 </div>
 
----
 
-<div align="center">
-  <p><b>Deploy to Cloud in 1 Click</b></p>
-  <a href="https://render.com/deploy?repo=https://github.com/davidahmann/meridian">
-    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render">
-  </a>
-  <br>
-  <p><sub>Also compatible with <a href="https://railway.app">Railway</a> (imports <code>railway.json</code> automatically).</sub></p>
-</div>
-
----
 
 ### ⚡ The 30-Second Quickstart
 
