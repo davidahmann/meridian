@@ -183,5 +183,15 @@ def ui(
     sys.exit(stcli.main())
 
 
+@app.command(name="doctor")
+def doctor() -> None:
+    """
+    Diagnose configuration and connectivity issues.
+    """
+    from .doctor import run_doctor
+
+    run_doctor()
+
+
 if __name__ == "__main__":
     app()

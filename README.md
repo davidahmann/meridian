@@ -13,7 +13,8 @@
   <p>Stop paying the infrastructure tax. Meridian takes you from Jupyter to Production in 30 seconds.</p>
 
   <p>
-    <b>📚 <a href="https://davidahmann.github.io/meridian/">Read the Documentation</a></b>
+    <b>📚 <a href="https://davidahmann.github.io/meridian/">Read the Documentation</a></b> |
+    <b>🛠️ <a href="docs/unit_testing.md">Unit Testing Guide</a></b>
   </p>
 </div>
 
@@ -87,7 +88,8 @@ Meridian is built for the rest of us.
 * **Local-First, Cloud-Ready:** Runs on your laptop with zero dependencies (DuckDB + In-Memory). Scales to production with boring technology (Postgres + Redis).
 * **No Magic:** Your code is your config. Explicit caching (`materialize=True`) and explicit refresh logic.
 * **Production Reliability:** Built-in circuit breakers, fallback chains (Cache -> Compute -> Default), and Prometheus metrics (`meridian_feature_requests_total`).
-* **Rich UI & TUI:** Includes a Streamlit dashboard and a production-grade Terminal UI for live monitoring.
+* **Self-Healing:** Run `meridian doctor` to instantly diagnose config and connectivity issues.
+* **Rich UI & TUI:** Includes a Streamlit dashboard with **Visual Dependency Graphs** and a production-grade Terminal UI for live monitoring.
 * **Hybrid Features (v1.1.0):** Mix Python logic (for complex math) and SQL (for heavy joins) in the same API.
 * **Point-in-Time Correctness (v1.1.0):** Zero data leakage using `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres).
 * **Write Once, Run Anywhere (v1.1.0):** Switch from Dev to Prod just by setting `MERIDIAN_ENV=production`. No code changes.

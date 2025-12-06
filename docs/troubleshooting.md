@@ -2,6 +2,21 @@
 
 Common issues and how to fix them.
 
+## 🩺 First Step: Meridian Doctor
+
+Before diving into specific errors, run the **Doctor** to diagnose your environment:
+
+```bash
+meridian doctor
+```
+
+This command checks:
+*   **Environment Variables:** `MERIDIAN_REDIS_URL`, `MERIDIAN_POSTGRES_URL`, etc.
+*   **Connectivity:** Pings Redis and Postgres (if URLs are provided).
+*   **Dependencies:** Verifies critical packages like `fastapi`, `redis`, `duckdb`.
+
+---
+
 ## Point-in-Time Correctness
 
 ### "KeyError: timestamp" or "Column timestamp not found"

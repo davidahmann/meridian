@@ -52,11 +52,12 @@ We don't use YAML for configuration. Your code is your config.
 - **Explicit Refresh:** Use `@feature(refresh="5m")` to define freshness.
 
 ### 3. Instant Wow ✨
-- **Meridian UI:** A built-in Streamlit dashboard to explore your data.
+- **Meridian UI:** A built-in Streamlit dashboard with **Visual Dependency Graphs**.
 - **Rich Terminal:** Production-grade TUI with live metrics.
 - **Jupyter Integration:** Beautiful HTML representations of your feature store objects.
 
 ### 4. Production-Grade Reliability 🛡️
+- **Self-Healing:** Run `meridian doctor` to diagnose environment issues.
 - **Fallback Chain:** Cache -> Compute -> Default. If Redis fails, we compute on-demand.
 - **Circuit Breakers:** Built-in protection against cascading failures (fail fast).
 - **Deep Observability:** Prometheus metrics (`meridian_feature_requests_total`) and structured JSON logging out of the box.
