@@ -31,5 +31,5 @@ A: Meridian eliminates YAML configuration. Define features in Python with `@feat
 
 ## Next Steps
 
-- [Compare vs Feast](why-not-feast.md)
+- [Compare vs Feast](feast-alternative.md)
 - [Deploy to Production](local-to-production.md)
