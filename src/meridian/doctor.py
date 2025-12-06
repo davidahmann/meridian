@@ -143,23 +143,27 @@ def run_doctor() -> None:
         print("\nDependencies:")
 
     try:
+        toml_loader: Any = None
         if sys.version_info >= (3, 11):
             import tomllib
+
+            toml_loader = tomllib
         else:
             # Fallback for older python if tomllib not present
-            # For this MVP we will try to use 'tomli' if installed or basic parsing
             try:
-                import tomli as tomllib
+                import tomli
+
+                toml_loader = tomli
             except ImportError:
-                tomllib = None
+                pass
 
         required_deps: List[str] = []
 
         # Read pyproject.toml
         pyproject_path = os.path.join(os.getcwd(), "pyproject.toml")
-        if os.path.exists(pyproject_path) and tomllib:
+        if os.path.exists(pyproject_path) and toml_loader:
             with open(pyproject_path, "rb") as f:
-                data = tomllib.load(f)
+                data = toml_loader.load(f)
                 # project.dependencies is a list of strings like "fastapi>=0.68.0"
                 deps_raw = data.get("project", {}).get("dependencies", [])
                 # Parse out package names (simple split)
