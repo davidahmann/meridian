@@ -40,6 +40,7 @@ pip install "meridian-oss[ui]"
 ```python
 from meridian.core import FeatureStore, entity, feature
 from datetime import timedelta
+import random
 
 store = FeatureStore()
 

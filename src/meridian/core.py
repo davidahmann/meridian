@@ -474,21 +474,57 @@ def feature(
                 "FeatureStore instance must be provided or linked via the Entity."
             )
 
-        # Parse refresh/ttl strings to timedelta if needed (TODO: Implement parsing logic)
-        # For MVP, we'll just pass them through if they are timedeltas, or fail if strings for now until we add parsing.
+        # Parse refresh/ttl strings to timedelta
+        parsed_refresh: Optional[timedelta] = refresh  # type: ignore
+        if isinstance(refresh, str):
+            parsed_refresh = _parse_timedelta(refresh)
+
+        parsed_ttl: Optional[timedelta] = ttl  # type: ignore
+        if isinstance(ttl, str):
+            parsed_ttl = _parse_timedelta(ttl)
+
+        parsed_stale_tolerance: Optional[timedelta] = stale_tolerance  # type: ignore
+        if isinstance(stale_tolerance, str):
+            parsed_stale_tolerance = _parse_timedelta(stale_tolerance)
 
         store.register_feature(
             name=func.__name__,
             entity_name=getattr(entity, "_meridian_entity_name"),
             func=func,
-            refresh=refresh,  # type: ignore
-            ttl=ttl,  # type: ignore
+            refresh=parsed_refresh,
+            ttl=parsed_ttl,
             materialize=materialize,
             description=func.__doc__,
-            stale_tolerance=stale_tolerance,  # type: ignore
+            stale_tolerance=parsed_stale_tolerance,
             default_value=default_value,
             sql=sql,
         )
         return func
 
     return decorator
+
+
+def _parse_timedelta(duration: str) -> timedelta:
+    """Parses a duration string (e.g. '5m', '1h') into a timedelta."""
+    import re
+
+    # Simple regex for parsing: 5m, 1h, 30s, 1d
+    match = re.match(r"^(\d+)([smhd])$", duration)
+    if not match:
+        raise ValueError(
+            f"Invalid duration format: '{duration}'. Use format like '5m', '1h', '30s'."
+        )
+
+    value = int(match.group(1))
+    unit = match.group(2)
+
+    if unit == "s":
+        return timedelta(seconds=value)
+    elif unit == "m":
+        return timedelta(minutes=value)
+    elif unit == "h":
+        return timedelta(hours=value)
+    elif unit == "d":
+        return timedelta(days=value)
+
+    raise ValueError(f"Unknown time unit: {unit}")

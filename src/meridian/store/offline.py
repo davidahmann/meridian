@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 import duckdb
 import pandas as pd
+import asyncio
 
 
 class OfflineStore(ABC):
@@ -44,14 +45,11 @@ class DuckDBOfflineStore(OfflineStore):
         # FROM entity_df e
         # ASOF LEFT JOIN feature_table f1
         # ON e.entity_id = f1.entity_id AND e.timestamp >= f1.timestamp
-        # SELECT e.*, f1.value as f1
-        # FROM entity_df e
-        # ASOF LEFT JOIN feature_table f1
-        # ON e.entity_id = f1.entity_id AND e.timestamp >= f1.timestamp
 
         query = "SELECT entity_df.*"
         joins = ""
 
+        # ... (rest of the query construction logic is fine, preserving context)
         for feature in features:
             # MVP Assumption: Feature table has columns [entity_id, timestamp, feature_name]
             # We alias the feature table to its name for clarity
@@ -71,13 +69,17 @@ class DuckDBOfflineStore(OfflineStore):
         query += f" FROM entity_df {joins}"
 
         try:
-            return self.conn.execute(query).df()
+            # Offload synchronous DuckDB execution to a thread
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(
+                None, lambda: self.conn.execute(query).df()
+            )
         except Exception as e:
             # Fallback for when tables don't exist (e.g. unit tests without setup)
             print(f"Offline retrieval failed: {e}")
             return entity_df
 
     async def execute_sql(self, query: str) -> pd.DataFrame:
-        # Note: DuckDB Python client is synchronous.
-        # For a truly async implementation, this should run in a thread pool executor.
-        return self.conn.execute(query).df()
+        # Truly async using thread pool executor
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, lambda: self.conn.execute(query).df())
