@@ -1,3 +1,9 @@
+---
+title: "Unit Testing ML Features with Meridian | Testing Guide"
+description: "How to unit test your ML features with Meridian. Use the local in-memory store to mock data and test logic without external dependencies."
+keywords: unit testing features, mlops testing, testing feature store, python ml testing
+---
+
 # Unit Testing with Meridian
 
 Meridian is designed to be **testable by default**. You don't need to spin up Docker containers or mock complex database interactions to test your feature logic.

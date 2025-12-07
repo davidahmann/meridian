@@ -1,4 +1,12 @@
+---
+title: "Meridian Architecture: Local-First Feature Store Design | DuckDB + Redis"
+description: "Deep dive into Meridian's architecture. Learn how it uses DuckDB for local development and scales to Postgres and Redis for production."
+keywords: feature store architecture, duckdb feature store, feature store design, postgres redis mlops
+---
+
 # Meridian Architecture: Boring Technology, Properly Applied
+
+> **TL;DR:** Meridian uses DuckDB and in-memory dicts for local development (no deps) and standard Postgres + Redis for production. It guarantees point-in-time correctness without Kubernetes.
 
 ## Design Philosophy
 
@@ -82,4 +90,17 @@ graph TD
     Materialization -->|Writes| Online[Online Store (Redis/Memory)]
     API[FastAPI Server] -->|Reads| Online
     API -->|Returns| Client[Client App]
+    API -->|Returns| Client[Client App]
 ```
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Meridian Architecture: Local-First Feature Store Design",
+  "description": "Technical deep-dive into Meridian's architecture, explaining the use of DuckDB for local development and Postgres/Redis for production without Kubernetes.",
+  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "keywords": "feature store architecture, duckdb, redis, mlops",
+  "articleSection": "Software Architecture"
+}
+</script>

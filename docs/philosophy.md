@@ -1,3 +1,9 @@
+---
+title: "Meridian Philosophy: The 95% Rule and Local-First Design"
+description: "Why we built Meridian. The 'Heroku for ML Features' philosophy: prioritizing developer experience and simple infrastructure over Google-scale complexity."
+keywords: meridian philosophy, feature store design, mlops philosophy, local-first software
+---
+
 # Philosophy & Trade-offs
 
 We built Meridian because we were tired of "Google-scale" tools for Series B problems. Here is the honest truth about why we made these design choices and who they are for.

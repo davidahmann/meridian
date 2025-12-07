@@ -1,4 +1,12 @@
+---
+title: "How to Build a Feature Store in 30 Seconds | Meridian Quickstart"
+description: "Step-by-step guide to installing Meridian and serving ML features from Python in under 30 seconds. No Docker or Kubernetes required."
+keywords: meridian quickstart, feature store tutorial, python feature store, local feature store
+---
+
 # Feature Store That Actually Works Locally: 30-Second Setup
+
+> **TL;DR:** Install with `pip install "meridian-oss[ui]"`. Define features in a Python file using `@feature`. Run `meridian serve`. No Docker or YAML required.
 
 ## The Problem With Every Other Feature Store
 
@@ -33,3 +41,30 @@ A: Meridian eliminates YAML configuration. Define features in Python with `@feat
 
 - [Compare vs Feast](feast-alternative.md)
 - [Deploy to Production](local-to-production.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to Build a Feature Store in 30 Seconds",
+  "description": "Install Meridian and serve ML features from Python in under 30 seconds.",
+  "totalTime": "PT30S",
+  "tool": [{
+    "@type": "HowToTool",
+    "name": "Meridian OSS"
+  }],
+  "step": [{
+    "@type": "HowToStep",
+    "name": "Install Meridian",
+    "text": "Run pip install \"meridian-oss[ui]\" to install the library."
+  }, {
+    "@type": "HowToStep",
+    "name": "Define Features",
+    "text": "Create a python file with @feature decorators to define your feature logic."
+  }, {
+    "@type": "HowToStep",
+    "name": "Serve",
+    "text": "Run meridian serve examples/basic_features.py to start the API."
+  }]
+}
+</script>

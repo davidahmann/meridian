@@ -1,3 +1,9 @@
+---
+title: "Meridian Changelog: Release Notes and History"
+description: "Stay up to date with Meridian releases. See what's new in v1.1.0, including Hybrid Features and Point-in-Time Correctness."
+keywords: meridian changelog, release notes, feature store updates, software version history
+---
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

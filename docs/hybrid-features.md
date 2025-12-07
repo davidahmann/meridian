@@ -1,3 +1,9 @@
+---
+title: "Hybrid Features in Meridian: Mixing Python and SQL"
+description: "Learn how to use Hybrid Features in Meridian using Python for complex logic and SQL for heavy data lifting in the same API."
+keywords: hybrid features, python feature store, sql feature store, on-demand features
+---
+
 # Hybrid Features: Python + SQL
 
 Meridian v1.1.0 introduces **Hybrid Features**, allowing you to choose the best tool for the job: Python for complex logic, and SQL for heavy lifting.

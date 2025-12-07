@@ -1,3 +1,9 @@
+---
+title: "Meridian vs Feast: A Lightweight Python Feature Store Alternative"
+description: "Detailed comparison: Meridian vs Feast. Why you don't need Kubernetes for a feature store. Python decorators vs YAML config."
+keywords: feast alternative, lightweight feature store, python feature store, meridian vs feast
+---
+
 # Meridian vs Feast: The Lightweight Feature Store Alternative
 
 If you are looking for a **lightweight feature store** that runs on your laptop but scales to production, you have likely found Feast. And you likely found it complicated.

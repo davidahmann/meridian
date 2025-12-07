@@ -1,3 +1,9 @@
+---
+title: "Why We Built Meridian: The Heroku for ML Features"
+description: "The story behind Meridian. Moving away from the 'Modern Data Tax' to a developer-first, infrastructure-light feature store."
+keywords: why meridian, feature store story, mlops tools, developer experience
+---
+
 # Why We Built Meridian: The "Heroku for ML Features"
 
 **Stop paying the infrastructure tax. Start shipping models.**

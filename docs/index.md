@@ -1,3 +1,9 @@
+---
+title: "Meridian - The Heroku for ML Features | Python Feature Store"
+description: "Define features in Python and deploy to production in 30 seconds. Meridian is a local-first feature store for ML engineers. No YAML, no infrastructure tax."
+keywords: feature store, python feature engineering, duckdb feature store, mlops, machine learning pipeline
+---
+
 # Meridian: Heroku for ML Features
 
 > **"Define features in Python. Get training data and production serving for free."**

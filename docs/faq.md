@@ -1,3 +1,9 @@
+---
+title: "Meridian FAQ: Production, Comparisons, and Technical details"
+description: "Frequently Asked Questions about Meridian. Learn about production readiness, Kubernetes requirement (none!), and how it compares to Feast."
+keywords: meridian faq, feature store questions, feast vs meridian, production feature store
+---
+
 # Frequently Asked Questions
 
 ## General

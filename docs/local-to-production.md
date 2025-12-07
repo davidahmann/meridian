@@ -1,3 +1,9 @@
+---
+title: "Deploying Meridian: From Local Laptop to Production API"
+description: "Guide to deploying Meridian. Move from DuckDB/In-Memory on your laptop to Postgres/Redis in production with zero code changes."
+keywords: deploy feature store, meridian production, postgres redis feature store, mlops deployment
+---
+
 # From Laptop to Production in 3 Steps
 
 ## Step 1: Local Development (Day 1)
