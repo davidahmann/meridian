@@ -42,6 +42,8 @@ dependencies = [
     "psycopg2-binary>=2.9.11",
     "pgvector>=0.4.2",
     "cohere>=4.27.0",
+    "anthropic>=0.18.0",
+    "uuid6>=2024.1.12",
 ]
 
 [project.urls]

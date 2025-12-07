@@ -52,11 +52,30 @@ class OnlineStore(ABC):
         """
         pass
 
+    # --- Cache Primitives ---
+    # Optional implementations, but widely used by Context API
+    async def get(self, key: str) -> Any:
+        pass
+
+    async def set(self, key: str, value: Any, ex: Optional[int] = None) -> Any:
+        pass
+
+    async def delete(self, *keys: str) -> Any:
+        pass
+
+    async def smembers(self, key: str) -> Any:
+        pass
+
+    def pipeline(self) -> Any:
+        pass
+
 
 class InMemoryOnlineStore(OnlineStore):
     def __init__(self) -> None:
         # Structure: {entity_name: {entity_id: {feature_name: value}}}
         self._storage: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        self._cache_storage: Dict[str, bytes] = {}
+        self._set_storage: Dict[str, Any] = {}
 
     async def get_online_features(
         self, entity_name: str, entity_id: str, feature_names: List[str]
@@ -89,10 +108,51 @@ class InMemoryOnlineStore(OnlineStore):
         ttl: Optional[int] = None,
     ) -> None:
         # Iterate over dataframe and set features
-        # Note: Inefficient for large dataframes, but fine for in-memory MVP
         for _, row in features_df.iterrows():
             entity_id = str(row[entity_id_col])
             value = row[feature_name]
             await self.set_online_features(
                 entity_name, entity_id, {feature_name: value}
             )
+
+    # --- Cache Primitives for Context API ---
+    async def get(self, key: str) -> Optional[bytes]:
+        return self._cache_storage.get(key)
+
+    async def set(self, key: str, value: bytes, ex: Optional[int] = None) -> None:
+        self._cache_storage[key] = value
+
+    async def delete(self, *keys: str) -> int:
+        count = 0
+        for k in keys:
+            if k in self._cache_storage:
+                del self._cache_storage[k]
+                count += 1
+            if k in self._set_storage:
+                del self._set_storage[k]
+        return count
+
+    async def smembers(self, key: str) -> Any:
+        return self._set_storage.get(key, set())
+
+    def pipeline(self) -> Any:
+        # Mock pipeline context manager for in-memory
+        class MockPipeline:
+            def __init__(self, store: InMemoryOnlineStore):
+                self.store = store
+
+            def set(self, k: str, v: bytes, ex: Optional[int] = None) -> None:
+                self.store._cache_storage[k] = v
+
+            def sadd(self, k: str, v: Any) -> None:
+                if k not in self.store._set_storage:
+                    self.store._set_storage[k] = set()
+                self.store._set_storage[k].add(v)
+
+            def expire(self, k: str, s: int) -> None:
+                pass
+
+            async def execute(self) -> None:
+                pass
+
+        return MockPipeline(self)

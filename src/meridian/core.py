@@ -497,18 +497,62 @@ class FeatureStore:
                 "Configured offline store does not support vector indexing."
             )
 
-        # Ensure table exists (idempotent)
-        if hasattr(self.offline_store, "create_index_table"):
             # We assume dimension matches embedding model. OpenAI small is 1536.
             await self.offline_store.create_index_table(index_name, dimension=1536)
 
-        await self.offline_store.add_documents(  # type: ignore
-            index_name=index_name,
-            entity_id=entity_id,
-            chunks=chunks,
-            embeddings=embeddings,
-            metadatas=[metadata or {}] * len(chunks),
-        )
+        if hasattr(self.offline_store, "add_documents"):
+            await self.offline_store.add_documents(
+                index_name=index_name,
+                entity_id=entity_id,
+                chunks=chunks,
+                embeddings=embeddings,
+                metadatas=[metadata or {}]
+                * len(
+                    chunks
+                ),  # Original line, assuming chunk_metadatas was a typo in the instruction
+            )
+        else:
+            logger.warning("Offline store does not support vector indexing.")
+
+    def register_context(self, context_func: Any) -> None:
+        """
+        Registers a context assembly function and injects the cache backend.
+        """
+        if hasattr(context_func, "_is_context"):
+            # Inject the online store as the cache backend
+            setattr(context_func, "_cache_backend", self.online_store)
+            logger.info(f"Registered Context: {context_func.__name__}")
+
+    async def invalidate_contexts_for_feature(self, feature_id: str) -> int:
+        """
+        Invalidates all cached contexts that depend on the given feature_id.
+        Returns number of contexts invalidated.
+        """
+        if not self.online_store:
+            return 0
+
+        dep_key = f"dependency:{feature_id}"
+        count = 0
+        try:
+            # 1. Get dependent cache keys
+            cache_keys = await self.online_store.smembers(dep_key)
+            if cache_keys:
+                keys_to_delete = [k for k in cache_keys]  # ensure str
+                # 2. Delete contexts
+                if keys_to_delete:
+                    await self.online_store.delete(*keys_to_delete)
+                    count = len(keys_to_delete)
+                    logger.info(
+                        "context_invalidation", feature_id=feature_id, count=count
+                    )
+
+            # 3. Clean up the dependency mapping
+            await self.online_store.delete(dep_key)
+
+        except Exception as e:
+            logger.error("invalidation_failed", feature_id=feature_id, error=str(e))
+
+        return count
 
 
 def entity(

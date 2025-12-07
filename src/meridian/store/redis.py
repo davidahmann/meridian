@@ -117,3 +117,19 @@ class RedisOnlineStore(OnlineStore):
 
             # Execute remaining
             await pipe.execute()
+
+    # --- Cache Primitives for Context API ---
+    async def get(self, key: str) -> Any:
+        return await self.client.get(key)
+
+    async def set(self, key: str, value: Any, ex: Optional[int] = None) -> Any:
+        return await self.client.set(key, value, ex=ex)
+
+    async def delete(self, *keys: str) -> Any:
+        return await self.client.delete(*keys)
+
+    async def smembers(self, key: str) -> Any:
+        return await self.client.smembers(key)
+
+    def pipeline(self) -> Any:
+        return self.client.pipeline()
