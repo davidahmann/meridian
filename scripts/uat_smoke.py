@@ -1,6 +1,6 @@
 import os
 import time
-import requests  # type: ignore
+import requests
 import subprocess  # nosec
 import sys
 import tempfile

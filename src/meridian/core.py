@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 import pandas as pd
 from .store import (
-    OfflineStore,
-    OnlineStore,
     InMemoryOnlineStore,
     RedisOnlineStore,
 )
@@ -14,6 +12,16 @@ import pybreaker
 import structlog
 from prometheus_client import Counter, Histogram
 import time
+
+from .store import (
+    OfflineStore,
+    OnlineStore,
+)
+from .retrieval import Retriever, RetrieverRegistry
+from .index import Index, IndexRegistry
+from .embeddings import OpenAIEmbedding
+
+# Metrics
 
 # Metrics
 FEATURE_REQUESTS = Counter(
@@ -70,6 +78,7 @@ class Feature:
     stale_tolerance: Optional[timedelta] = None
     default_value: Any = None
     sql: Optional[str] = None
+    trigger: Optional[str] = None
 
 
 class FeatureRegistry:
@@ -86,6 +95,9 @@ class FeatureRegistry:
     def get_features_for_entity(self, entity_name: str) -> List[Feature]:
         return [f for f in self.features.values() if f.entity_name == entity_name]
 
+    def get_features_by_trigger(self, trigger: str) -> List[Feature]:
+        return [f for f in self.features.values() if f.trigger == trigger]
+
 
 class FeatureStore:
     def __init__(
@@ -94,6 +106,8 @@ class FeatureStore:
         online_store: Optional[OnlineStore] = None,
     ) -> None:
         self.registry = FeatureRegistry()
+        self.retriever_registry = RetrieverRegistry()
+        self.index_registry = IndexRegistry()
 
         # Auto-configure stores if not provided
         if offline_store is None or online_store is None:
@@ -408,6 +422,7 @@ class FeatureStore:
         stale_tolerance: Optional[timedelta] = None,
         default_value: Any = None,
         sql: Optional[str] = None,
+        trigger: Optional[str] = None,
     ) -> Feature:
         feature = Feature(
             name=name,
@@ -420,9 +435,80 @@ class FeatureStore:
             stale_tolerance=stale_tolerance,
             default_value=default_value,
             sql=sql,
+            trigger=trigger,
         )
         self.registry.register_feature(feature)
         return feature
+
+    def register_retriever(self, retriever: Retriever) -> None:
+        """Registers a retriever with the store."""
+        self.retriever_registry.register(retriever)
+        # Inject Cache Backend if available
+        # We use online_store.redis for caching
+        if hasattr(self.online_store, "redis"):
+            # Use setattr to bypass frozen dataclass if frozen (it's not frozen by default)
+            setattr(retriever, "_cache_backend", self.online_store.redis)
+        elif hasattr(self.online_store, "client"):
+            setattr(retriever, "_cache_backend", self.online_store.client)
+
+    def register_index(self, index_obj: Index) -> None:
+        """Registers an index definition."""
+        self.index_registry.register(index_obj)
+
+    async def index(
+        self,
+        index_name: str,
+        entity_id: str,
+        text: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """
+        Ingests text into the specified index.
+        1. Retrieve Index definition.
+        2. Chunk text.
+        3. Embed chunks.
+        4. Store in Vector Store.
+        """
+        idx = self.index_registry.get(index_name)
+        if not idx:
+            raise ValueError(f"Index '{index_name}' not found.")
+
+        # 1. Chunk
+        chunks = idx.chunk_text(text)
+        logger.info(f"Indexing {len(chunks)} chunks for {index_name}:{entity_id}")
+
+        # 2. Embed
+        # We need an embedding provider. For MVP, we use OpenAIEmbedding default or configured on store?
+        # Ideally store has it. If not, we instantiate default.
+        if not hasattr(self, "embedding_provider"):
+            # Lazy init default
+            self.embedding_provider = OpenAIEmbedding()
+
+        embeddings = await self.embedding_provider.embed_documents(chunks)
+
+        # 3. Store
+        # We need the OfflineStore (which is now PostgresOfflineStore with vector caps)
+        if not self.offline_store:
+            raise ValueError("Offline store not configured. Cannot save index.")
+
+        # Check capability
+        if not hasattr(self.offline_store, "add_documents"):
+            raise ValueError(
+                "Configured offline store does not support vector indexing."
+            )
+
+        # Ensure table exists (idempotent)
+        if hasattr(self.offline_store, "create_index_table"):
+            # We assume dimension matches embedding model. OpenAI small is 1536.
+            await self.offline_store.create_index_table(index_name, dimension=1536)
+
+        await self.offline_store.add_documents(  # type: ignore
+            index_name=index_name,
+            entity_id=entity_id,
+            chunks=chunks,
+            embeddings=embeddings,
+            metadatas=[metadata or {}] * len(chunks),
+        )
 
 
 def entity(
@@ -458,6 +544,7 @@ def feature(
     stale_tolerance: Optional[Union[str, timedelta]] = None,
     default_value: Any = None,
     sql: Optional[str] = None,
+    trigger: Optional[str] = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         # If store is not passed, we might need a way to find it.
@@ -506,6 +593,7 @@ def feature(
             stale_tolerance=parsed_stale_tolerance,
             default_value=default_value,
             sql=sql,
+            trigger=trigger,
         )
         return func
 

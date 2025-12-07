@@ -88,6 +88,52 @@ def create_app(store: FeatureStore) -> FastAPI:
             logger.error("Error retrieving features", error=str(e))
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.post("/ingest/{event_type}", status_code=202)
+    async def ingest_event(
+        event_type: str,
+        payload: Dict[str, Any],
+        entity_id: str,
+        api_key: str = Depends(get_api_key),
+    ) -> Dict[str, str]:
+        """
+        Ingests an event into the Axiom Event Bus.
+        """
+        from meridian.events import AxiomEvent
+        from meridian.bus import RedisEventBus
+
+        # We need a Redis connection. Since store has online_store (Redis),
+        # we can try to reuse it or create a temporary one.
+        # Ideally, we inject RedisEventBus.
+        # For this MVP, we will try to reuse store.online_store if it is Redis.
+        # Otherwise, we create a fresh Redis connection using config logic
+        # (simulated by instantiating RedisEventBus with new connection or getting it from store).
+
+        # Check if store.online_store has a client
+        client = None
+        if hasattr(store.online_store, "client"):
+            client = store.online_store.client
+        elif hasattr(store.online_store, "redis"):
+            client = store.online_store.redis
+
+        if not client:
+            # Fallback: create fresh client
+            from redis.asyncio import Redis
+            import os
+
+            url = os.environ.get("MERIDIAN_REDIS_URL", "redis://localhost:6379")
+            client = Redis.from_url(url, decode_responses=True)
+
+        bus = RedisEventBus(client)
+        event = AxiomEvent(event_type=event_type, entity_id=entity_id, payload=payload)
+        msg_id = await bus.publish(event)
+
+        # If we created a fresh client, we should close it?
+        # If it's shared from store, DON'T close it.
+        # To avoid complexity, let's rely on Python GC or context manager if possible.
+        # Ideally, use dependency injection with lifecycle.
+
+        return {"msg_id": msg_id, "event_id": str(event.id)}
+
     @app.get("/health")
     async def health() -> Dict[str, str]:
         return {"status": "ok"}

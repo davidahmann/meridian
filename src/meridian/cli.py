@@ -22,6 +22,61 @@ def callback() -> None:
     """
 
 
+@app.command(name="worker")
+def worker_cmd(
+    file: str = typer.Argument(
+        ..., help="Path to the feature definition file (e.g., features.py)"
+    ),
+    redis_url: str = typer.Option(
+        None, envvar="MERIDIAN_REDIS_URL", help="Redis URL Override"
+    ),
+) -> None:
+    """
+    Starts the Axiom background worker.
+    """
+    import asyncio
+    from .worker import AxiomWorker
+
+    # 1. Load Feature Definitions
+    if not os.path.exists(file):
+        console.print(f"[bold red]Error:[/bold red] File '{file}' not found.")
+        raise typer.Exit(code=1)
+
+    sys.path.append(os.getcwd())
+    try:
+        module_name = os.path.splitext(os.path.basename(file))[0]
+        spec = importlib.util.spec_from_file_location(module_name, file)
+        if spec and spec.loader:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
+
+        # Find store instance
+        store = None
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if isinstance(attr, FeatureStore):
+                store = attr
+                break
+
+        if not store:
+            console.print("[bold red]Error:[/bold red] No FeatureStore found in file.")
+            raise typer.Exit(code=1)
+
+    except Exception as e:
+        console.print(f"[bold red]Error loading features:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    console.print(Panel(f"Starting Axiom Worker for {file}...", style="bold green"))
+
+    # Pass store to worker
+    worker = AxiomWorker(redis_url=redis_url, store=store)
+    try:
+        asyncio.run(worker.run())
+    except KeyboardInterrupt:
+        console.print("Worker stopped.")
+
+
 @app.command(name="version")
 def version() -> None:
     """

@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Optional, Dict, Any
+import json
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
@@ -142,3 +143,127 @@ class PostgresOfflineStore(OfflineStore):
                 return pd.DataFrame(rows, columns=result.keys())
             else:
                 return pd.DataFrame(columns=list(result.keys()))
+
+    async def create_index_table(self, index_name: str, dimension: int = 1536) -> None:
+        """
+        Creates the vector index table if it doesn't exist.
+        Schema: id (UUID), entity_id, chunk_index, content, embedding, metadata.
+        STRICT SCHEMA: Adds content_hash for deduplication.
+        """
+        table_name = f"meridian_index_{index_name}"
+        async with self.engine.begin() as conn:  # type: ignore[no-untyped-call]
+            # Enable extension
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+
+            # Create table
+            await conn.execute(
+                text(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {table_name} (
+                        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+                        entity_id TEXT NOT NULL,
+                        chunk_index INTEGER NOT NULL,
+                        content TEXT NOT NULL,
+                        content_hash TEXT NOT NULL,
+                        embedding vector({dimension}),
+                        metadata JSONB DEFAULT '{{}}'::jsonb,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        UNIQUE (entity_id, content_hash)
+                    )
+                    """
+                )
+            )
+
+            # Create HNSW index
+            idx_name = f"idx_{index_name}_embedding"
+            await conn.execute(
+                text(
+                    f"""
+                    CREATE INDEX IF NOT EXISTS {idx_name}
+                    ON {table_name}
+                    USING hnsw (embedding vector_cosine_ops)
+                    """
+                )
+            )
+
+    async def add_documents(
+        self,
+        index_name: str,
+        entity_id: str,
+        chunks: List[str],
+        embeddings: List[List[float]],
+        metadatas: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
+        """
+        Inserts documents into the index.
+        Computes content_hash and adds mandatory metadata.
+        """
+        import hashlib
+        import datetime
+
+        table_name = f"meridian_index_{index_name}"
+
+        values = []
+        for i, (chunk, vec) in enumerate(zip(chunks, embeddings)):
+            meta = metadatas[i] if metadatas and i < len(metadatas) else {}
+
+            # Compute hash
+            content_hash = hashlib.sha256(chunk.encode("utf-8")).hexdigest()
+
+            # Add Mandatory Metadata
+            meta["ingestion_timestamp"] = datetime.datetime.utcnow().isoformat()
+            meta["content_hash"] = content_hash
+            meta["indexer_version"] = "meridian-v1"
+
+            vec_str = str(vec)
+
+            values.append(
+                {
+                    "entity_id": entity_id,
+                    "chunk_index": i,
+                    "content": chunk,
+                    "content_hash": content_hash,
+                    "embedding": vec_str,
+                    "metadata": json.dumps(meta),
+                }
+            )
+
+        async with self.engine.begin() as conn:  # type: ignore[no-untyped-call]
+            # Use ON CONFLICT DO NOTHING to satisfy "prevent duplication" constraint
+            insert_query = f"""
+                    INSERT INTO {table_name} (entity_id, chunk_index, content, content_hash, embedding, metadata)
+                    VALUES (:entity_id, :chunk_index, :content, :content_hash, :embedding, :metadata)
+                    ON CONFLICT (entity_id, content_hash) DO NOTHING
+                    """  # nosec
+
+            await conn.execute(
+                text(insert_query),
+                values,
+            )
+
+    async def search(
+        self, index_name: str, query_embedding: List[float], top_k: int = 5
+    ) -> List[Dict[str, Any]]:
+        """
+        Performs vector similarity search (Cosine Distance via <=> operator).
+        Returns list of dicts with content and metadata.
+        """
+        table_name = f"meridian_index_{index_name}"
+        vec_str = str(query_embedding)
+
+        query = f"""
+        SELECT content, metadata, 1 - (embedding <=> :query_vec) as score
+        FROM {table_name}
+        ORDER BY embedding <=> :query_vec
+        LIMIT :top_k
+        """  # nosec
+
+        async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
+            result = await conn.execute(
+                text(query), {"query_vec": vec_str, "top_k": top_k}
+            )
+            rows = result.fetchall()
+            return [
+                {"content": r.content, "metadata": r.metadata, "score": r.score}
+                for r in rows
+            ]
