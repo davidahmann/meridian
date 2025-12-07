@@ -22,6 +22,20 @@ def callback() -> None:
     """
 
 
+@app.command(name="version")
+def version() -> None:
+    """
+    Prints the Meridian version.
+    """
+    try:
+        from importlib.metadata import version
+
+        v = version("meridian-oss")
+    except Exception:
+        v = "unknown"
+    console.print(f"Meridian OSS v{v}")
+
+
 @app.command(name="serve")
 def serve(
     file: str = typer.Argument(
