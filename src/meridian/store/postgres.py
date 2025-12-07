@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Dict, Any
 import json
 import pandas as pd
@@ -144,6 +145,56 @@ class PostgresOfflineStore(OfflineStore):
             else:
                 return pd.DataFrame(columns=list(result.keys()))
 
+    async def get_historical_features(
+        self, entity_name: str, entity_id: str, features: List[str], timestamp: datetime
+    ) -> Dict[str, Any]:
+        """
+        Retrieves feature values as they were at the specified timestamp.
+        """
+        if not features:
+            return {}
+
+        # Use LATERAL JOINs against a single-row virtual table
+        selects = []
+        joins = ""
+
+        import re
+
+        for feature in features:
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", feature):
+                continue
+
+            joins += (
+                f" LEFT JOIN LATERAL ("
+                f" SELECT {feature}"
+                f" FROM {feature} f"  # nosec
+                f" WHERE f.entity_id = e.entity_id"
+                f" AND f.timestamp <= e.timestamp"
+                f" ORDER BY f.timestamp DESC"
+                f" LIMIT 1"
+                f" ) {feature}_lat ON TRUE"
+            )
+            selects.append(f"{feature}_lat.{feature} AS {feature}")
+
+        select_clause = ", ".join(selects)
+
+        # Postgres VALUES syntax for virtual table: (VALUES ('id', 'ts'::timestamp)) as e(entity_id, timestamp)
+        query = f"""
+        SELECT {select_clause}
+        FROM (VALUES (:entity_id, :ts::timestamp)) as e(entity_id, timestamp)
+        {joins}
+        """  # nosec
+
+        async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
+            result = await conn.execute(
+                text(query), {"entity_id": str(entity_id), "ts": timestamp}
+            )
+            row = result.fetchone()
+            if row:
+                # Convert Row to dict
+                return dict(row._mapping)
+            return {}
+
     async def create_index_table(self, index_name: str, dimension: int = 1536) -> None:
         """
         Creates the vector index table if it doesn't exist.
@@ -242,7 +293,11 @@ class PostgresOfflineStore(OfflineStore):
             )
 
     async def search(
-        self, index_name: str, query_embedding: List[float], top_k: int = 5
+        self,
+        index_name: str,
+        query_embedding: List[float],
+        top_k: int = 5,
+        filter_timestamp: Optional[datetime] = None,
     ) -> List[Dict[str, Any]]:
         """
         Performs vector similarity search (Cosine Distance via <=> operator).
@@ -251,17 +306,24 @@ class PostgresOfflineStore(OfflineStore):
         table_name = f"meridian_index_{index_name}"
         vec_str = str(query_embedding)
 
+        where_clause = ""
+        params = {"query_vec": vec_str, "top_k": top_k}
+
+        if filter_timestamp:
+            # Filter by ingestion time (created_at)
+            where_clause = "WHERE created_at <= :ts"
+            params["ts"] = filter_timestamp
+
         query = f"""
         SELECT content, metadata, 1 - (embedding <=> :query_vec) as score
         FROM {table_name}
+        {where_clause}
         ORDER BY embedding <=> :query_vec
         LIMIT :top_k
         """  # nosec
 
         async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
-            result = await conn.execute(
-                text(query), {"query_vec": vec_str, "top_k": top_k}
-            )
+            result = await conn.execute(text(query), params)
             rows = result.fetchall()
             return [
                 {"content": r.content, "metadata": r.metadata, "score": r.score}

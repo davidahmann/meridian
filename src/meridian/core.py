@@ -1,6 +1,16 @@
-from typing import Any, Callable, Dict, Optional, Type, Union, List, get_type_hints
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Type,
+    Union,
+    List,
+    get_type_hints,
+    Generator,
+)
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import timedelta, datetime
 import pandas as pd
 from .store import (
     InMemoryOnlineStore,
@@ -23,6 +33,9 @@ from .embeddings import OpenAIEmbedding
 
 # Metrics
 
+import contextvars
+from contextlib import contextmanager
+
 # Metrics
 FEATURE_REQUESTS = Counter(
     "meridian_feature_requests_total", "Total feature requests", ["feature", "status"]
@@ -39,6 +52,46 @@ FEATURE_MATERIALIZE_FAILURES = Counter(
 )
 
 logger = structlog.get_logger()
+
+# Time Travel Context Variable
+# Stores the timestamp for the current execution context. if set, all queries should be historical.
+_context_timestamp: contextvars.ContextVar[Optional[datetime]] = contextvars.ContextVar(
+    "meridian_context_timestamp", default=None
+)
+
+
+def get_current_timestamp() -> Optional[datetime]:
+    """Returns the current Time Travel timestamp, or None if real-time."""
+    return _context_timestamp.get()
+
+
+@contextmanager
+def _with_timestamp(timestamp: datetime) -> Generator[None, None, None]:
+    token = _context_timestamp.set(timestamp)
+    try:
+        yield
+    finally:
+        _context_timestamp.reset(token)
+
+
+async def get_context(
+    func: Callable[..., Any], metadata: Optional[Dict[str, Any]] = None, **kwargs: Any
+) -> Any:
+    """
+    Executes a context assembly function with Time Travel support.
+
+    Args:
+        func: The context function (decorated with @context).
+        timestamp: (kwarg) The point-in-time to travel to.
+        **kwargs: Arguments for the context function.
+    """
+    timestamp = kwargs.pop("timestamp", None)
+
+    if timestamp:
+        with _with_timestamp(timestamp):
+            return await func(**kwargs)
+    else:
+        return await func(**kwargs)
 
 
 async def async_breaker_call(
@@ -324,6 +377,30 @@ class FeatureStore:
             entity_name=entity_name, entity_id=entity_id, features=features
         )
         start_time = time.perf_counter()
+
+        # 0. Time Travel Check
+        timestamp = get_current_timestamp()
+        if timestamp:
+            log.info("time_travel_request", timestamp=timestamp.isoformat())
+            try:
+                # We assume features belong to the same entity/table structure in offline store logic
+                # get_historical_features returns Dict[feature_name, value]
+                if not hasattr(self.offline_store, "get_historical_features"):
+                    log.warning(
+                        "offline_store_no_history",
+                        reason="Method get_historical_features missing",
+                    )
+                    return {}  # Or raise?
+
+                return await self.offline_store.get_historical_features(
+                    entity_name=entity_name,
+                    entity_id=entity_id,
+                    features=features,
+                    timestamp=timestamp,
+                )
+            except Exception as e:
+                log.error("time_travel_failed", error=str(e))
+                return {}  # Fallback to empty (missing)
 
         # 1. Try Cache (Online Store)
         try:
