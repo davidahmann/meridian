@@ -148,6 +148,9 @@ Meridian uses 12-factor app configuration via Environment Variables.
 | `OPENAI_API_KEY` | Required for Vector Embeddings & Context Assembly | `None` |
 | `COHERE_API_KEY` | Alternative embedding provider (Cohere) | `None` |
 | `MERIDIAN_EMBEDDING_MODEL` | Embedding model for vector search | `text-embedding-3-small` |
+| `MERIDIAN_EMBEDDING_CONCURRENCY` | Max concurrent embedding requests | `10` |
+| `MERIDIAN_PG_POOL_SIZE` | Postgres Connection Pool Size | `5` |
+| `MERIDIAN_PG_MAX_OVERFLOW` | Postgres Connection Pool Overflow | `10` |
 
 ---
 
@@ -206,6 +209,22 @@ Meridian listens to your event bus (Redis Streams) to push fresh features instan
 @feature(entity=User, trigger="transaction_event")
 def last_transaction_amount(user_id: str, event: AxiomEvent) -> float:
     return event.payload["amount"]
+```
+
+**Monitor Events via CLI:**
+```bash
+meridian events listen --stream transaction_event
+```
+
+#### 4. Manage Indexes
+Create and inspect vector indexes directly from the CLI.
+
+```bash
+# Create a new index with 1536 dimensions
+meridian index create my_docs --dimension 1536
+
+# Check status (row count)
+meridian index status my_docs
 ```
 
 ---

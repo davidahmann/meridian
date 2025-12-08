@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import re
+import os
 from typing import List, Optional, Dict, Any
 import json
 import hashlib
@@ -22,7 +23,15 @@ class PostgresOfflineStore(OfflineStore):
                     "postgresql://", "postgresql+asyncpg://"
                 )
 
-        self.engine: AsyncEngine = create_async_engine(connection_string)
+        # Pool Configuration
+        pool_size = int(os.getenv("MERIDIAN_PG_POOL_SIZE", "5"))
+        max_overflow = int(os.getenv("MERIDIAN_PG_MAX_OVERFLOW", "10"))
+
+        self.engine: AsyncEngine = create_async_engine(
+            connection_string,
+            pool_size=pool_size,
+            max_overflow=max_overflow,
+        )
 
     async def get_training_data(
         self,

@@ -11,7 +11,65 @@ from datetime import datetime
 from .core import FeatureStore
 from .server import create_app
 
+
 app = typer.Typer()
+console = Console()
+
+
+@app.command(name="events")
+def events_cmd(
+    action: str = typer.Argument(..., help="Action: listen"),
+    stream: str = typer.Option("meridian_events", help="Stream key to listen to"),
+    count: int = typer.Option(10, help="Number of events to fetch per poll"),
+    redis_url: str = typer.Option(
+        None, envvar="MERIDIAN_REDIS_URL", help="Redis URL Override"
+    ),
+) -> None:
+    """
+    Manage or listen to Meridian events.
+    Usage: meridian events listen --stream=my_stream
+    """
+    if action != "listen":
+        console.print(f"[bold red]Unknown action:[/bold red] {action}")
+        raise typer.Exit(1)
+
+    import asyncio
+    from redis.asyncio import Redis
+
+    url = redis_url or os.getenv("MERIDIAN_REDIS_URL") or "redis://localhost:6379"
+
+    async def listen_loop() -> None:
+        console.print(f"[green]Listening to stream:[/green] {stream} on {url}")
+        r = Redis.from_url(url, decode_responses=True)
+        last_id = "$"
+
+        try:
+            while True:
+                # XREAD block=0 means block indefinitely until new item
+                streams = await r.xread({stream: last_id}, count=1, block=0)
+                if not streams:
+                    continue
+
+                for stream_name, messages in streams:
+                    for msg_id, fields in messages:
+                        timestamp = datetime.now().strftime("%H:%M:%S")
+                        console.print(
+                            f"[{timestamp}] [bold cyan]{msg_id}[/bold cyan]: {fields}"
+                        )
+                        last_id = msg_id
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            console.print(f"[bold red]Error:[/bold red] {e}")
+        finally:
+            await r.aclose()  # type: ignore[attr-defined]
+
+    try:
+        asyncio.run(listen_loop())
+    except KeyboardInterrupt:
+        console.print("\nStopped.")
+
+
 console = Console()
 
 
@@ -316,6 +374,73 @@ def context_cmd(
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
         raise typer.Exit(1)
+
+
+@app.command(name="index")
+def index_cmd(
+    action: str = typer.Argument(..., help="Action: create, status"),
+    name: str = typer.Argument(..., help="Name of the index"),
+    dimension: int = typer.Option(1536, help="Vector dimension (create only)"),
+    postgres_url: str = typer.Option(
+        None, envvar="MERIDIAN_POSTGRES_URL", help="Postgres URL Override"
+    ),
+) -> None:
+    """
+    Manage vector indexes.
+    Usage:
+      meridian index create my_index --dimension=1536
+      meridian index status my_index
+    """
+    import asyncio
+    from .store.postgres import PostgresOfflineStore
+    from sqlalchemy import text
+
+    url = postgres_url or os.getenv("MERIDIAN_POSTGRES_URL")
+    if not url:
+        console.print("[bold red]Error:[/bold red] MERIDIAN_POSTGRES_URL not set.")
+        raise typer.Exit(1)
+
+    async def run_action() -> None:
+        try:
+            store = PostgresOfflineStore(url)
+
+            if action == "create":
+                console.print(
+                    f"Creating index [bold]{name}[/bold] (dim={dimension})..."
+                )
+                await store.create_index_table(name, dimension)
+                console.print(f"[green]Index '{name}' created successfully.[/green]")
+
+            elif action == "status":
+                table = f"meridian_index_{name}"
+                async with store.engine.connect() as conn:  # type: ignore[no-untyped-call]
+                    # Check if exists
+                    exists = await conn.execute(
+                        text(f"SELECT to_regclass('public.{table}')")
+                    )
+                    if not exists.scalar():
+                        console.print(
+                            f"[red]Index table '{table}' does not exist.[/red]"
+                        )
+                        return
+
+                    # Count rows
+                    res = await conn.execute(text(f"SELECT COUNT(*) FROM {table}"))  # nosec
+                    count = res.scalar()
+                    console.print(f"Index: [bold]{name}[/bold]")
+                    console.print(f"Table: {table}")
+                    console.print(f"Rows:  [cyan]{count}[/cyan]")
+
+            else:
+                console.print(f"[red]Unknown action: {action}[/red]")
+
+            await store.engine.dispose()  # type: ignore[no-untyped-call]
+
+        except Exception as e:
+            console.print(f"[bold red]Error:[/bold red] {e}")
+            raise typer.Exit(1)
+
+    asyncio.run(run_action())
 
 
 if __name__ == "__main__":

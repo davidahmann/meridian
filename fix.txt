@@ -24,9 +24,3 @@ Streaming Assembly	Large contexts should stream chunks
 Quickstart guide for context store
 API reference for /ingest, /context/{id}/explain
 Examples for @context, @retriever, @index
-5. Advanced Features (Priority: Low - Future)
-Feature	Notes
-Cost Estimation	Track USD per context via token × model rate
-Content Versioning	Version column in index table
-Multi-Entity DAG	Resolve features across different entity types
-Hybrid Search	Combine keyword + vector scoring

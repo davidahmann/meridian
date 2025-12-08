@@ -33,6 +33,11 @@ class OpenAIEmbedding(EmbeddingProvider):
             )
         self.client = AsyncOpenAI(api_key=self.api_key)
 
+        # Concurrency Control (Rate Limiting)
+        # Default to 10 concurrent requests to avoid 429s on standard tier
+        concurrency = int(os.getenv("MERIDIAN_EMBEDDING_CONCURRENCY", "10"))
+        self._semaphore = asyncio.Semaphore(concurrency)
+
     async def embed_documents(self, texts: List[str]) -> List[List[float]]:
         # Handle empty
         if not texts:
@@ -90,7 +95,8 @@ class OpenAIEmbedding(EmbeddingProvider):
                 else:
                     raise e
         # Final attempt
-        return await self.client.embeddings.create(input=inputs, model=self.model)
+        async with self._semaphore:
+            return await self.client.embeddings.create(input=inputs, model=self.model)
 
 
 class CohereEmbedding(EmbeddingProvider):

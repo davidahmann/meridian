@@ -59,3 +59,21 @@ if __name__ == "__main__":
 ### "ConnectionError: Connection refused"
 **Cause:** Redis is not running or the URL is wrong.
 **Fix:** Check `MERIDIAN_REDIS_URL`. Default is `redis://localhost:6379`.
+
+## Context Store (RAG/Vectors)
+
+### "UndefinedFunction: function vector_dims(vector) does not exist"
+**Cause:** The `pgvector` extension is not installed or enabled in your Postgres database.
+**Fix:**
+Run this SQL in your database:
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+*Note: `meridian index create` attempts to do this automatically, but requires superuser permissions.*
+
+### "ContextBudgetError: Required content exceeds budget"
+**Cause:** Your `@context(max_tokens=N)` limit is too small for the implementation of your retrieved documents or system prompt.
+**Fix:**
+1. Increase `max_tokens`.
+2. Reduce `top_k` in your `@retriever`.
+3. Use `priority` to allow non-critical items to be dropped.

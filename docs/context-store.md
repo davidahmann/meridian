@@ -80,6 +80,16 @@ curl -X POST http://localhost:8000/ingest/document \
 - **Embedding:** Chunks are embedded using OpenAI or Cohere (configurable).
 - **Storage:** Embeddings stored in Postgres with pgvector extension.
 
+**Management via CLI:**
+```bash
+# Manually create an index
+meridian index create knowledge_base --dimension 1536
+
+# Check index status
+meridian index status knowledge_base
+# Output: Index: knowledge_base | Rows: 1542
+```
+
 ### 2. Retrievers
 
 A **Retriever** performs vector search and returns relevant documents.
@@ -145,6 +155,12 @@ async def doc_summary(doc_id: str, event: AxiomEvent) -> str:
 
 Events are published via Redis Streams and consumed by `AxiomWorker`.
 
+**Monitor Events:**
+```bash
+# Tail the event stream in real-time
+meridian events listen --stream document_updated
+```
+
 [Learn more about Event-Driven Features →](event-driven-features.md)
 
 ## Configuration
@@ -155,6 +171,14 @@ Events are published via Redis Streams and consumed by `AxiomWorker`.
 | `COHERE_API_KEY` | API key for Cohere embeddings (alternative) | Optional |
 | `MERIDIAN_EMBEDDING_MODEL` | Embedding model to use | `text-embedding-3-small` |
 | `MERIDIAN_CHUNK_SIZE` | Tokens per chunk | `512` |
+
+### Production Tuning
+
+| Variable | Description | Recommendation |
+| :--- | :--- | :--- |
+| `MERIDIAN_EMBEDDING_CONCURRENCY` | Max concurrent embedding requests | Set to `20+` if you have high Tier limits. Default `10`. |
+| `MERIDIAN_PG_POOL_SIZE` | Postgres Connection Pool Size | Set to `10-20` for high-throughput API pods. Default `5`. |
+| `MERIDIAN_PG_MAX_OVERFLOW` | Postgres Connection Pool Overflow | Set to `20+` to handle spikes. Default `10`. |
 
 ## Architecture
 
