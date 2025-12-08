@@ -16,6 +16,11 @@ except ImportError:
     RedisOnlineStore = None  # type: ignore
 
 
+def get_redis_url() -> str:
+    """Returns the configured Redis URL or a sensible default for local dev."""
+    return os.environ.get("MERIDIAN_REDIS_URL", "redis://localhost:6379")
+
+
 class BaseConfig(ABC):
     @abstractmethod
     def get_offline_store(self) -> OfflineStore:

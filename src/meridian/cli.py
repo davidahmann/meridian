@@ -182,7 +182,7 @@ def serve(
             table.add_column("Metric", style="cyan")
             table.add_column("Value", style="magenta")
 
-            # Mock metrics for now (since we can't easily hook into uvicorn stats from here without middleware)
+            # Display basic static metrics (Real-time dashboard requires Epic 4.2)
             # In a real implementation, we'd read from a shared metrics buffer
             table.add_row("Status", "Running 🟢")
             table.add_row("Uptime", datetime.now().strftime("%H:%M:%S"))

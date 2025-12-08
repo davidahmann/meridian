@@ -40,9 +40,9 @@ class AxiomWorker:
                 elif hasattr(online_store, "redis"):
                     self.redis = online_store.redis
                 else:
-                    import os
+                    from meridian.config import get_redis_url
 
-                    url = os.environ.get("MERIDIAN_REDIS_URL", "redis://localhost:6379")
+                    url = get_redis_url()
                     self.redis = Redis.from_url(url, decode_responses=True)
 
         self.store = store

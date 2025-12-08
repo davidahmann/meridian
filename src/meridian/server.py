@@ -120,9 +120,10 @@ def create_app(store: FeatureStore) -> FastAPI:
         if not client:
             # Fallback: create fresh client
             from redis.asyncio import Redis
-            import os
 
-            url = os.environ.get("MERIDIAN_REDIS_URL", "redis://localhost:6379")
+            from meridian.config import get_redis_url
+
+            url = get_redis_url()
             client = Redis.from_url(url, decode_responses=True)
 
         bus = RedisEventBus(client)

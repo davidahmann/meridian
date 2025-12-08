@@ -27,7 +27,7 @@ from .store import (
     OfflineStore,
     OnlineStore,
 )
-from .retrieval import Retriever, RetrieverRegistry
+from .retrieval import RetrieverRegistry
 from .index import Index, IndexRegistry
 from .embeddings import OpenAIEmbedding
 
@@ -517,9 +517,17 @@ class FeatureStore:
         self.registry.register_feature(feature)
         return feature
 
-    def register_retriever(self, retriever: Retriever) -> None:
+    def register_retriever(self, retriever_or_func: Any) -> None:
         """Registers a retriever with the store."""
+        if hasattr(retriever_or_func, "_meridian_retriever"):
+            retriever = getattr(retriever_or_func, "_meridian_retriever")
+        else:
+            retriever = retriever_or_func
+
         self.retriever_registry.register(retriever)
+        # Inject Store Reference for DAG Resolution
+        setattr(retriever, "_meridian_store_ref", self)
+
         # Inject Cache Backend if available
         # We use online_store.redis for caching
         if hasattr(self.online_store, "redis"):

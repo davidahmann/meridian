@@ -49,3 +49,7 @@ meridian.toml
 # Generated Artifacts
 *.html
 fixes.txt
+
+# Testing Artifacts
+.coverage
+htmlcov/
