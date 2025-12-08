@@ -206,8 +206,10 @@ COHERE_API_KEY=...
     else:
         # Systemic Fix: Use os.open to set permissions AT CREATION TIME
         fd = os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with open(fd, "w") as f:
-            f.write(env_example.strip())
+        try:
+            os.write(fd, env_example.strip().encode("utf-8"))
+        finally:
+            os.close(fd)
         console.print("Created [bold].env.production[/bold]")
 
     console.print("\n[green]Setup Complete![/green]")
@@ -268,8 +270,12 @@ __pycache__/
         # Systemic Fix: Use os.open to set permissions AT CREATION TIME (avoids race condition)
         # 0o600 = Read/Write by owner only.
         fd = os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with open(fd, "w") as f:
-            f.write("\n".join(api_key_lines) + "\n")
+        try:
+            content = "\n".join(api_key_lines) + "\n"
+            os.write(fd, content.encode("utf-8"))
+        finally:
+            os.close(fd)
+
         console.print(
             "Created [bold].env[/bold] with API key (permissions restricted to 0600)."
         )
