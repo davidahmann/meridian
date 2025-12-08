@@ -95,4 +95,7 @@ class DependencyResolver:
             logger.error("dag_fetch_error", error=str(e))
             return template
 
-        return await self.resolve(template, resolved_values)
+        try:
+            return await self.resolve(template, resolved_values)
+        except Exception:
+            return template

@@ -14,7 +14,7 @@ def test_context_command_success() -> None:
     mock_response.__exit__.return_value = None
 
     with patch("urllib.request.urlopen", return_value=mock_response) as mock_urlopen:
-        result = runner.invoke(app, ["context", "ctx_123"])
+        result = runner.invoke(app, ["context", "explain", "ctx_123"])
 
         assert result.exit_code == 0
         assert "Fetching trace for ctx_123" in result.stdout
@@ -34,7 +34,7 @@ def test_context_command_server_error() -> None:
     mock_response.__exit__.return_value = None
 
     with patch("urllib.request.urlopen", return_value=mock_response):
-        result = runner.invoke(app, ["context", "ctx_404"])
+        result = runner.invoke(app, ["context", "explain", "ctx_404"])
         assert result.exit_code == 1
         assert "Server returned 404" in result.stdout
 
@@ -47,6 +47,6 @@ def test_context_command_connection_error() -> None:
         "urllib.request.urlopen",
         side_effect=urllib.error.URLError("Connection refused"),
     ):
-        result = runner.invoke(app, ["context", "ctx_dead"])
+        result = runner.invoke(app, ["context", "explain", "ctx_dead"])
         assert result.exit_code == 1
         assert "Connection Failed" in result.stdout

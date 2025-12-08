@@ -38,6 +38,8 @@ def mock_store() -> MagicMock:
     store = MagicMock(spec=FeatureStore)
     store.online_store = MagicMock()
     store.online_store.client = AsyncMock()  # Mock redis client
+    # mocked get_online_features needs to return a dict, not a mock
+    store.get_online_features = AsyncMock(return_value={"f": 1})
     return store
 
 

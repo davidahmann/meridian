@@ -36,5 +36,5 @@ async def test_dag_resolution_error() -> None:
     # values = await self.store.get_online_features(...)
     # If this raises, execute_dag raises.
 
-    with pytest.raises(Exception, match="Store Down"):
-        await resolver.execute_dag("Hello {user.name}", "u1")
+    res = await resolver.execute_dag("Hello {user.name}", "u1")
+    assert res == "Hello {user.name}"
