@@ -262,5 +262,61 @@ def doctor() -> None:
     run_doctor()
 
 
+@app.command(name="context")
+def context_cmd(
+    ctx_id: str = typer.Argument(..., help="The Context ID to trace"),
+    host: str = typer.Option("127.0.0.1", help="Meridian server host"),
+    port: int = typer.Option(8000, help="Meridian server port"),
+) -> None:
+    """
+    Fetch and display a context trace (RAG explanation).
+    """
+    import urllib.request
+    import urllib.error
+    import json
+
+    url = f"http://{host}:{port}/context/{ctx_id}/explain"
+    console.print(f"Fetching trace for [bold cyan]{ctx_id}[/bold cyan] from {url}...")
+
+    if not url.lower().startswith(("http://", "https://")):
+        console.print("[bold red]Error:[/bold red] Invalid URL scheme")
+        raise typer.Exit(1)
+
+    try:
+        # Use standard lib to avoid extra dependencies for CLI
+        req = urllib.request.Request(url)
+        # Add API Key if present in env
+        api_key = os.getenv("MERIDIAN_API_KEY")
+        if api_key:
+            req.add_header("X-API-Key", api_key)
+
+        with urllib.request.urlopen(req) as response:  # nosec B310
+            if response.status != 200:
+                console.print(
+                    f"[bold red]Error:[/bold red] Server returned {response.status}"
+                )
+                raise typer.Exit(1)
+
+            data = json.loads(response.read().decode())
+
+            # Pretty print with Rich
+            console.print(
+                Panel(
+                    json.dumps(data, indent=2),
+                    title=f"Context Trace: {ctx_id}",
+                    border_style="green",
+                )
+            )
+
+    except urllib.error.URLError as e:
+        console.print(
+            f"[bold red]Connection Failed:[/bold red] {e}. Is the server running?"
+        )
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(1)
+
+
 if __name__ == "__main__":
     app()

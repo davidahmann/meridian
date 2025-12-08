@@ -190,6 +190,41 @@ graph LR
 - [Event-Driven Features](event-driven-features.md): Real-time updates
 - [Use Case: RAG Chatbot](use-cases/rag-chatbot.md): End-to-end example
 
+## 🐛 Debugging & Tracing
+
+Meridian provides built-in observability for your context assembly. Because context is often assembled from multiple stochastic sources (vector search, cached features), understanding *why* a specific prompt was built is crucial.
+
+### The `meridian context` Command
+
+You can trace any context request by its ID:
+
+```bash
+meridian context ctx_12345
+```
+
+**Output:**
+```json
+{
+  "context_id": "ctx_12345",
+  "total_tokens": 3450,
+  "budget": 4000,
+  "items": [
+    {
+      "priority": 0,
+      "tokens": 150,
+      "content": "System Prompt...",
+      "status": "INCLUDED"
+    },
+    {
+      "priority": 2,
+      "tokens": 500,
+      "content": "User Preferences...",
+      "status": "DROPPED (Budget Exceeded)"
+    }
+  ]
+}
+```
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",

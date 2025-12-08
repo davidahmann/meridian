@@ -177,7 +177,14 @@ async def chat_context(user_id: str, query: str) -> Context:
         ContextItem("You are a helpful assistant.", priority=0, required=True),
         ContextItem(docs, priority=1, required=True),
         ContextItem(f"User prefs: {user_prefs}", priority=2),  # Truncated first
+```python
     ])
+```
+
+**Debug Context Assembly:**
+```bash
+# View exactly why documents were included/dropped
+meridian context <id>
 ```
 
 [📖 Full Context Store Documentation →](https://davidahmann.github.io/meridian/context-store)
