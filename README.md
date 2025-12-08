@@ -179,7 +179,7 @@ OPENAI_API_KEY=sk-...
 
 * ✅ **Phase 1:** Core API, DuckDB/Postgres support, Redis caching, FastAPI serving, PIT Correctness, Async I/O.
 * ✅ **Phase 2 (v1.2.0):** Context Store, RAG infrastructure, pgvector, Event-Driven features, Time Travel.
-* ✅ **Phase 2.x (v1.2.3):** Release Polish, CLI improvements, Timezone robustness.
+* ✅ **Phase 2.x (v1.2.4):** Release Polish, CLI improvements, Timezone robustness.
 * 🚧 **Phase 3:** Drift detection, RBAC, and multi-region support.
 
 ---

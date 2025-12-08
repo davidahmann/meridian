@@ -204,12 +204,11 @@ COHERE_API_KEY=...
     if os.path.exists(env_path):
         console.print(f"[yellow]Warning:[/yellow] {env_path} already exists. Skipping.")
     else:
-        with open(env_path, "w") as f:
+        # Systemic Fix: Use os.open to set permissions AT CREATION TIME
+        fd = os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with open(fd, "w") as f:
             f.write(env_example.strip())
-        os.chmod(env_path, 0o600)
-        console.print(
-            "Created [bold].env.production[/bold] (permissions restricted to 0600)"
-        )
+        console.print("Created [bold].env.production[/bold]")
 
     console.print("\n[green]Setup Complete![/green]")
     console.print("To start infrastructure, run:")
@@ -266,9 +265,11 @@ __pycache__/
 
     if api_key_lines:
         env_path = os.path.join(name, ".env")
-        with open(env_path, "w") as f:
+        # Systemic Fix: Use os.open to set permissions AT CREATION TIME (avoids race condition)
+        # 0o600 = Read/Write by owner only.
+        fd = os.open(env_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with open(fd, "w") as f:
             f.write("\n".join(api_key_lines) + "\n")
-        os.chmod(env_path, 0o600)
         console.print(
             "Created [bold].env[/bold] with API key (permissions restricted to 0600)."
         )
