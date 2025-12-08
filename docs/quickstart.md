@@ -10,7 +10,7 @@ keywords: meridian quickstart, feature store tutorial, context store tutorial, p
 
 > [!IMPORTANT]
 > **Prerequisites for RAG/Context Store:**
-> To use Vector Search, you need an `OPENAI_API_KEY`.
+> To use Vector Search, you need an API Key (OpenAI, Anthropic, or Cohere).
 >
 > **Want a Production Stack Locally?**
 > Run `meridian setup` to generate a `docker-compose.yml` with **pgvector** and Redis.

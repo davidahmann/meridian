@@ -142,6 +142,10 @@ def setup(
     """
     Generate production-ready configuration files (Docker Compose).
     """
+    # Ensure directory exists
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+        console.print(f"Created directory: [bold cyan]{dir}[/bold cyan]")
     docker_compose = """
 version: '3.8'
 
@@ -182,6 +186,8 @@ MERIDIAN_POSTGRES_URL=postgresql://user:password@localhost:5432/meridian  # prag
 
 # LLM Providers (Required for Context Store)
 OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+COHERE_API_KEY=...
 """
 
     # Write files
@@ -224,13 +230,25 @@ def init(
     console.print(f"Created directory: [bold cyan]{name}[/bold cyan]")
 
     # Interactive Configuration
-    openai_key = None
+    api_key_lines = []
     if interactive:
         # Check if we are in a TTY
         if sys.stdin.isatty():
             console.print("\n[bold]Configuration[/bold]")
-            if typer.confirm("Do you want to configure OpenAI API Key now?"):
-                openai_key = typer.prompt("Enter OpenAI API Key", hide_input=True)
+            target_provider = typer.prompt(
+                "Which LLM provider do you want to configure? (openai/anthropic/cohere/skip)",
+                default="skip",
+            ).lower()
+
+            if target_provider == "openai":
+                k = typer.prompt("Enter OpenAI API Key", hide_input=True)
+                api_key_lines.append(f"OPENAI_API_KEY={k}")
+            elif target_provider == "anthropic":
+                k = typer.prompt("Enter Anthropic API Key", hide_input=True)
+                api_key_lines.append(f"ANTHROPIC_API_KEY={k}")
+            elif target_provider == "cohere":
+                k = typer.prompt("Enter Cohere API Key", hide_input=True)
+                api_key_lines.append(f"COHERE_API_KEY={k}")
 
     # Basic scaffold
     gitignore = """
@@ -243,9 +261,9 @@ __pycache__/
     with open(os.path.join(name, ".gitignore"), "w") as f:
         f.write(gitignore.strip())
 
-    if openai_key:
+    if api_key_lines:
         with open(os.path.join(name, ".env"), "w") as f:
-            f.write(f"OPENAI_API_KEY={openai_key}\n")
+            f.write("\n".join(api_key_lines) + "\n")
         console.print("Created [bold].env[/bold] with API key.")
 
     if demo:
