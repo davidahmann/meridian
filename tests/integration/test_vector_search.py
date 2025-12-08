@@ -12,7 +12,7 @@ async def test_vector_search_e2e() -> None:
     except ImportError:
         pytest.skip("Testcontainers not installed")
 
-    with PostgresContainer("postgres:15-alpine") as postgres:
+    with PostgresContainer("pgvector/pgvector:pg16") as postgres:
         # 1. Setup Postgres with pgvector
         url = postgres.get_connection_url().replace("psycopg2", "asyncpg")
         store = PostgresOfflineStore(url)

@@ -320,8 +320,12 @@ def doctor() -> None:
     run_doctor()
 
 
-@app.command(name="context")
-def context_cmd(
+context_app = typer.Typer(help="Manage and inspect Context Store assemblies.")
+app.add_typer(context_app, name="context")
+
+
+@context_app.command(name="explain")
+def explain_cmd(
     ctx_id: str = typer.Argument(..., help="The Context ID to trace"),
     host: str = typer.Option("127.0.0.1", help="Meridian server host"),
     port: int = typer.Option(8000, help="Meridian server port"),
