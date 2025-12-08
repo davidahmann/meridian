@@ -6,7 +6,14 @@ keywords: meridian quickstart, feature store tutorial, context store tutorial, p
 
 # Feature Store & Context Store That Actually Work Locally: 30-Second Setup
 
-> **TL;DR:** Install with `pip install "meridian-oss[ui]"`. Define features with `@feature` and context with `@retriever`. Run `meridian serve`. No Docker or YAML required.
+> **TL;DR:** Install with `pip install "meridian-oss[ui]"`. Define features with `@feature`. Run `meridian serve`.
+
+> [!IMPORTANT]
+> **Prerequisites for RAG/Context Store:**
+> To use Vector Search, you need an `OPENAI_API_KEY`.
+>
+> **Want a Production Stack Locally?**
+> Run `meridian setup` to generate a `docker-compose.yml` with **pgvector** and Redis.
 
 ## The Problem With Every Other Feature Store
 

@@ -60,14 +60,15 @@ Infrastructure:
 
 ## Step 4: Local Production (Docker Compose)
 
-We provide a `docker-compose.prod.yml` to spin up a full stack (Meridian + Redis + Postgres) locally.
+For a proven production stack (Postgres + pgvector + Redis), just run:
 
 ```bash
-# Start the stack
-make prod-up
-
-# Check health
-curl http://localhost:8000/health
+meridian setup
+docker compose up -d
 ```
 
-This stack mimics a real production environment and is perfect for integration testing or small-scale deployments.
+> [!WARNING]
+> **Postgres Requirement:**
+> Standard Postgres images (`postgres:16`) **will not work** for Vector Search. You must use `pgvector/pgvector:pg16` or install the extension manually. `meridian setup` handles this for you.
+
+This stack mimics a real production environment and is perfect for integration testing.

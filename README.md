@@ -228,6 +228,29 @@ meridian index status my_docs
 
 ---
 
+### 🏭 Production Configuration
+
+Copy this to your `.env` or `.env.production` file:
+
+```bash
+# Security
+MERIDIAN_API_KEY=change_me_to_something_secure
+
+# Data Stores (Required for Prod)
+MERIDIAN_REDIS_URL=redis://localhost:6379
+MERIDIAN_POSTGRES_URL=postgresql://user:password@localhost:5432/meridian  # pragma: allowlist secret
+
+# LLM Providers (Required for Context Store)
+OPENAI_API_KEY=sk-...
+COHERE_API_KEY=...
+
+# Tuning
+MERIDIAN_EMBEDDING_CONCURRENCY=10
+MERIDIAN_POSTGRES_POOL_SIZE=20
+```
+
+---
+
 ### 🔍 Request Lifecycle
 
 ```mermaid

@@ -135,10 +135,83 @@ def worker_cmd(
         console.print("Worker stopped.")
 
 
+@app.command(name="setup")
+def setup(
+    dir: str = typer.Argument(".", help="Directory to create setup files in"),
+) -> None:
+    """
+    Generate production-ready configuration files (Docker Compose).
+    """
+    docker_compose = """
+version: '3.8'
+
+services:
+  # 1. Postgres with pgvector (Offline Store + Context Store)
+  postgres:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: meridian
+    volumes:
+      - meridian_postgres_data:/var/lib/postgresql/data
+
+  # 2. Redis (Online Store + Cache)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - meridian_redis_data:/data
+
+volumes:
+  meridian_postgres_data:
+  meridian_redis_data:
+"""
+    env_example = """
+# Meridian Production Config
+
+# Security
+MERIDIAN_API_KEY=change_me_to_something_secure
+
+# Data Stores
+MERIDIAN_REDIS_URL=redis://localhost:6379
+MERIDIAN_POSTGRES_URL=postgresql://user:password@localhost:5432/meridian  # pragma: allowlist secret
+
+# LLM Providers (Required for Context Store)
+OPENAI_API_KEY=sk-...
+"""
+
+    # Write files
+    dc_path = os.path.join(dir, "docker-compose.yml")
+    env_path = os.path.join(dir, ".env.production")
+
+    if os.path.exists(dc_path):
+        console.print(f"[yellow]Warning:[/yellow] {dc_path} already exists. Skipping.")
+    else:
+        with open(dc_path, "w") as f:
+            f.write(docker_compose.strip())
+        console.print("Created [bold]docker-compose.yml[/bold]")
+
+    if os.path.exists(env_path):
+        console.print(f"[yellow]Warning:[/yellow] {env_path} already exists. Skipping.")
+    else:
+        with open(env_path, "w") as f:
+            f.write(env_example.strip())
+        console.print("Created [bold].env.production[/bold]")
+
+    console.print("\n[green]Setup Complete![/green]")
+    console.print("To start infrastructure, run:")
+    console.print("  [bold]docker compose up -d[/bold]")
+
+
 @app.command(name="init")
 def init(
     name: str = typer.Argument("meridian_project", help="Project name"),
     demo: bool = typer.Option(False, help="Include demo features and data"),
+    interactive: bool = typer.Option(True, help="Run in interactive mode"),
 ) -> None:
     """
     Initialize a new Meridian project.
@@ -149,6 +222,15 @@ def init(
 
     os.makedirs(name)
     console.print(f"Created directory: [bold cyan]{name}[/bold cyan]")
+
+    # Interactive Configuration
+    openai_key = None
+    if interactive:
+        # Check if we are in a TTY
+        if sys.stdin.isatty():
+            console.print("\n[bold]Configuration[/bold]")
+            if typer.confirm("Do you want to configure OpenAI API Key now?"):
+                openai_key = typer.prompt("Enter OpenAI API Key", hide_input=True)
 
     # Basic scaffold
     gitignore = """
@@ -161,6 +243,11 @@ __pycache__/
     with open(os.path.join(name, ".gitignore"), "w") as f:
         f.write(gitignore.strip())
 
+    if openai_key:
+        with open(os.path.join(name, ".env"), "w") as f:
+            f.write(f"OPENAI_API_KEY={openai_key}\n")
+        console.print("Created [bold].env[/bold] with API key.")
+
     if demo:
         # Create features.py
         features_py = """
@@ -168,6 +255,7 @@ from meridian.core import FeatureStore, entity, feature
 from meridian.context import context, Context, ContextItem
 from meridian.retrieval import retriever
 import random
+import os
 
 # Use default local stack (DuckDB + In-Memory)
 store = FeatureStore()
@@ -324,6 +412,23 @@ def serve(
                 "[bold red]Error:[/bold red] No FeatureStore instance found in file."
             )
             raise typer.Exit(code=1)
+
+        # === Startup Checks (UX) ===
+        # Check 1: RAG Usage without Keys
+        has_retrievers = len(store.retriever_registry.retrievers) > 0
+        has_openai = os.getenv("OPENAI_API_KEY") is not None
+        has_cohere = os.getenv("COHERE_API_KEY") is not None
+
+        if has_retrievers and not (has_openai or has_cohere):
+            console.print(
+                Panel(
+                    "[yellow]Warning: Retrievers detected but no LLM API Key found.[/yellow]\n"
+                    "Vector search and generation will fail.\n"
+                    "Fix: set [bold]OPENAI_API_KEY[/bold] or [bold]COHERE_API_KEY[/bold] in .env",
+                    title="Configuration Warning",
+                    border_style="yellow",
+                )
+            )
 
         # Start scheduler
         store.start()
