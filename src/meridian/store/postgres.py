@@ -53,7 +53,7 @@ class PostgresOfflineStore(OfflineStore):
             # Create temp table
             await conn.execute(
                 text(
-                    "CREATE TEMP TABLE IF NOT EXISTS temp_entity_lookup (entity_id VARCHAR, timestamp TIMESTAMP)"
+                    "CREATE TEMP TABLE IF NOT EXISTS temp_entity_lookup (entity_id VARCHAR, timestamp TIMESTAMPTZ)"
                 )
             )
             await conn.execute(text("DELETE FROM temp_entity_lookup"))
@@ -68,7 +68,11 @@ class PostgresOfflineStore(OfflineStore):
                 values.append(
                     {
                         "entity_id": str(row[entity_id_col]),
-                        "timestamp": row[timestamp_col],
+                        "timestamp": (
+                            row[timestamp_col].to_pydatetime()
+                            if hasattr(row[timestamp_col], "to_pydatetime")
+                            else row[timestamp_col]
+                        ),
                     }
                 )
 

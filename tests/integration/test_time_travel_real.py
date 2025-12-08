@@ -26,7 +26,7 @@ async def test_time_travel_integration() -> None:
         async with store.engine.begin() as conn:  # type: ignore[no-untyped-call]
             await conn.execute(
                 text(
-                    "CREATE TABLE price (entity_id TEXT, timestamp TIMESTAMP, price INT)"
+                    "CREATE TABLE price (entity_id TEXT, timestamp TIMESTAMPTZ, price INT)"
                 )
             )
 
