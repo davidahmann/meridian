@@ -65,7 +65,11 @@ def check_redis(redis_url: Optional[str]) -> Dict[str, Any]:
             "details": "redis-py not installed",
         }
     except Exception as e:
-        return {"name": "Redis", "status": "❌ Failed", "details": str(e)}
+        return {
+            "name": "Redis",
+            "status": "❌ Failed",
+            "details": f"{e}. Fix: Try 'docker run -d -p 6379:6379 redis:alpine'",
+        }
 
 
 def check_postgres(pg_url: Optional[str]) -> Dict[str, Any]:

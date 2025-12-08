@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Meridian</h1>
-  <h3>The Heroku for ML Features & LLM Context</h3>
+  <h3>The Context Store for LLMs & ML Features</h3>
 
   <p>
     <a href="https://pypi.org/project/meridian-oss/"><img src="https://img.shields.io/pypi/v/meridian-oss?color=blue&label=pypi" alt="PyPI version" /></a>
@@ -9,8 +9,8 @@
     <a href="#"><img src="https://img.shields.io/badge/No-YAML-red.svg" alt="No YAML" /></a>
   </p>
 
-  <p><b>Define features in Python. Get training data, production serving, and LLM context for free.</b></p>
-  <p>Stop paying the infrastructure tax. Meridian takes you from Jupyter to Production in 30 seconds.</p>
+  <p><b>Define RAG pipelines and ML features in Python. Get production retrieval, vector search, and training data for free.</b></p>
+  <p>Stop fighting the infrastructure tax. Meridian takes you from "Notebook Prototype" to "Production RAG" in 30 seconds.</p>
 
   <p><b>🆕 v1.2.0:</b> Context Store for LLMs with RAG, vector search (pgvector), and token budgets.</p>
 
@@ -88,6 +88,7 @@ Meridian is built for the rest of us.
 
 #### Key Features
 
+* **Context Store for LLMs (v1.2.0):** Full RAG infrastructure with vector search (pgvector), token budgets, and priority-based context assembly.
 * **Local-First, Cloud-Ready:** Runs on your laptop with zero dependencies (DuckDB + In-Memory). Scales to production with boring technology (Postgres + Redis).
 * **No Magic:** Your code is your config. Explicit caching (`materialize=True`) and explicit refresh logic.
 * **Production Reliability:** Built-in circuit breakers, fallback chains (Cache -> Compute -> Default), and Prometheus metrics (`meridian_feature_requests_total`).
@@ -95,8 +96,6 @@ Meridian is built for the rest of us.
 * **Rich UI & TUI:** Includes a Streamlit dashboard with **Visual Dependency Graphs** and a production-grade Terminal UI for live monitoring.
 * **Hybrid Features (v1.1.0):** Mix Python logic (for complex math) and SQL (for heavy joins) in the same API.
 * **Point-in-Time Correctness (v1.1.0):** Zero data leakage using `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres).
-* **Write Once, Run Anywhere (v1.1.0):** Switch from Dev to Prod just by setting `MERIDIAN_ENV=production`. No code changes.
-* **Context Store for LLMs (v1.2.0):** Full RAG infrastructure with vector search (pgvector), token budgets, and priority-based context assembly.
 
 ---
 

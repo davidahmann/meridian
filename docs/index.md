@@ -1,16 +1,18 @@
 ---
-title: "Meridian - The Heroku for ML Features & Context Store | Python Feature Store + RAG"
-description: "Define features in Python and deploy to production in 30 seconds. Meridian is a local-first feature store and context store for ML engineers and LLM applications. No YAML, no infrastructure tax."
-keywords: feature store, context store, python feature engineering, duckdb feature store, mlops, machine learning pipeline, rag feature store, llm context assembly, pgvector, vector search
+title: "Meridian - The Context Store for LLMs & ML Features | RAG + Feature Store"
+description: "Define RAG pipelines and ML features in Python. Meridian is a local-first Context Store for LLM applications and Feature Store for ML engineers. No YAML, no infrastructure tax."
+keywords: context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search
 ---
 
-# Meridian: Heroku for ML Features & Context
+# Meridian: The Context Store for LLMs & ML Features
 
-> **"Define features in Python. Get training data and production serving for free."**
+> **"Define RAG pipelines in Python. Get production retrieval and vector search for free."**
 
-Meridian is a developer-first **Feature Store + Context Store** designed to take you from a Jupyter notebook to production in 30 seconds. It eliminates the infrastructure tax of existing tools—no Kubernetes, no Spark, no YAML. Just pure Python and SQL.
+Meridian is a developer-first **Context Store + Feature Store** designed to take you from a "Notebook Prototype" to "Production RAG" in 30 seconds. It eliminates the infrastructure tax of existing tools—no Kubernetes, no Spark, no YAML. Just pure Python and SQL.
 
-**New in v1.2.0:** Context Store for LLMs with RAG, vector search, and intelligent context assembly.
+**Core Capabilities:**
+1. **Context Store (v1.2.0):** Full RAG infrastructure with vector search (pgvector), token budgets, and intelligent context assembly.
+2. **Feature Store:** Traditional ML feature serving with point-in-time correctness.
 
 ---
 

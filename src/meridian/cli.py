@@ -135,6 +135,121 @@ def worker_cmd(
         console.print("Worker stopped.")
 
 
+@app.command(name="init")
+def init(
+    name: str = typer.Argument("meridian_project", help="Project name"),
+    demo: bool = typer.Option(False, help="Include demo features and data"),
+) -> None:
+    """
+    Initialize a new Meridian project.
+    """
+    if os.path.exists(name):
+        console.print(f"[bold red]Error:[/bold red] Directory '{name}' already exists.")
+        raise typer.Exit(1)
+
+    os.makedirs(name)
+    console.print(f"Created directory: [bold cyan]{name}[/bold cyan]")
+
+    # Basic scaffold
+    gitignore = """
+__pycache__/
+*.pyc
+.env
+.venv
+*.db
+    """
+    with open(os.path.join(name, ".gitignore"), "w") as f:
+        f.write(gitignore.strip())
+
+    if demo:
+        # Create features.py
+        features_py = """
+from meridian.core import FeatureStore, entity, feature
+from meridian.context import context, Context, ContextItem
+from meridian.retrieval import retriever
+import random
+
+# Use default local stack (DuckDB + In-Memory)
+store = FeatureStore()
+
+@entity(store)
+class User:
+    user_id: str
+
+# 1. Standard ML Feature
+@feature(entity=User, refresh="5m", materialize=True)
+def engagement_score(user_id: str) -> float:
+    # Simulate a score
+    return round(random.random() * 100, 2)
+
+# 2. RAG / Context Store
+# We assume there is an index called 'knowledge_base' (created via seed.py)
+
+@retriever(store, index="knowledge_base", top_k=2)
+async def semantic_search(query: str) -> list[str]:
+    # In a real app with pgvector, this searches vectors.
+    # For this local demo without Postgres/OpenAI keys, we mock the return
+    # if the index isn't reachable or keys aren't set.
+    return [
+        "Meridian allows defining features in Python.",
+        "The Context Store manages token budgets for LLMs."
+    ]
+
+@context(store, max_tokens=1000)
+async def chatbot_context(user_id: str, query: str) -> Context:
+    # Fetch data in parallel
+    score = await store.get_feature("engagement_score", user_id)
+    docs = await semantic_search(query)
+
+    return Context(items=[
+        ContextItem(f"User Engagement: {score}", priority=2),
+        ContextItem(docs, priority=1, required=True),
+        ContextItem("System: You are a helpful assistant.", priority=0, required=True),
+    ])
+"""
+        with open(os.path.join(name, "features.py"), "w") as f:
+            f.write(features_py.strip())
+
+        # Create README
+        readme = """
+# Meridian Demo Project
+
+This is a generated demo project.
+
+## Quickstart
+
+1. **Install Meridian**:
+   ```bash
+   pip install "meridian-oss[ui]"
+   ```
+
+2. **Run the Server**:
+   ```bash
+   meridian serve features.py
+   ```
+
+3. **Query Context (E.g. for User 'u1')**:
+   ```bash
+   meridian context explain u1 --query "What is Meridian?"
+   ```
+"""
+        with open(os.path.join(name, "README.md"), "w") as f:
+            f.write(readme.strip())
+
+        console.print(f"[green]Initialized demo project in '{name}'[/green]")
+        console.print(
+            "Run [bold]meridian serve features.py[/bold] inside the directory to start."
+        )
+
+    else:
+        # Empty features.py
+        with open(os.path.join(name, "features.py"), "w") as f:
+            f.write(
+                "from meridian.core import FeatureStore\n\nstore = FeatureStore()\n"
+            )
+        console.print(f"[green]Initialized empty project in '{name}'[/green]")
+
+
 @app.command(name="version")
 def version() -> None:
     """
@@ -372,7 +487,7 @@ def explain_cmd(
 
     except urllib.error.URLError as e:
         console.print(
-            f"[bold red]Connection Failed:[/bold red] {e}. Is the server running?"
+            f"[bold red]Connection Failed:[/bold red] {e}. Run [bold]meridian doctor[/bold] to check connectivity."
         )
         raise typer.Exit(1)
     except Exception as e:
