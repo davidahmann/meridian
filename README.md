@@ -3,7 +3,7 @@
   <h3>The Context Store for LLMs & ML Features</h3>
 
   <p>
-    <a href="https://pypi.org/project/fabra/"><img src="https://img.shields.io/pypi/v/fabra?color=blue&label=pypi" alt="PyPI version" /></a>
+    <a href="https://pypi.org/project/fabra_ai/"><img src="https://img.shields.io/pypi/v/fabra?color=blue&label=pypi" alt="PyPI version" /></a>
     <a href="https://github.com/davidahmann/fabra/actions/workflows/ci.yml"><img src="https://github.com/davidahmann/fabra/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
     <a href="https://github.com/davidahmann/fabra/security"><img src="https://img.shields.io/badge/security-enabled-brightgreen" alt="Security" /></a>
     <a href="https://github.com/davidahmann/fabra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/davidahmann/fabra?color=green" alt="License" /></a>
