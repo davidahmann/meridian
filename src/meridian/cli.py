@@ -668,40 +668,94 @@ def ui(
     file: str = typer.Argument(
         ..., help="Path to the feature definition file (e.g., features.py)"
     ),
+    port: int = typer.Option(8501, help="Port to run the UI on"),
+    api_port: int = typer.Option(8502, help="Port for API backend"),
 ) -> None:
     """
-    Launches the Meridian UI (Streamlit).
+    Launches the Meridian UI.
+
+    Starts a Next.js-based UI with a FastAPI backend for exploring
+    your Feature Store and Context definitions.
+
+    Example:
+        meridian ui features.py
+        meridian ui features.py --port 3000
     """
     if not os.path.exists(file):
         console.print(f"[bold red]Error:[/bold red] File '{file}' not found.")
         raise typer.Exit(code=1)
 
-    try:
-        import streamlit.web.cli as stcli
-    except ImportError:
+    # Next.js UI with FastAPI backend
+    import subprocess  # nosec B404
+    import threading
+    import time
+    import webbrowser
+
+    from .ui_server import run_server
+
+    console.print(
+        Panel(
+            f"Starting Meridian UI\n\n"
+            f"  API Backend: http://127.0.0.1:{api_port}\n"
+            f"  UI Frontend: http://localhost:{port}\n\n"
+            f"Loading: [bold cyan]{file}[/bold cyan]",
+            title="Meridian UI",
+            style="bold blue",
+        )
+    )
+
+    # Check if Next.js build exists
+    ui_next_dir = os.path.join(os.path.dirname(__file__), "ui-next")
+    if not os.path.exists(os.path.join(ui_next_dir, "node_modules")):
         console.print(
-            "[bold red]Error:[/bold red] Streamlit is not installed. "
-            "Please run [green]pip install meridian[ui][/green] or [green]pip install streamlit[/green]."
+            "[yellow]Warning:[/yellow] Next.js dependencies not installed.\n"
+            "Run the following to set up:\n"
+            f"  cd {ui_next_dir} && npm install\n\n"
+            "Falling back to API-only mode..."
+        )
+        # Just run the API server
+        run_server(file, port=api_port, host="127.0.0.1")
+        return
+
+    # Start API server in background thread
+    def start_api() -> None:
+        import uvicorn
+        from .ui_server import load_module, app as api_app
+
+        load_module(file)
+        uvicorn.run(api_app, host="127.0.0.1", port=api_port, log_level="warning")
+
+    api_thread = threading.Thread(target=start_api, daemon=True)
+    api_thread.start()
+
+    # Wait for API to be ready
+    time.sleep(1)
+
+    # Start Next.js dev server
+    console.print("[green]Starting UI server...[/green]")
+    try:
+        # Open browser after a short delay
+        def open_browser() -> None:
+            time.sleep(3)
+            webbrowser.open(f"http://localhost:{port}")
+
+        browser_thread = threading.Thread(target=open_browser, daemon=True)
+        browser_thread.start()
+
+        # Run Next.js dev server
+        subprocess.run(  # nosec B603 B607
+            ["npm", "run", "dev", "--", "-p", str(port)],
+            cwd=ui_next_dir,
+            check=True,
+        )
+    except FileNotFoundError:
+        console.print(
+            "[bold red]Error:[/bold red] npm not found. "
+            "Please install Node.js to use the UI."
         )
         raise typer.Exit(code=1)
-
-    # Resolve absolute path to the UI script
-    ui_script = os.path.join(os.path.dirname(__file__), "ui.py")
-
-    # Construct the command args for streamlit
-    # Format: streamlit run path/to/ui.py --server.headless=true --server.port=8501 -- path/to/features.py
-    sys.argv = [
-        "streamlit",
-        "run",
-        ui_script,
-        "--server.headless=true",
-        "--server.port=8501",
-        "--",
-        file,
-    ]
-
-    console.print(f"[green]Launching Meridian UI for {file}...[/green]")
-    sys.exit(stcli.main())
+    except KeyboardInterrupt:
+        console.print("\nUI stopped.")
 
 
 @app.command(name="doctor")

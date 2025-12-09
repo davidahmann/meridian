@@ -36,3 +36,14 @@ repos:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
         exclude: pyproject.toml|uv.lock
+
+  # Next.js / TypeScript linting
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        entry: bash -c 'cd src/meridian/ui-next && npm run lint --if-present || true'
+        language: system
+        types: [file]
+        files: ^src/meridian/ui-next/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false

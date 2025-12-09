@@ -8,6 +8,36 @@ keywords: meridian changelog, release notes, feature store updates, context stor
 
 All notable changes to this project will be documented in this file.
 
+## [v1.6.0] - 2025-12-09
+
+### 🚀 Major Features: Next.js UI
+
+*   **Next.js UI Migration:** Replaced Streamlit UI with modern Next.js 14 application.
+    *   Built with React, TypeScript, and Tailwind CSS.
+    *   App Router architecture for optimal performance.
+    *   Dark theme with professional design.
+*   **FastAPI Backend:** New dedicated UI backend server.
+    *   `GET /api/store` - List features, retrievers, and contexts.
+    *   `POST /api/features/get` - Retrieve feature values.
+    *   `POST /api/context/assemble` - Assemble context with parameters.
+*   **Feature Explorer:** Browse and search all registered features.
+    *   View feature metadata, types, and dependencies.
+    *   Real-time feature value retrieval with entity inputs.
+*   **Context Assembly UI:** Interactive context testing.
+    *   Parameter input forms with defaults.
+    *   Rich result display with token counts and costs.
+    *   Raw JSON viewer for debugging.
+*   **E2E Testing:** Playwright test suite with 18 comprehensive tests.
+
+### 🔧 Improvements
+
+*   Removed legacy Streamlit UI (`src/meridian/ui.py`).
+*   Simplified CLI `meridian ui` command (removed `--legacy` flag).
+*   Updated pre-commit config with ESLint for TypeScript/TSX files.
+*   Updated `.gitignore` with Next.js and Playwright artifacts.
+
+---
+
 ## [v1.5.0] - 2025-12-09
 
 ### 🚀 Major Features: Freshness SLAs

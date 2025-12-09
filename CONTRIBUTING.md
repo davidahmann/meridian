@@ -15,6 +15,7 @@ Meridian uses `uv` for dependency management and `make` for common tasks.
 ### 1. Prerequisites
 - Python 3.9+
 - [uv](https://github.com/astral-sh/uv) (for fast dependency management)
+- Node.js 18+ (for the Next.js UI)
 
 ### 2. Setup
 Fork the repo, then:
@@ -33,7 +34,7 @@ We have a comprehensive `Makefile` to make development easy:
 
 - **`make test`**: Run the test suite (pytest).
 - **`make lint`**: Run formatters and linters (ruff, mypy).
-- **`make ui`**: Run the Streamlit UI locally.
+- **`make ui`**: Run the Next.js UI locally.
 - **`make serve`**: Run the API server with Terminal UI.
 - **`make build`**: Build the Python distribution (wheel/sdist).
 - **`make docker-up`**: Start local Postgres/Redis stack.

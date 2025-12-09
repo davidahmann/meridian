@@ -19,6 +19,7 @@ setup:
 	uv venv
 	uv pip install -e ".[dev,ui]"
 	uv run pre-commit install
+	cd src/meridian/ui-next && npm install
 
 install:
 	uv pip install -e ".[dev,ui]"
