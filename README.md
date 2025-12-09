@@ -41,7 +41,7 @@ Most feature stores are built for the 1% of companies (Uber, DoorDash) with plat
 | :--- | :--- | :--- |
 | **Config** | 500 lines of YAML | Python Decorators (`@feature`) |
 | **Infra** | Kubernetes + Spark | Runs on your Laptop (DuckDB) |
-| **Serving** | Complex API Gateway | `meridian serve file.py` |
+| **Serving** | Complex API Gateway | `meridian serve file.py` (Realtime & Batch) |
 | **RAG Context** | LangChain Spaghetti | Declarative `@context` |
 | **Philosophy** | "Google Scale" | "Get it Shipped" |
 
@@ -141,6 +141,8 @@ Meridian bridges the gap between **AI Engineers** building RAG agents and **ML E
 *   **Point-in-Time Correctness:** Zero data leakage. Uses `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres) to fetch feature values exactly as they existed at inference time.
 *   **Hybrid Logic:** Mix **Python** (for complex Pandas/Numpy transformations) and **SQL** (for heavy database aggregations) in the same pipeline.
 *   **Event-Driven:** Trigger feature updates instantly from Redis Streams (`trigger="transaction_event"`).
+*   **Extensibility:** Use `Before/After` hooks to customize retrieval or ingest pipelines.
+*   **Observability:** Built-in OpenTelemetry tracing and cost estimation per-request.
 
 #### 🐚 Shell Completion
 Enable tab completion for Bash, Zsh, Fish, and PowerShell:
@@ -196,8 +198,8 @@ OPENAI_API_KEY=sk-...
 
 * ✅ **Phase 1:** Core API, DuckDB/Postgres support, Redis caching, FastAPI serving, PIT Correctness, Async I/O.
 * ✅ **Phase 2 (v1.2.0):** Context Store, RAG infrastructure, pgvector, Event-Driven features, Time Travel.
-* ✅ **Phase 2.x (v1.2.5):** Release Polish, CLI improvements, Timezone robustness.
-* 🚧 **Phase 3:** Drift detection, RBAC, and multi-region support.
+* ✅ **Phase 3 (v1.3.0):** UI Visualization, Magic Retrievers, and DX Polish.
+* 🚧 **Phase 4:** Drift detection, RBAC, and multi-region support.
 
 ---
 
