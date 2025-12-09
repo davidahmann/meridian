@@ -1,6 +1,6 @@
 ---
-title: "Hooks & Extensibility | Meridian"
-description: "Extend Meridian with custom hooks for validation, detailed logging, or external integrations. Configure webhooks for event-driven workflows."
+title: "Hooks & Extensibility | Fabra"
+description: "Extend Fabra with custom hooks for validation, detailed logging, or external integrations. Configure webhooks for event-driven workflows."
 keywords: hooks, webhooks, plugins, extensibility, events, validation
 ---
 
@@ -10,7 +10,7 @@ keywords: hooks, webhooks, plugins, extensibility, events, validation
 
 | | |
 |:---|:---|
-| **Base Class** | `meridian.hooks.Hook` |
+| **Base Class** | `fabra.hooks.Hook` |
 | **Register** | `FeatureStore(hooks=[YourHook()])` |
 | **Events** | `before_feature_retrieval`, `after_feature_retrieval`, `after_ingest` |
 | **Built-in** | `WebhookHook(url="...", headers={...})` |
@@ -23,7 +23,7 @@ Fabra provides a powerful **Hook System** that allows you to intercept key lifec
 
 ## The `Hook` Interface
 
-To create a custom hook, subclass `meridian.hooks.Hook` and valid methods.
+To create a custom hook, subclass `fabra.hooks.Hook` and valid methods.
 
 ```python
 from fabra.hooks import Hook
@@ -63,7 +63,7 @@ store = FeatureStore(
 
 ## Webhooks
 
-Meridian includes a built-in `WebhookHook` to trigger external HTTP endpoints when events occur (e.g., via `meridian events` or the Ingest API).
+Fabra includes a built-in `WebhookHook` to trigger external HTTP endpoints when events occur (e.g., via `fabra events` or the Ingest API).
 
 ### Configuration
 
@@ -74,7 +74,7 @@ from fabra.hooks import WebhookHook
 store = FeatureStore(
     hooks=[
         WebhookHook(
-            url="https://api.example.com/webhooks/meridian",
+            url="https://api.example.com/webhooks/fabra",
             headers={"Authorization": "Bearer secret-token"}
         )
     ]
@@ -105,8 +105,8 @@ The external URL will receive a POST request with the event payload.
 
 ## FAQ
 
-**Q: How do I add custom hooks to Meridian?**
-A: Subclass `meridian.hooks.Hook` and implement the lifecycle methods (`before_feature_retrieval`, `after_feature_retrieval`, `after_ingest`). Register via `FeatureStore(hooks=[YourHook()])`.
+**Q: How do I add custom hooks to Fabra?**
+A: Subclass `fabra.hooks.Hook` and implement the lifecycle methods (`before_feature_retrieval`, `after_feature_retrieval`, `after_ingest`). Register via `FeatureStore(hooks=[YourHook()])`.
 
 **Q: Can I add validation to feature retrieval?**
 A: Yes. Implement `before_feature_retrieval` to validate inputs or `after_feature_retrieval` to validate/transform outputs. Raise exceptions to block invalid data.
@@ -123,9 +123,9 @@ A: Three events: `before_feature_retrieval` (before fetch), `after_feature_retri
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Hooks & Extensibility in Meridian",
-  "description": "Extend Meridian with custom hooks for validation, detailed logging, or external integrations. Configure webhooks for event-driven workflows.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "headline": "Hooks & Extensibility in Fabra",
+  "description": "Extend Fabra with custom hooks for validation, detailed logging, or external integrations. Configure webhooks for event-driven workflows.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "hooks, webhooks, plugins, extensibility, feature store",
   "articleSection": "Documentation"
 }

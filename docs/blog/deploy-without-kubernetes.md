@@ -46,7 +46,7 @@ Modern PaaS platforms handle:
 
 For $5-50/month. With zero YAML.
 
-## Fabra.s Deploy Command
+## Fabra's Deploy Command
 
 ```bash
 # Fly.io
@@ -121,7 +121,7 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["meridian", "serve", "features.py", "--host", "0.0.0.0"]
+CMD ["fabra", "serve", "features.py", "--host", "0.0.0.0"]
 ```
 
 ### Google Cloud Run
@@ -164,12 +164,12 @@ fly secrets set FABRA_REDIS_URL="redis://..."
 ### Cloud Run
 
 ```bash
-gcloud secrets create meridian-postgres --data-file=-
-gcloud secrets create meridian-redis --data-file=-
+gcloud secrets create fabra-postgres --data-file=-
+gcloud secrets create fabra-redis --data-file=-
 
 gcloud run services update my-features \
-  --set-secrets=FABRA_POSTGRES_URL=meridian-postgres:latest \
-  --set-secrets=FABRA_REDIS_URL=meridian-redis:latest
+  --set-secrets=FABRA_POSTGRES_URL=fabra-postgres:latest \
+  --set-secrets=FABRA_REDIS_URL=fabra-redis:latest
 ```
 
 ### Railway
@@ -186,7 +186,7 @@ railway variables set FABRA_REDIS_URL="redis://..."
 Use a platform that provides Postgres and Redis:
 
 **Railway:**
-- Deploy Meridian container
+- Deploy Fabra container
 - Add Postgres plugin
 - Add Redis plugin
 - Connect via environment variables
@@ -194,7 +194,7 @@ Use a platform that provides Postgres and Redis:
 Total: ~$10-30/month
 
 **Render:**
-- Deploy Meridian web service
+- Deploy Fabra web service
 - Add managed Postgres
 - Add managed Redis
 - Connect via environment variables
@@ -206,7 +206,7 @@ Total: ~$20-50/month
 **Neon (Postgres) + Upstash (Redis):**
 - Neon: Serverless Postgres with pgvector, generous free tier
 - Upstash: Serverless Redis, pay-per-request
-- Deploy Meridian to Fly.io/Cloud Run
+- Deploy Fabra to Fly.io/Cloud Run
 
 Total: ~$5-20/month
 
@@ -214,7 +214,7 @@ Total: ~$5-20/month
 
 **Single VM:**
 - DigitalOcean/Linode $20/month droplet
-- Docker Compose with Postgres, Redis, Meridian
+- Docker Compose with Postgres, Redis, Fabra
 - Nginx for SSL termination
 
 Good for: teams who want full control.
@@ -224,7 +224,7 @@ Good for: teams who want full control.
 Before deploying, test your production config locally:
 
 ```bash
-meridian setup
+fabra setup
 # Generates docker-compose.yml
 ```
 
@@ -233,13 +233,13 @@ meridian setup
 version: '3.8'
 
 services:
-  meridian:
+  fabra:
     build: .
     ports:
       - "8000:8000"
     environment:
       FABRA_ENV: production
-      FABRA_POSTGRES_URL: postgresql+asyncpg://postgres:yourpassword@postgres:5432/meridian  # pragma: allowlist secret
+      FABRA_POSTGRES_URL: postgresql+asyncpg://postgres:yourpassword@postgres:5432/fabra  # pragma: allowlist secret
       FABRA_REDIS_URL: redis://redis:6379
     depends_on:
       - postgres
@@ -249,7 +249,7 @@ services:
     image: pgvector/pgvector:pg16
     environment:
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: meridian
+      POSTGRES_DB: fabra
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -270,7 +270,7 @@ curl http://localhost:8000/health
 
 ## Health Checks
 
-Meridian exposes health endpoints:
+Fabra exposes health endpoints:
 
 ```bash
 curl http://localhost:8000/health
@@ -324,7 +324,7 @@ spec:
 
 ### When to Scale
 
-Meridian handles ~1000 requests/second per instance with async I/O. Scale when:
+Fabra handles ~1000 requests/second per instance with async I/O. Scale when:
 
 - P99 latency exceeds 100ms
 - CPU utilization > 70%
@@ -349,14 +349,14 @@ Kubernetes is 10-20x more expensive for the same workload.
 Export Prometheus metrics:
 
 ```python
-# Meridian exposes metrics at /metrics
+# Fabra exposes metrics at /metrics
 curl http://localhost:8000/metrics
 ```
 
 Key metrics:
-- `meridian_feature_requests_total`
-- `meridian_feature_latency_seconds`
-- `meridian_cache_hit_ratio`
+- `fabra_feature_requests_total`
+- `fabra_feature_latency_seconds`
+- `fabra_cache_hit_ratio`
 
 Connect to:
 - **Grafana Cloud** (free tier)

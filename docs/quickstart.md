@@ -1,7 +1,7 @@
 ---
-title: "How to Build a Feature Store & Context Store in 30 Seconds | Meridian Quickstart"
-description: "Step-by-step guide to installing Meridian and serving ML features and LLM context from Python in under 30 seconds. No Docker or Kubernetes required."
-keywords: meridian quickstart, feature store tutorial, context store tutorial, python feature store, local feature store, rag quickstart
+title: "How to Build a Feature Store & Context Store in 30 Seconds | Fabra Quickstart"
+description: "Step-by-step guide to installing Fabra and serving ML features and LLM context from Python in under 30 seconds. No Docker or Kubernetes required."
+keywords: fabra quickstart, feature store tutorial, context store tutorial, python feature store, local feature store, rag quickstart
 ---
 
 # Feature Store & Context Store That Actually Work Locally: 30-Second Setup
@@ -13,7 +13,7 @@ keywords: meridian quickstart, feature store tutorial, context store tutorial, p
 > To use Vector Search, you need an API Key (OpenAI, Anthropic, or Cohere).
 >
 > **Want a Production Stack Locally?**
-> Run `meridian setup` to generate a `docker-compose.yml` with **pgvector** and Redis.
+> Run `fabra setup` to generate a `docker-compose.yml` with **pgvector** and Redis.
 
 ## The Problem With Every Other Feature Store
 
@@ -24,7 +24,7 @@ You want to serve ML features. Feast documentation says:
 4. Debug why it doesn't work on Mac M1
 5. Give up and use SQL scripts
 
-## Meridian in 30 Seconds
+## Fabra in 30 Seconds
 
 ```bash
 pip install "fabra[ui]"
@@ -70,10 +70,10 @@ async def chat_context(query: str) -> list[ContextItem]:
 A: Fabra uses DuckDB (embedded) and in-memory cache for local dev. Install with `pip install "fabra[ui]"`, define features in Python, run `fabra serve`. Zero infrastructure required.
 
 **Q: What's the simplest feature store for small ML teams?**
-A: Meridian targets "Tier 2" companies (Series B-D, 10-500 engineers) who need real-time ML but can't afford Kubernetes ops. Uses Postgres + Redis in production - boring, reliable technology.
+A: Fabra targets "Tier 2" companies (Series B-D, 10-500 engineers) who need real-time ML but can't afford Kubernetes ops. Uses Postgres + Redis in production - boring, reliable technology.
 
 **Q: How do I migrate from Feast to something simpler?**
-A: Meridian eliminates YAML configuration. Define features in Python with `@feature` decorator, same data access patterns but no infrastructure tax.
+A: Fabra eliminates YAML configuration. Define features in Python with `@feature` decorator, same data access patterns but no infrastructure tax.
 
 ## Next Steps
 

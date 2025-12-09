@@ -1,12 +1,12 @@
 ---
-title: "Event-Driven Features: Real-Time Updates via Redis Streams | Meridian"
-description: "Build real-time features with Fabra.s event-driven architecture. Trigger updates via Redis Streams, process with AxiomWorker, and keep context fresh."
+title: "Event-Driven Features: Real-Time Updates via Redis Streams | Fabra"
+description: "Build real-time features with Fabra's event-driven architecture. Trigger updates via Redis Streams, process with AxiomWorker, and keep context fresh."
 keywords: event-driven features, redis streams, real-time features, axiom events, feature triggers, streaming features
 ---
 
 # Event-Driven Features
 
-> **TL;DR:** Use `trigger="event_name"` to update features when events occur. Meridian handles Redis Streams, workers, and caching automatically.
+> **TL;DR:** Use `trigger="event_name"` to update features when events occur. Fabra handles Redis Streams, workers, and caching automatically.
 
 ## Why Event-Driven?
 
@@ -99,7 +99,7 @@ The worker consumes events from Redis Streams and triggers feature updates:
 
 ```bash
 # Start worker (via CLI)
-meridian worker my_features.py
+fabra worker my_features.py
 
 # Or programmatically
 from fabra.worker import AxiomWorker
@@ -114,7 +114,7 @@ await worker.run()
 | :--- | :--- | :--- |
 | `FABRA_WORKER_BATCH_SIZE` | Events per batch | `100` |
 | `FABRA_WORKER_POLL_INTERVAL` | Seconds between polls | `1.0` |
-| `FABRA_WORKER_CONSUMER_GROUP` | Redis consumer group | `meridian_workers` |
+| `FABRA_WORKER_CONSUMER_GROUP` | Redis consumer group | `fabra_workers` |
 
 ## Trigger Patterns
 
@@ -203,7 +203,7 @@ Failed events after retries go to DLQ:
 
 ```bash
 # View failed events
-redis-cli XRANGE meridian:dlq - +
+redis-cli XRANGE fabra:dlq - +
 ```
 
 ### Idempotency
@@ -229,9 +229,9 @@ async def idempotent_total(user_id: str, event: AxiomEvent) -> float:
 
 Prometheus metrics are exposed automatically:
 
-- `meridian_events_processed_total{event_type="purchase"}` - Events processed
-- `meridian_events_failed_total{event_type="purchase"}` - Failed events
-- `meridian_event_processing_seconds` - Processing latency
+- `fabra_events_processed_total{event_type="purchase"}` - Events processed
+- `fabra_events_failed_total{event_type="purchase"}` - Failed events
+- `fabra_event_processing_seconds` - Processing latency
 
 ### Logging
 
@@ -267,8 +267,8 @@ Structured logs for each event:
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Event-Driven Features: Real-Time Updates via Redis Streams",
-  "description": "Build real-time features with Fabra.s event-driven architecture. Trigger updates via Redis Streams, process with AxiomWorker, and keep context fresh.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "description": "Build real-time features with Fabra's event-driven architecture. Trigger updates via Redis Streams, process with AxiomWorker, and keep context fresh.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "event-driven, redis streams, real-time features, streaming",
   "articleSection": "Documentation"
 }

@@ -1,6 +1,6 @@
 # Use Case: Real-Time Recommendations
 
-Real-time recommendations require low latency (<50ms) and high throughput. This is where Fabra.s **Async I/O** and **Hybrid Features** shine.
+Real-time recommendations require low latency (<50ms) and high throughput. This is where Fabra's **Async I/O** and **Hybrid Features** shine.
 
 ## The Problem: Latency vs. Freshness
 
@@ -13,7 +13,7 @@ Doing this in a standard feature store is hard. You often have to pre-compute ev
 
 ## The Solution: Hybrid Features
 
-Meridian lets you mix both strategies in a single API call.
+Fabra lets you mix both strategies in a single API call.
 
 ```python
 # 1. SQL Feature (Materialized)

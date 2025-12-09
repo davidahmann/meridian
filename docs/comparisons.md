@@ -1,10 +1,10 @@
 ---
-title: "Meridian vs Feast vs Tecton vs LangChain | Feature Store & RAG Comparison 2025"
-description: "Compare Meridian with Feast, Tecton, LangChain, and Pinecone. Find the best feature store and RAG infrastructure for your team. Updated for 2025."
-keywords: meridian vs feast, tecton alternative, feature store comparison, langchain alternative, rag infrastructure, mlops tools, vector database comparison, context store, llm infrastructure
+title: "Fabra vs Feast vs Tecton vs LangChain | Feature Store & RAG Comparison 2025"
+description: "Compare Fabra with Feast, Tecton, LangChain, and Pinecone. Find the best feature store and RAG infrastructure for your team. Updated for 2025."
+keywords: fabra vs feast, tecton alternative, feature store comparison, langchain alternative, rag infrastructure, mlops tools, vector database comparison, context store, llm infrastructure
 ---
 
-# Feature Store & RAG Comparison: Meridian vs The World
+# Feature Store & RAG Comparison: Fabra vs The World
 
 > **TL;DR:** Fabra is the only tool that unifies **Feature Store** (for ML) and **Context Store** (for LLMs) in one system. No Kubernetes required.
 
@@ -12,7 +12,7 @@ keywords: meridian vs feast, tecton alternative, feature store comparison, langc
 
 ### Feature Stores
 
-| Feature | **Meridian** | **Feast** | **Tecton** |
+| Feature | **Fabra** | **Feast** | **Tecton** |
 | :--- | :--- | :--- | :--- |
 | **Best For** | Startups & Scale-ups (Series A-C) | Enterprises with Platform Teams | Large Enterprises with Budget |
 | **Open Source** | ✅ Yes (Apache 2.0) | ✅ Yes | ❌ No (Proprietary) |
@@ -26,7 +26,7 @@ keywords: meridian vs feast, tecton alternative, feature store comparison, langc
 
 ### RAG & LLM Infrastructure
 
-| Feature | **Meridian** | **LangChain** | **Pinecone + Custom** |
+| Feature | **Fabra** | **LangChain** | **Pinecone + Custom** |
 | :--- | :--- | :--- | :--- |
 | **Type** | Unified Infrastructure | Framework/Library | Vector DB + Glue Code |
 | **Vector Search** | ✅ Built-in (pgvector) | ❌ Requires integration | ✅ Core feature |
@@ -40,7 +40,7 @@ keywords: meridian vs feast, tecton alternative, feature store comparison, langc
 
 ## Detailed Breakdowns
 
-### Meridian vs Feast
+### Fabra vs Feast
 
 **Feast** is the gold standard for open-source feature stores, designed for "big tech" scale. It assumes you have:
 
@@ -48,7 +48,7 @@ keywords: meridian vs feast, tecton alternative, feature store comparison, langc
 - Kubernetes cluster running
 - Spark/Flink pipelines
 
-**Meridian** is designed for the "99%":
+**Fabra** is designed for the "99%":
 
 - Runs on your laptop with DuckDB
 - Deploys to standard Postgres + Redis
@@ -56,7 +56,7 @@ keywords: meridian vs feast, tecton alternative, feature store comparison, langc
 
 ```python
 # Feast: features.yaml + entity.yaml + registry.yaml + ...
-# Meridian: Just Python
+# Fabra: Just Python
 @feature(entity=User, refresh="hourly")
 def click_count(user_id: str) -> int:
     return db.query("SELECT COUNT(*) FROM clicks WHERE user_id = ?", user_id)
@@ -67,7 +67,7 @@ def click_count(user_id: str) -> int:
 
 ---
 
-### Meridian vs Tecton
+### Fabra vs Tecton
 
 **Tecton** is an enterprise SaaS product from the creators of Uber's Michelangelo. It's powerful but:
 
@@ -75,7 +75,7 @@ def click_count(user_id: str) -> int:
 - Expensive ($50k+ / year)
 - Vendor lock-in
 
-**Meridian** provides 80% of the value for 0% of the cost:
+**Fabra** provides 80% of the value for 0% of the cost:
 
 - Same core guarantees (PIT correctness, async I/O)
 - Open source (Apache 2.0)
@@ -86,7 +86,7 @@ def click_count(user_id: str) -> int:
 
 ---
 
-### Meridian vs LangChain
+### Fabra vs LangChain
 
 **LangChain** is a framework for building LLM applications. It provides:
 
@@ -94,7 +94,7 @@ def click_count(user_id: str) -> int:
 - Integrations with 100+ services
 - Steep learning curve
 
-**Meridian** is infrastructure, not a framework:
+**Fabra** is infrastructure, not a framework:
 
 - Vector storage (pgvector) built-in
 - Token budget management (`@context(max_tokens=4000)`)
@@ -102,7 +102,7 @@ def click_count(user_id: str) -> int:
 
 ```python
 # LangChain: Multiple imports, chain setup, retriever config...
-# Meridian: Python decorators
+# Fabra: Python decorators
 @retriever(index="docs", top_k=5)
 async def search_docs(query: str):
     pass  # Magic wiring to pgvector
@@ -122,7 +122,7 @@ async def build_prompt(user_id: str, query: str):
 
 ---
 
-### Meridian vs Pinecone
+### Fabra vs Pinecone
 
 **Pinecone** is a managed vector database. It's great for vector search, but:
 
@@ -131,7 +131,7 @@ async def build_prompt(user_id: str, query: str):
 - No token budgeting
 - Requires custom glue code for RAG
 
-**Meridian** uses pgvector (runs in your existing Postgres):
+**Fabra** uses pgvector (runs in your existing Postgres):
 
 - Self-hosted or managed Postgres
 - Unified with Feature Store
@@ -144,7 +144,7 @@ async def build_prompt(user_id: str, query: str):
 
 ## Migration Guides
 
-### From Feast to Meridian
+### From Feast to Fabra
 
 ```bash
 # 1. Install
@@ -154,7 +154,7 @@ pip install "fabra[ui]"
 # 3. Run: fabra serve features.py
 ```
 
-### From LangChain to Meridian
+### From LangChain to Fabra
 
 ```python
 # Replace LangChain retrievers with @retriever
@@ -172,15 +172,15 @@ pip install "fabra[ui]"
 | Enterprise SaaS with budget | Tecton |
 | Complex agent workflows | LangChain |
 | Vector-only SaaS | Pinecone |
-| **Unified ML + RAG infrastructure** | **Meridian** |
+| **Unified ML + RAG infrastructure** | **Fabra** |
 
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "Feature Store & RAG Comparison: Meridian vs Feast vs Tecton vs LangChain",
-  "description": "Comprehensive comparison of Meridian with Feast, Tecton, LangChain, and Pinecone for feature stores and RAG infrastructure in 2025.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "headline": "Feature Store & RAG Comparison: Fabra vs Feast vs Tecton vs LangChain",
+  "description": "Comprehensive comparison of Fabra with Feast, Tecton, LangChain, and Pinecone for feature stores and RAG infrastructure in 2025.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "feature store comparison, rag infrastructure, langchain alternative, feast alternative, tecton alternative",
   "datePublished": "2025-01-01",
   "dateModified": "2025-12-09"

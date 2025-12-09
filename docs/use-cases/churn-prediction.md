@@ -21,7 +21,7 @@ If you naively join these tables on `user_id`, you might accidentally use the `t
 
 ## The Solution: Point-in-Time Correctness
 
-Fabra.solves this automatically using `ASOF JOIN` (DuckDB) or `LATERAL JOIN` (Postgres).
+Fabra solves this automatically using `ASOF JOIN` (DuckDB) or `LATERAL JOIN` (Postgres).
 
 ```python
 # features.py
@@ -36,7 +36,7 @@ training_df = await store.get_training_data(
 )
 ```
 
-Meridian ensures that for the label on **Jan 15th**, it only sees the feature value from **Jan 1st** (`txn_count=10`). It ignores the future value.
+Fabra ensures that for the label on **Jan 15th**, it only sees the feature value from **Jan 1st** (`txn_count=10`). It ignores the future value.
 
 ## Why This Matters
 - **Correctness:** Your offline metrics (AUC/F1) will match online performance.

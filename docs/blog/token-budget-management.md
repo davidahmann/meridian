@@ -52,7 +52,7 @@ tokens = enc.encode(text)
 print(len(tokens))  # Actual token count
 ```
 
-Meridian wraps this:
+Fabra wraps this:
 
 ```python
 from fabra.utils.tokens import OpenAITokenCounter
@@ -110,7 +110,7 @@ async def build_prompt(query: str):
     ]
 ```
 
-Fabra.s algorithm:
+Fabra's algorithm:
 
 1. Sort items by priority (lowest number = most important)
 2. Add items until budget exhausted
@@ -217,7 +217,7 @@ Token budget applies to input. For output, use streaming to improve perceived la
 
 3. **Caching**
 
-Meridian caches context assembly:
+Fabra caches context assembly:
 
 ```python
 @context(store, max_tokens=4000, cache_ttl="5m")
@@ -250,12 +250,12 @@ Track these metrics:
 - Cost per query
 - Items dropped per query
 
-Meridian exposes Prometheus metrics:
+Fabra exposes Prometheus metrics:
 
 ```python
-# meridian_context_tokens_total
-# meridian_context_items_dropped_total
-# meridian_context_budget_exceeded_total
+# fabra_context_tokens_total
+# fabra_context_items_dropped_total
+# fabra_context_budget_exceeded_total
 ```
 
 ### A/B Testing Budgets

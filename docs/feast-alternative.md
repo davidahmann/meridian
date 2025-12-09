@@ -1,10 +1,10 @@
 ---
-title: "Meridian vs Feast: A Lightweight Python Feature Store Alternative 2025"
-description: "Detailed comparison: Meridian vs Feast. Why you don't need Kubernetes for a feature store. Python decorators vs YAML config. RAG support comparison."
-keywords: feast alternative, lightweight feature store, python feature store, meridian vs feast, open source feature store, ml feature store, rag feature store
+title: "Fabra vs Feast: A Lightweight Python Feature Store Alternative 2025"
+description: "Detailed comparison: Fabra vs Feast. Why you don't need Kubernetes for a feature store. Python decorators vs YAML config. RAG support comparison."
+keywords: feast alternative, lightweight feature store, python feature store, fabra vs feast, open source feature store, ml feature store, rag feature store
 ---
 
-# Meridian vs Feast: The Lightweight Feature Store Alternative
+# Fabra vs Feast: The Lightweight Feature Store Alternative
 
 If you are looking for a **lightweight feature store** that runs on your laptop but scales to production, you have likely found Feast. And you likely found it complicated.
 
@@ -12,7 +12,7 @@ Fabra is the **developer-first alternative to Feast**. We provide the same core 
 
 ## Feature Comparison
 
-| Feature | Feast | Meridian |
+| Feature | Feast | Fabra |
 | :--- | :--- | :--- |
 | **Setup Time** | Days (Kubernetes, Docker) | Seconds (`pip install`) |
 | **Configuration** | YAML Hell | Python Code (`@feature`) |
@@ -25,14 +25,14 @@ Fabra is the **developer-first alternative to Feast**. We provide the same core 
 | **Token Budgeting** | ❌ No | ✅ **@context decorator** |
 | **Target User** | Platform Teams | ML & AI Engineers |
 
-## Why Choose Meridian?
+## Why Choose Fabra?
 
 ### 1. No Kubernetes Required
 
-Feast assumes you have a platform team managing a Kubernetes cluster. Meridian assumes you are a developer who wants to ship code.
+Feast assumes you have a platform team managing a Kubernetes cluster. Fabra assumes you are a developer who wants to ship code.
 
 - **Feast:** Requires Docker, K8s, and complex registry syncing.
-- **Meridian:** Runs on your laptop with DuckDB. Deploys to standard Postgres + Redis.
+- **Fabra:** Runs on your laptop with DuckDB. Deploys to standard Postgres + Redis.
 
 ### 2. Python, Not YAML
 
@@ -47,7 +47,7 @@ type: int64
 ...
 ```
 
-**Meridian:**
+**Fabra:**
 
 ```python
 @feature(entity=User)
@@ -57,7 +57,7 @@ def click_count(user_id: str) -> int:
 
 ### 3. Built-in RAG & LLM Support
 
-Meridian includes a **Context Store** for LLM applications—something Feast doesn't offer at all.
+Fabra includes a **Context Store** for LLM applications—something Feast doesn't offer at all.
 
 ```python
 from fabra.retrieval import retriever
@@ -90,7 +90,7 @@ Supported targets: Fly.io, Cloud Run, AWS ECS, Render, Railway.
 
 ### 5. Feature Parity on the Hard Problems
 
-Meridian matches Feast on the critical "hard" problems of feature engineering:
+Fabra matches Feast on the critical "hard" problems of feature engineering:
 
 - **Point-in-Time Correctness:** We use `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres) to prevent data leakage, just like Feast.
 - **Async I/O:** Our production serving path uses `asyncpg` and `redis-py` for high-throughput, non-blocking performance.
@@ -101,7 +101,7 @@ Feast is a great tool for massive scale. Use Feast if:
 
 - You have a dedicated platform team of 5+ engineers.
 - You are already running Spark/Flink pipelines.
-- You need to serve 100k+ QPS (though Meridian handles 10k+ easily).
+- You need to serve 100k+ QPS (though Fabra handles 10k+ easily).
 - You don't need RAG/LLM capabilities.
 
 ## Migration from Feast
@@ -126,9 +126,9 @@ If you want **"Heroku for ML Features + RAG"**, use Fabra.
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "Meridian vs Feast: Lightweight Feature Store Alternative",
-  "description": "Detailed comparison of Meridian and Feast feature stores. Learn why you don't need Kubernetes for a feature store.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "headline": "Fabra vs Feast: Lightweight Feature Store Alternative",
+  "description": "Detailed comparison of Fabra and Feast feature stores. Learn why you don't need Kubernetes for a feature store.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "feast alternative, feature store, python feature store, mlops",
   "datePublished": "2025-01-01",
   "dateModified": "2025-12-09"

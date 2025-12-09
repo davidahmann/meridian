@@ -57,9 +57,9 @@ WHERE f.feature_name = 'transaction_count_1h'
 
 This joins the **most recent feature value that existed at event time**. For the 10:00 fraud event, it uses the 09:00 feature value.
 
-## How Meridian Handles This
+## How Fabra Handles This
 
-Meridian automatically logs feature values with timestamps:
+Fabra automatically logs feature values with timestamps:
 
 ```python
 @feature(entity=User, refresh="5m")
@@ -67,7 +67,7 @@ def transaction_count_1h(user_id: str) -> int:
     return count_transactions(user_id, hours=1)
 ```
 
-Every time this feature is computed, Meridian logs:
+Every time this feature is computed, Fabra logs:
 
 ```
 | user_id | feature_name          | value | timestamp           |
@@ -142,7 +142,7 @@ The result includes feature values as they existed at each event's timestamp.
 
 ## Time Travel for Debugging
 
-Fabra.supports "time travel" queries for debugging:
+Fabra supports "time travel" queries for debugging:
 
 ```python
 from fabra.core import get_context

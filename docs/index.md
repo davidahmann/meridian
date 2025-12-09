@@ -1,16 +1,16 @@
 ---
-title: "Meridian - The Context Store for LLMs & ML Features"
+title: "Fabra - Craft ML Features & LLM Context"
 description: "Unify RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds."
 keywords: context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search
 ---
 
-# Meridian: The Context Store for LLMs & ML Features
+# Fabra: Craft ML Features & LLM Context
 
 > **Unify RAG pipelines and ML features in a single Python decorator.**
 
 From notebook prototype to production in 30 seconds. No Kubernetes. No Spark. No YAML.
 
-[Get Started →](quickstart.md) | [Try in Browser →](https://meridianoss.vercel.app)
+[Get Started →](quickstart.md) | [Try in Browser →](https://fabraoss.vercel.app)
 
 ## At a Glance
 
@@ -38,7 +38,7 @@ You're building an AI app. You need:
 
 Today, this means stitching together LangChain, Pinecone, a feature store, Redis, and prayer.
 
-**Meridian unifies all of this in one Python decorator.**
+**Fabra unifies all of this in one Python decorator.**
 
 ---
 
@@ -88,7 +88,7 @@ fabra serve features.py
 
 ## Why Fabra?
 
-| | Traditional Stack | Meridian |
+| | Traditional Stack | Fabra |
 |:---|:---|:---|
 | **Config** | 500 lines of YAML | Python decorators |
 | **Infrastructure** | Kubernetes + Spark + Pinecone | Your laptop (DuckDB) |
@@ -98,7 +98,7 @@ fabra serve features.py
 
 ### One Decorator for Everything
 
-Other tools make you choose: LangChain for RAG, Feast for features, a separate vector DB. Meridian gives you `@feature`, `@retriever`, and `@context` — all wired together, all in Python.
+Other tools make you choose: LangChain for RAG, Feast for features, a separate vector DB. Fabra gives you `@feature`, `@retriever`, and `@context` — all wired together, all in Python.
 
 ### Local-First, Production-Ready
 
@@ -128,7 +128,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 
 ### Production-Grade Reliability
 
-- **Self-Healing:** `meridian doctor` diagnoses environment issues
+- **Self-Healing:** `fabra doctor` diagnoses environment issues
 - **Fallback Chain:** Cache → Compute → Default
 - **Circuit Breakers:** Built-in protection against cascading failures
 - **Observability:** Prometheus metrics, structured JSON logging, OpenTelemetry
@@ -186,7 +186,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 ### Guides
 
 - [Local to Production](local-to-production.md) — Deploy when you're ready
-- [Meridian vs Feast](feast-alternative.md) — The lightweight alternative
+- [Fabra vs Feast](feast-alternative.md) — The lightweight alternative
 - [Comparisons](comparisons.md) — vs other tools
 
 ### Reference
@@ -216,19 +216,19 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 
 ## Quick FAQ
 
-**Q: What is Meridian?**
+**Q: What is Fabra?**
 A: Fabra is a unified Context Store (for LLMs) and Feature Store (for ML) that lets you define features and RAG pipelines with Python decorators. Zero infrastructure to start.
 
 **Q: Do I need Kubernetes or Docker?**
-A: No. Meridian runs locally with DuckDB and in-memory cache. For production, set `FABRA_ENV=production` with Postgres and Redis.
+A: No. Fabra runs locally with DuckDB and in-memory cache. For production, set `FABRA_ENV=production` with Postgres and Redis.
 
-**Q: How is Meridian different from Feast?**
+**Q: How is Fabra different from Feast?**
 A: Fabra is a lightweight alternative with Python decorators instead of YAML, plus built-in RAG/LLM support (vector search, token budgeting) that Feast doesn't have.
 
-**Q: How is Meridian different from LangChain?**
+**Q: How is Fabra different from LangChain?**
 A: LangChain is a framework for building LLM apps. Fabra is infrastructure—it provides vector storage, token budgets, and ML features that LangChain apps can use.
 
-**Q: What vector database does Meridian use?**
+**Q: What vector database does Fabra use?**
 A: pgvector (Postgres extension). Your vectors live alongside your relational data—no separate vector database required.
 
 ---
@@ -241,7 +241,7 @@ We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/fabr
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Meridian",
+  "name": "Fabra",
   "operatingSystem": "Linux, macOS, Windows",
   "applicationCategory": "DeveloperApplication",
   "description": "Unify RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds.",
@@ -250,7 +250,7 @@ We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/fabr
     "price": "0",
     "priceCurrency": "USD"
   },
-  "url": "https://davidahmann.github.io/meridian/",
+  "url": "https://davidahmann.github.io/fabra/",
   "featureList": [
     "Unified RAG and ML Feature Store",
     "Vector Search with pgvector",
@@ -260,7 +260,7 @@ We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/fabr
     "Context Accountability (v1.4)",
     "Freshness SLAs (v1.5)"
   ],
-  "softwareVersion": "1.5.0",
+  "softwareVersion": "2.0.1",
   "license": "https://opensource.org/licenses/Apache-2.0"
 }
 </script>

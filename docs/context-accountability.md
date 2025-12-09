@@ -24,7 +24,7 @@ Without context accountability, debugging AI decisions is guesswork.
 
 ## The Solution
 
-Meridian automatically tracks **lineage** for every context assembly:
+Fabra automatically tracks **lineage** for every context assembly:
 
 ```python
 from fabra import FeatureStore, context, ContextItem
@@ -345,7 +345,7 @@ LIMIT 100;
 ## FAQ
 
 **Q: How do I track what data my LLM used?**
-A: Meridian automatically tracks lineage for every context assembly. Access via `ctx.lineage` after calling your `@context` function, or query historical contexts with `store.get_context_at(context_id)`.
+A: Fabra automatically tracks lineage for every context assembly. Access via `ctx.lineage` after calling your `@context` function, or query historical contexts with `store.get_context_at(context_id)`.
 
 **Q: Can I replay an AI decision for debugging?**
 A: Yes. Every context gets a UUIDv7 ID. Use `store.get_context_at(id)` to retrieve the exact content, features, and retriever results that were assembled.
@@ -370,7 +370,7 @@ A: In the `context_log` table in your offline store (DuckDB or Postgres). You ca
   "@type": "TechArticle",
   "headline": "Context Accountability: AI Decision Audit Trail",
   "description": "Track exactly what data was used when your AI made a decision. Full lineage tracking, context replay, and compliance audit support.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "ai audit, context lineage, llm debugging, ai compliance, context replay",
   "articleSection": "Documentation"
 }

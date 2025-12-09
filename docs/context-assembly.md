@@ -1,12 +1,12 @@
 ---
-title: "Context Assembly: Token Budgets and Priority | Meridian"
-description: "Compose LLM context from multiple sources with Fabra.s @context decorator. Token budget management, priority-based truncation, and explainability."
+title: "Context Assembly: Token Budgets and Priority | Fabra"
+description: "Compose LLM context from multiple sources with Fabra's @context decorator. Token budget management, priority-based truncation, and explainability."
 keywords: context assembly, token budget, llm context, priority truncation, context composition, rag context
 ---
 
 # Context Assembly
 
-> **TL;DR:** Use `@context` to compose context from multiple sources. Set token budgets, assign priorities, and let Meridian handle truncation automatically.
+> **TL;DR:** Use `@context` to compose context from multiple sources. Set token budgets, assign priorities, and let Fabra handle truncation automatically.
 
 ## At a Glance
 
@@ -291,7 +291,7 @@ See [Freshness SLAs](freshness-sla.md) for the full guide.
 ## FAQ
 
 **Q: How do I set a token budget for LLM context?**
-A: Use the `@context` decorator with `max_tokens` parameter: `@context(store, max_tokens=4000)`. Meridian automatically truncates lower-priority items when the budget is exceeded.
+A: Use the `@context` decorator with `max_tokens` parameter: `@context(store, max_tokens=4000)`. Fabra automatically truncates lower-priority items when the budget is exceeded.
 
 **Q: What happens when context exceeds token limit?**
 A: Items are dropped by priority (highest number first). Items with `required=True` raise `ContextBudgetError` if they can't fit. Items without `required` are silently dropped.
@@ -299,7 +299,7 @@ A: Items are dropped by priority (highest number first). Items with `required=Tr
 **Q: How do I prioritize content in LLM context?**
 A: Set `priority` on `ContextItem`: `priority=0` (critical, kept first), `priority=1` (high), `priority=2+` (lower, dropped first). System prompts should always be priority 0.
 
-**Q: Does Fabra.support token counting for Claude and GPT-4?**
+**Q: Does Fabra support token counting for Claude and GPT-4?**
 A: Yes. Fabra uses tiktoken for accurate counting. Specify model: `@context(store, max_tokens=4000, model="gpt-4")`. Claude-3 uses approximation.
 
 **Q: How do I debug context assembly?**
@@ -322,8 +322,8 @@ A: Yes. Return a `Context` object with `max_tokens` set: `return Context(items=[
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Context Assembly: Token Budgets and Priority",
-  "description": "Compose LLM context from multiple sources with Fabra.s @context decorator. Token budget management, priority-based truncation, and explainability.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "description": "Compose LLM context from multiple sources with Fabra's @context decorator. Token budget management, priority-based truncation, and explainability.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "context assembly, token budget, llm context, rag",
   "articleSection": "Documentation"
 }

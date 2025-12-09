@@ -1,7 +1,7 @@
 ---
-title: "Deploying Meridian: From Local Laptop to Production API | One-Command Deploy"
-description: "Guide to deploying Meridian. Move from DuckDB/In-Memory on your laptop to Postgres/Redis in production with zero code changes. One-command deploy to Fly.io, Cloud Run, and more."
-keywords: deploy feature store, meridian production, postgres redis feature store, mlops deployment, fly.io deploy, cloud run deploy, ecs deploy, railway deploy
+title: "Deploying Fabra: From Local Laptop to Production API | One-Command Deploy"
+description: "Guide to deploying Fabra. Move from DuckDB/In-Memory on your laptop to Postgres/Redis in production with zero code changes. One-command deploy to Fly.io, Cloud Run, and more."
+keywords: deploy feature store, fabra production, postgres redis feature store, mlops deployment, fly.io deploy, cloud run deploy, ecs deploy, railway deploy
 ---
 
 # From Laptop to Production in 3 Steps
@@ -12,7 +12,7 @@ keywords: deploy feature store, meridian production, postgres redis feature stor
 |:---|:---|:---|:---|
 | Development | DuckDB (embedded) | In-memory | `fabra serve` |
 | Production | Postgres | Redis | `FABRA_ENV=production` |
-| Local Prod | Postgres (Docker) | Redis (Docker) | `meridian setup && docker compose up` |
+| Local Prod | Postgres (Docker) | Redis (Docker) | `fabra setup && docker compose up` |
 | Cloud | Postgres (managed) | Redis (managed) | `fabra deploy fly\|cloudrun\|ecs` |
 
 ## Step 1: Local Development (Day 1)
@@ -75,19 +75,19 @@ Infrastructure:
 For a proven production stack (Postgres + pgvector + Redis), just run:
 
 ```bash
-meridian setup
+fabra setup
 docker compose up -d
 ```
 
 > [!WARNING]
 > **Postgres Requirement:**
-> Standard Postgres images (`postgres:16`) **will not work** for Vector Search. You must use `pgvector/pgvector:pg16` or install the extension manually. `meridian setup` handles this for you.
+> Standard Postgres images (`postgres:16`) **will not work** for Vector Search. You must use `pgvector/pgvector:pg16` or install the extension manually. `fabra setup` handles this for you.
 
 This stack mimics a real production environment and is perfect for integration testing.
 
 ## Step 5: One-Command Cloud Deploy (New in v1.3.0)
 
-Deploy to any major cloud platform with a single command. Meridian generates all the deployment configs you need.
+Deploy to any major cloud platform with a single command. Fabra generates all the deployment configs you need.
 
 ### Fly.io
 
@@ -133,7 +133,7 @@ fabra deploy render --name my-feature-store
 
 | Flag | Description | Default |
 | :--- | :--- | :--- |
-| `--name` | Service name | `meridian-app` |
+| `--name` | Service name | `fabra-app` |
 | `--port` | Port to expose | `8000` |
 | `--dry-run` | Preview files without writing | `false` |
 | `--verbose` | Show detailed output | `false` |
@@ -148,7 +148,7 @@ fabra deploy fly --name my-app --dry-run
 
 ## FAQ
 
-**Q: How do I deploy Meridian to production?**
+**Q: How do I deploy Fabra to production?**
 A: Set `FABRA_ENV=production` and configure `FABRA_POSTGRES_URL` and `FABRA_REDIS_URL`. Same code works locally and in production—zero changes required.
 
 **Q: What infrastructure do I need for production?**
@@ -158,7 +158,7 @@ A: Postgres (for offline store), Redis (for online cache), and any app host. Tot
 A: Run `fabra deploy fly --name my-app`. This generates Dockerfile and fly.toml, then run `fly deploy`.
 
 **Q: Can I run a production stack locally?**
-A: Yes. Run `meridian setup` to generate docker-compose.yml with Postgres (pgvector) and Redis. Then `docker compose up -d`.
+A: Yes. Run `fabra setup` to generate docker-compose.yml with Postgres (pgvector) and Redis. Then `docker compose up -d`.
 
 **Q: What's the difference between development and production mode?**
 A: Development uses DuckDB (file-based) and in-memory cache. Production uses Postgres and Redis for durability and horizontal scale.
@@ -173,7 +173,7 @@ A: Deploy multiple API pods behind a load balancer. No code changes needed—Pos
   "@context": "https://schema.org",
   "@type": "HowTo",
   "name": "Deploy Fabra Feature Store to Production",
-  "description": "Step-by-step guide to deploying Meridian from local development to production on Fly.io, Cloud Run, AWS ECS, Railway, or Render.",
+  "description": "Step-by-step guide to deploying Fabra from local development to production on Fly.io, Cloud Run, AWS ECS, Railway, or Render.",
   "totalTime": "PT1H",
   "step": [{
     "@type": "HowToStep",

@@ -2,206 +2,206 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Core Pages -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/</loc>
+    <loc>https://davidahmann.github.io/fabra/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/quickstart/</loc>
+    <loc>https://davidahmann.github.io/fabra/quickstart/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/context-store/</loc>
+    <loc>https://davidahmann.github.io/fabra/context-store/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/architecture/</loc>
+    <loc>https://davidahmann.github.io/fabra/architecture/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/philosophy/</loc>
+    <loc>https://davidahmann.github.io/fabra/philosophy/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
 
   <!-- Comparison & Alternative Pages -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/feast-alternative/</loc>
+    <loc>https://davidahmann.github.io/fabra/feast-alternative/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/comparisons/</loc>
+    <loc>https://davidahmann.github.io/fabra/comparisons/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
 
   <!-- Feature Guides -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/local-to-production/</loc>
+    <loc>https://davidahmann.github.io/fabra/local-to-production/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/hybrid-features/</loc>
+    <loc>https://davidahmann.github.io/fabra/hybrid-features/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/retrievers/</loc>
+    <loc>https://davidahmann.github.io/fabra/retrievers/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/context-assembly/</loc>
+    <loc>https://davidahmann.github.io/fabra/context-assembly/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/event-driven-features/</loc>
+    <loc>https://davidahmann.github.io/fabra/event-driven-features/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/hooks/</loc>
+    <loc>https://davidahmann.github.io/fabra/hooks/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
 
   <!-- v1.4+ Context Accountability -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/context-accountability/</loc>
+    <loc>https://davidahmann.github.io/fabra/context-accountability/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
 
   <!-- v1.5+ Freshness SLAs -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/freshness-sla/</loc>
+    <loc>https://davidahmann.github.io/fabra/freshness-sla/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
 
   <!-- Reference Pages -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/faq/</loc>
+    <loc>https://davidahmann.github.io/fabra/faq/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/troubleshooting/</loc>
+    <loc>https://davidahmann.github.io/fabra/troubleshooting/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/unit_testing/</loc>
+    <loc>https://davidahmann.github.io/fabra/unit_testing/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/why-we-built-meridian/</loc>
+    <loc>https://davidahmann.github.io/fabra/why-we-built-fabra/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/changelog/</loc>
+    <loc>https://davidahmann.github.io/fabra/changelog/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/glossary/</loc>
+    <loc>https://davidahmann.github.io/fabra/glossary/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.7</priority>
   </url>
 
   <!-- Use Cases -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/use-cases/fraud-detection/</loc>
+    <loc>https://davidahmann.github.io/fabra/use-cases/fraud-detection/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/use-cases/churn-prediction/</loc>
+    <loc>https://davidahmann.github.io/fabra/use-cases/churn-prediction/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/use-cases/real-time-recommendations/</loc>
+    <loc>https://davidahmann.github.io/fabra/use-cases/real-time-recommendations/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/use-cases/rag-chatbot/</loc>
+    <loc>https://davidahmann.github.io/fabra/use-cases/rag-chatbot/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.7</priority>
   </url>
 
   <!-- Blog Posts -->
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/feast-alternative/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/feast-alternative/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/local-feature-store/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/local-feature-store/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/rag-without-langchain/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/rag-without-langchain/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/feature-store-for-startups/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/feature-store-for-startups/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/context-assembly/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/context-assembly/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/point-in-time-features/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/point-in-time-features/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/pgvector-vs-pinecone/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/pgvector-vs-pinecone/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/token-budget-management/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/token-budget-management/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/python-decorators-ml/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/python-decorators-ml/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/deploy-without-kubernetes/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/deploy-without-kubernetes/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/context-replay/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/context-replay/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/ai-audit-trail/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/ai-audit-trail/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/meridian/blog/freshness-guarantees/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/freshness-guarantees/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>

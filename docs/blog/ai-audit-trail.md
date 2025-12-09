@@ -7,7 +7,7 @@ date: 2025-01-15
 
 # Building an Audit Trail for AI Decisions
 
-**TL;DR:** As AI systems make more consequential decisions, you need to answer "why did the AI say that?" Meridian v1.4's Context Accountability gives you complete data provenance for every AI interaction.
+**TL;DR:** As AI systems make more consequential decisions, you need to answer "why did the AI say that?" Fabra v1.4's Context Accountability gives you complete data provenance for every AI interaction.
 
 ---
 
@@ -57,9 +57,9 @@ Without proper context logging, you're guessing.
 
 ---
 
-## Fabra.s Approach: Context Lineage
+## Fabra's Approach: Context Lineage
 
-Meridian v1.4 introduces **Context Lineage** — automatic tracking of every piece of data that goes into your AI's context window.
+Fabra v1.4 introduces **Context Lineage** — automatic tracking of every piece of data that goes into your AI's context window.
 
 ### Full Data Provenance
 
@@ -127,7 +127,7 @@ Every feature records when it was fetched and how fresh it was. If a user's cred
 
 ### Step 1: Enable Context Tracking
 
-It's on by default in Meridian v1.4. Just use the `@context` decorator:
+It's on by default in Fabra v1.4. Just use the `@context` decorator:
 
 ```python
 from fabra.context import context, ContextItem

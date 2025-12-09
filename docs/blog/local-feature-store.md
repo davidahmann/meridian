@@ -73,7 +73,7 @@ That's it. No containers. No configuration files. The feature store is running.
 When you run locally (`FABRA_ENV=development`, the default):
 
 1. **Online Store:** In-memory Python dictionary (instant reads)
-2. **Offline Store:** DuckDB file (`.meridian/features.duckdb`)
+2. **Offline Store:** DuckDB file (`.fabra/features.duckdb`)
 3. **Scheduler:** APScheduler in-process (no external dependencies)
 
 When you deploy (`FABRA_ENV=production`):
@@ -100,7 +100,7 @@ fabra serve features.py
 
 The hardest problem in feature stores is point-in-time correctness: when generating training data, you need feature values as they existed at prediction time.
 
-Most feature stores solve this with Spark jobs. Fabra.solves it with SQL.
+Most feature stores solve this with Spark jobs. Fabra solves it with SQL.
 
 **DuckDB (local):**
 ```sql

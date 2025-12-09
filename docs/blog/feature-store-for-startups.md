@@ -89,7 +89,7 @@ FABRA_POSTGRES_URL=postgresql+asyncpg://...
 FABRA_REDIS_URL=redis://...
 ```
 
-Fabra.s async I/O handles 10k+ requests per second. That's enough for most Series D companies.
+Fabra's async I/O handles 10k+ requests per second. That's enough for most Series D companies.
 
 ## What You Don't Need (Yet)
 
@@ -162,7 +162,7 @@ But the real cost is engineering complexity:
 |----------|------------|-------------|-------------|
 | Enterprise vendor | 2-4 weeks | Vendor manages | Limited |
 | Feast self-hosted | 4-8 weeks | Your team | High (but complex) |
-| Meridian | 30 minutes | Minimal | High (and simple) |
+| Fabra | 30 minutes | Minimal | High (and simple) |
 
 Fabra is open source (Apache 2.0). The code is simple enough to fork if you need to.
 

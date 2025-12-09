@@ -78,7 +78,7 @@ Comparable at most scales.
 
 **Real example:** A startup building a RAG chatbot with 100k documents. pgvector is plenty.
 
-## Fabra.s Approach
+## Fabra's Approach
 
 Fabra uses pgvector by default:
 
@@ -108,7 +108,7 @@ async def search_docs(query: str):
 
 ### Local Development
 
-For local development, Fabra.stores embeddings in DuckDB:
+For local development, Fabra stores embeddings in DuckDB:
 
 ```bash
 FABRA_ENV=development  # DuckDB, no external services
@@ -131,7 +131,7 @@ Same code, different backends.
 -- Enable the extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Meridian creates tables automatically
+-- Fabra creates tables automatically
 ```
 
 ### Option 2: Docker
@@ -189,7 +189,7 @@ Fabra uses HNSW by default for production.
 
 ## Embedding Generation
 
-Meridian handles embedding generation:
+Fabra handles embedding generation:
 
 ```python
 # Default: OpenAI embeddings
@@ -222,7 +222,7 @@ ORDER BY embedding <-> query_embedding
 LIMIT 10;
 ```
 
-Fabra.supports hybrid search in retrievers:
+Fabra supports hybrid search in retrievers:
 
 ```python
 @retriever(index="docs", top_k=5, hybrid=True)
@@ -238,7 +238,7 @@ Starting with pgvector doesn't lock you in:
 2. **Upload to Pinecone** — standard API
 3. **Update retriever config** — point to new backend
 
-Meridian will support Pinecone as an alternative backend if demand exists.
+Fabra will support Pinecone as an alternative backend if demand exists.
 
 ## Try It
 
@@ -261,7 +261,7 @@ await store.index("docs", "2", "pgvector runs in Postgres")
 async def search(query: str):
     pass
 
-results = await search("what is meridian?")
+results = await search("what is fabra?")
 print(results)
 ```
 

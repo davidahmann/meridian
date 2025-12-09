@@ -1,12 +1,12 @@
 ---
-title: "Meridian Philosophy: The 95% Rule, Local-First Design, and Unified Context"
-description: "Why we built Meridian. The 'Heroku for ML Features' philosophy: prioritizing developer experience, simple infrastructure, and unified feature+context over Google-scale complexity."
-keywords: meridian philosophy, feature store design, context store design, mlops philosophy, local-first software, rag philosophy
+title: "Fabra Philosophy: The 95% Rule, Local-First Design, and Unified Context"
+description: "Why we built Fabra. The 'Heroku for ML Features' philosophy: prioritizing developer experience, simple infrastructure, and unified feature+context over Google-scale complexity."
+keywords: fabra philosophy, feature store design, context store design, mlops philosophy, local-first software, rag philosophy
 ---
 
 # Philosophy & Trade-offs
 
-We built Meridian because we were tired of "Google-scale" tools for Series B problems. Here is the honest truth about why we made these design choices and who they are for.
+We built Fabra because we were tired of "Google-scale" tools for Series B problems. Here is the honest truth about why we made these design choices and who they are for.
 
 ## The 95% Rule
 
@@ -28,16 +28,16 @@ A common question is: *"Why do I need a feature store? Can't I just write to Red
 
 You can, and for simple apps, you should. But here is where raw Redis breaks down for ML:
 
-1.  **Point-in-Time Correctness:** Redis only knows "now". It doesn't know "what was the value of this feature 3 months ago?" Meridian logs feature values to the Offline Store (Postgres/DuckDB) so you can generate training data that is historically accurate.
-2.  **Schema Evolution:** What happens when you change a feature definition? With raw Redis, you have to write a migration script. With Meridian, you just update the `@feature` decorator.
-3.  **Observability:** Meridian automatically tracks cache hit rates, latency, and staleness. Raw Redis is a black box.
+1.  **Point-in-Time Correctness:** Redis only knows "now". It doesn't know "what was the value of this feature 3 months ago?" Fabra logs feature values to the Offline Store (Postgres/DuckDB) so you can generate training data that is historically accurate.
+2.  **Schema Evolution:** What happens when you change a feature definition? With raw Redis, you have to write a migration script. With Fabra, you just update the `@feature` decorator.
+3.  **Observability:** Fabra automatically tracks cache hit rates, latency, and staleness. Raw Redis is a black box.
 
 ## Why Not Just dbt?
 
 dbt is fantastic for batch transformations. We love dbt. But dbt stops at the data warehouse.
 
 *   **dbt** creates **tables** (e.g., `daily_user_stats`).
-*   **Meridian** serves **rows** (e.g., `user_id: 123`).
+*   **Fabra** serves **rows** (e.g., `user_id: 123`).
 
 If you only need features refreshed once a day, dbt is enough. But if you need to serve those features to a live API with <10ms latency, you need a serving layer. Fabra bridges that gap.
 
@@ -51,24 +51,24 @@ With the rise of LLMs, we saw teams building parallel infrastructure:
 
 This is the same complexity trap. Three systems to maintain, three sets of credentials, three failure modes.
 
-**Fabra.s Context Store** unifies this:
+**Fabra's Context Store** unifies this:
 
 *   **Same Postgres:** Features in tables, embeddings in pgvector.
 *   **Same Redis:** Feature cache and retriever cache.
 *   **Same API:** `/features` and `/context` from one server.
 *   **Same Decorators:** `@feature`, `@retriever`, `@context`.
 
-If you're building an LLM app that needs user personalization (features) + document retrieval (context), you don't need two systems. You need Meridian.
+If you're building an LLM app that needs user personalization (features) + document retrieval (context), you don't need two systems. You need Fabra.
 
 ## The "Confession"
 
-We didn't start by building Meridian. We started by trying to use existing tools.
+We didn't start by building Fabra. We started by trying to use existing tools.
 
 We spent 6 weeks setting up a popular open-source feature store. We fought with Docker networking, Kubernetes manifests, and registry sync issues. We realized we were spending 90% of our time on infrastructure and 10% on ML.
 
 So we gave up.
 
-We built Meridian in 2 weeks with a simple goal: **"It must run in a Jupyter notebook with `pip install`."**
+We built Fabra in 2 weeks with a simple goal: **"It must run in a Jupyter notebook with `pip install`."**
 
 If you value "works on my laptop" over "scales to exabytes", Fabra is for you.
 
@@ -76,10 +76,10 @@ If you value "works on my laptop" over "scales to exabytes", Fabra is for you.
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Meridian Philosophy: The 95% Rule, Local-First Design, and Unified Context",
-  "description": "Why we built Meridian. The 'Heroku for ML Features' philosophy: prioritizing developer experience, simple infrastructure, and unified feature+context over Google-scale complexity.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
-  "keywords": "meridian philosophy, feature store design, local-first software, mlops",
+  "headline": "Fabra Philosophy: The 95% Rule, Local-First Design, and Unified Context",
+  "description": "Why we built Fabra. The 'Heroku for ML Features' philosophy: prioritizing developer experience, simple infrastructure, and unified feature+context over Google-scale complexity.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "keywords": "fabra philosophy, feature store design, local-first software, mlops",
   "articleSection": "Philosophy"
 }
 </script>

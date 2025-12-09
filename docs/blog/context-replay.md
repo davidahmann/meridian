@@ -7,7 +7,7 @@ date: 2025-01-15
 
 # What Did Your AI Know? Introducing Context Replay
 
-**TL;DR:** Meridian v1.4 introduces Context Replay — the ability to see exactly what data your AI had when it made a decision. Think `git log` for your LLM's context window.
+**TL;DR:** Fabra v1.4 introduces Context Replay — the ability to see exactly what data your AI had when it made a decision. Think `git log` for your LLM's context window.
 
 ---
 
@@ -25,7 +25,7 @@ If you're like most teams, you're guessing. Maybe you can reconstruct it from ap
 
 ## Enter Context Replay
 
-Meridian v1.4 introduces automatic context logging. Every time you assemble context, Meridian captures:
+Fabra v1.4 introduces automatic context logging. Every time you assemble context, Fabra captures:
 
 - **The full context string** — Exactly what went into the prompt
 - **Feature lineage** — Which features were used and their values
@@ -165,7 +165,7 @@ Set retention policies per environment. Keep 7 days in dev, 90 days in productio
 
 ## Getting Started
 
-Upgrade to Meridian v1.4:
+Upgrade to Fabra v1.4:
 
 ```bash
 pip install --upgrade "fabra[ui]"
@@ -185,4 +185,4 @@ Context Replay is just the foundation. Coming in v1.5:
 
 ---
 
-*Meridian v1.4 is available now. [Full documentation →](../context-accountability.md)*
+*Fabra v1.4 is available now. [Full documentation →](../context-accountability.md)*

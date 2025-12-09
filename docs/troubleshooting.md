@@ -1,19 +1,19 @@
 ---
-title: "Troubleshooting Meridian: Common Errors and Fixes"
+title: "Troubleshooting Fabra: Common Errors and Fixes"
 description: "Resolve common Fabra issues like Point-in-Time Correctness errors, Redis connection failures, and Async loop errors."
-keywords: meridian troubleshooting, feature store errors, redis connection error, timestamp error
+keywords: fabra troubleshooting, feature store errors, redis connection error, timestamp error
 ---
 
 # Troubleshooting Guide
 
 Common issues and how to fix them.
 
-## 🩺 First Step: Meridian Doctor
+## 🩺 First Step: Fabra Doctor
 
 Before diving into specific errors, run the **Doctor** to diagnose your environment:
 
 ```bash
-meridian doctor
+fabra doctor
 ```
 
 This command checks:
@@ -51,8 +51,8 @@ if __name__ == "__main__":
 ```
 
 ### "UndefinedTableError: relation ... does not exist"
-**Cause:** In Hybrid Mode, if you define `@feature(sql="SELECT * FROM my_table")`, Meridian expects `my_table` to exist in Postgres.
-**Fix:** Ensure the table exists in your offline store. Meridian does not create raw data tables for you.
+**Cause:** In Hybrid Mode, if you define `@feature(sql="SELECT * FROM my_table")`, Fabra expects `my_table` to exist in Postgres.
+**Fix:** Ensure the table exists in your offline store. Fabra does not create raw data tables for you.
 
 ## Redis
 
@@ -64,7 +64,7 @@ Ensure your `redis` service name in `docker-compose.yml` matches `FABRA_REDIS_UR
 ### "asyncpg.exceptions.DataError: invalid input for query argument"
 **Cause:** Postgres is strict about Timezone Aware (`TIMESTAMPTZ`) vs Naive (`TIMESTAMP`) datetimes. If you pass a Naive datetime (e.g., from `datetime.now()`) to a component expecting an Aware one (or vice versa), `asyncpg` may fail.
 **Fix:**
-Meridian v1.1.8+ handles this automatically for `get_training_data`. However, if you are manually inserting data:
+Fabra v1.1.8+ handles this automatically for `get_training_data`. However, if you are manually inserting data:
 - Use `TIMESTAMPTZ` for your column definitions: `CREATE TABLE ... timestamp TIMESTAMPTZ`.
 - Ensure your Python datetimes are UTC aware: `datetime.now(timezone.utc)`.
 
@@ -77,7 +77,7 @@ Run this SQL in your database:
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
-*Note: `meridian index create` attempts to do this automatically, but requires superuser permissions.*
+*Note: `fabra index create` attempts to do this automatically, but requires superuser permissions.*
 
 ### "ContextBudgetError: Required content exceeds budget"
 **Cause:** Your `@context(max_tokens=N)` limit is too small for the implementation of your retrieved documents or system prompt.
@@ -90,10 +90,10 @@ CREATE EXTENSION IF NOT EXISTS vector;
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Troubleshooting Meridian: Common Errors and Fixes",
+  "headline": "Troubleshooting Fabra: Common Errors and Fixes",
   "description": "Resolve common Fabra issues like Point-in-Time Correctness errors, Redis connection failures, and Async loop errors.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
-  "keywords": "meridian troubleshooting, feature store errors, redis connection error, context budget error",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "keywords": "fabra troubleshooting, feature store errors, redis connection error, context budget error",
   "articleSection": "Support"
 }
 </script>

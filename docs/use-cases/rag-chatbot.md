@@ -222,7 +222,7 @@ async def on_doc_save(doc_id: str, content: str, metadata: dict):
 fabra serve chatbot.py
 
 # Terminal 2: Start worker (for event processing)
-meridian worker chatbot.py
+fabra worker chatbot.py
 
 # Terminal 3: Test it
 curl -X POST http://localhost:8000/chat \

@@ -69,9 +69,9 @@ All notable changes to this project will be documented in this file.
     *   `@context(store, freshness_sla="30s", freshness_strict=True)` - Raise `FreshnessSLAError` on violation.
     *   Exception includes full violation details for debugging.
 *   **Prometheus Metrics:**
-    *   `meridian_context_freshness_status_total{status="guaranteed|degraded"}` - Track freshness status.
-    *   `meridian_context_freshness_violations_total{feature="..."}` - Track violations by feature.
-    *   `meridian_context_stalest_feature_seconds` - Histogram of stalest feature ages.
+    *   `fabra_context_freshness_status_total{status="guaranteed|degraded"}` - Track freshness status.
+    *   `fabra_context_freshness_violations_total{feature="..."}` - Track violations by feature.
+    *   `fabra_context_stalest_feature_seconds` - Histogram of stalest feature ages.
 
 ### 🔧 Improvements
 
@@ -150,7 +150,7 @@ All notable changes to this project will be documented in this file.
     *   `get_historical_features()` for point-in-time queries.
     *   Debug production issues by querying past state.
 *   **Diagnostics:**
-    *   `meridian doctor` CLI command for environment diagnostics.
+    *   `fabra doctor` CLI command for environment diagnostics.
     *   Checks Redis, Postgres, and environment variable configuration.
 
 ### 🐛 Bug Fixes

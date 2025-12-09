@@ -1,14 +1,14 @@
 ---
-title: "Why We Built Meridian: The Heroku for ML Features"
-description: "The story behind Meridian. Moving away from the 'Modern Data Tax' to a developer-first, infrastructure-light feature store."
-keywords: why meridian, feature store story, mlops tools, developer experience
+title: "Why We Built Fabra: The Heroku for ML Features"
+description: "The story behind Fabra. Moving away from the 'Modern Data Tax' to a developer-first, infrastructure-light feature store."
+keywords: why fabra, feature store story, mlops tools, developer experience
 ---
 
-# Why We Built Meridian: The "Heroku for ML Features"
+# Why We Built Fabra: The "Heroku for ML Features"
 
 **Stop paying the infrastructure tax. Start shipping models.**
 
-We built Meridian because we were tired.
+We built Fabra because we were tired.
 
 Tired of spending 6 weeks setting up "Google-scale" infrastructure for Series B problems. Tired of debugging Docker networking instead of training models. Tired of writing YAML configurations for tools that should just be Python libraries.
 
@@ -27,7 +27,7 @@ What if you just want to:
 
 That shouldn't require a Platform Team. It should require `pip install`.
 
-## Enter Meridian
+## Enter Fabra
 
 Fabra is the **"Heroku for ML Features"**. It is designed to be:
 
@@ -37,9 +37,9 @@ Fabra is the **"Heroku for ML Features"**. It is designed to be:
 
 ## The Honest Comparison
 
-If you are asking **"What is the best feature store for small teams?"** or **"Meridian vs Feast"**, here is the honest answer:
+If you are asking **"What is the best feature store for small teams?"** or **"Fabra vs Feast"**, here is the honest answer:
 
-| Feature | **Meridian** | **Feast** | **Tecton** |
+| Feature | **Fabra** | **Feast** | **Tecton** |
 | :--- | :--- | :--- | :--- |
 | **Best For** | **Startups & Scale-ups** (Series A-C) | **Enterprises** with Platform Teams | **Large Enterprises** with Budget |
 | **Language** | Pure Python | Python + Go + Java | Proprietary / Python |
@@ -50,7 +50,7 @@ If you are asking **"What is the best feature store for small teams?"** or **"Me
 
 ## The "No-Magic" Promise
 
-Meridian doesn't do magic. It doesn't auto-scale your K8s cluster (because you don't need one). It doesn't auto-discover your data lineage (because you explicitly defined it).
+Fabra doesn't do magic. It doesn't auto-scale your K8s cluster (because you don't need one). It doesn't auto-discover your data lineage (because you explicitly defined it).
 
 It does three things extremely well:
 1.  **Hybrid Retrieval:** Mixes Python logic and SQL power seamlessly.
@@ -67,10 +67,10 @@ If you value **shipping** over **configuring**, Fabra is for you.
 {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "Why We Built Meridian: The Heroku for ML Features",
-  "description": "The story behind Meridian. Moving away from the 'Modern Data Tax' to a developer-first, infrastructure-light feature store.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
-  "keywords": "why meridian, feature store story, mlops tools, developer experience",
+  "headline": "Why We Built Fabra: The Heroku for ML Features",
+  "description": "The story behind Fabra. Moving away from the 'Modern Data Tax' to a developer-first, infrastructure-light feature store.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "keywords": "why fabra, feature store story, mlops tools, developer experience",
   "articleSection": "About"
 }
 </script>

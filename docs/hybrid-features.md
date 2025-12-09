@@ -1,12 +1,12 @@
 ---
-title: "Hybrid Features in Meridian: Mixing Python and SQL"
-description: "Learn how to use Hybrid Features in Meridian using Python for complex logic and SQL for heavy data lifting in the same API."
+title: "Hybrid Features in Fabra: Mixing Python and SQL"
+description: "Learn how to use Hybrid Features in Fabra using Python for complex logic and SQL for heavy data lifting in the same API."
 keywords: hybrid features, python feature store, sql feature store, on-demand features
 ---
 
 # Hybrid Features: Python + SQL
 
-Meridian v1.1.0 introduces **Hybrid Features**, allowing you to choose the best tool for the job: Python for complex logic, and SQL for heavy lifting.
+Fabra v1.1.0 introduces **Hybrid Features**, allowing you to choose the best tool for the job: Python for complex logic, and SQL for heavy lifting.
 
 ## The Two Modes
 
@@ -40,7 +40,7 @@ def user_txn_count(user_id: str) -> int:
 ```
 
 **How it works:**
-- **Offline Retrieval:** Meridian executes the SQL query against your Offline Store (DuckDB or Postgres) and joins the result to your entity dataframe.
+- **Offline Retrieval:** Fabra executes the SQL query against your Offline Store (DuckDB or Postgres) and joins the result to your entity dataframe.
 - **Materialization:** The Scheduler executes the SQL query periodically and bulk-loads the results into Redis.
 - **Online Serving:** The API serves the pre-computed value from Redis.
 
@@ -57,7 +57,7 @@ training_df = await store.get_training_data(
 )
 ```
 
-Meridian automatically handles the orchestration:
+Fabra automatically handles the orchestration:
 1.  Computes `name_length` in Python.
 2.  Delegates `user_txn_count` to the database.
 3.  Merges everything into a single DataFrame.
@@ -66,9 +66,9 @@ Meridian automatically handles the orchestration:
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Hybrid Features in Meridian: Mixing Python and SQL",
-  "description": "Learn how to use Hybrid Features in Meridian using Python for complex logic and SQL for heavy data lifting in the same API.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "headline": "Hybrid Features in Fabra: Mixing Python and SQL",
+  "description": "Learn how to use Hybrid Features in Fabra using Python for complex logic and SQL for heavy data lifting in the same API.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "hybrid features, python feature store, sql feature store, on-demand features",
   "articleSection": "Documentation"
 }

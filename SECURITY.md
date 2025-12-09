@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-We support the latest release of Meridian.
+We support the latest release of Fabra.
 
 | Version | Supported          |
 | ------- | ------------------ |

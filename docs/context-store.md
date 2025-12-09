@@ -1,12 +1,12 @@
 ---
-title: "Context Store for LLMs: RAG Infrastructure | Meridian"
-description: "Build production RAG applications with Fabra.s Context Store. Vector search with pgvector, automatic chunking, token budgets, and priority-based context assembly."
+title: "Context Store for LLMs: RAG Infrastructure | Fabra"
+description: "Build production RAG applications with Fabra's Context Store. Vector search with pgvector, automatic chunking, token budgets, and priority-based context assembly."
 keywords: context store, rag infrastructure, llm context, pgvector, vector search, token budget, context assembly, retrieval augmented generation
 ---
 
 # Context Store for LLMs
 
-> **TL;DR:** Fabra.s Context Store is RAG infrastructure that actually works. Index documents, search with pgvector, and assemble context with token budgets—all with Python decorators.
+> **TL;DR:** Fabra's Context Store is RAG infrastructure that actually works. Index documents, search with pgvector, and assemble context with token budgets—all with Python decorators.
 
 ## Why Context Store?
 
@@ -86,10 +86,10 @@ curl -X POST http://localhost:8000/ingest/document \
 **Management via CLI:**
 ```bash
 # Manually create an index
-meridian index create knowledge_base --dimension 1536
+fabra index create knowledge_base --dimension 1536
 
 # Check index status
-meridian index status knowledge_base
+fabra index status knowledge_base
 # Output: Index: knowledge_base | Rows: 1542
 ```
 
@@ -167,8 +167,8 @@ async def support_context(query: str) -> list[ContextItem]:
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Meridian Context Store: RAG Infrastructure for Developers",
-  "description": "Complete guide to the Meridian Context Store. Manage vector embeddings, token budgets, and context assembly for Large Language Models.",
+  "headline": "Fabra Context Store: RAG Infrastructure for Developers",
+  "description": "Complete guide to the Fabra Context Store. Manage vector embeddings, token budgets, and context assembly for Large Language Models.",
   "articleSection": "Context Store",
   "keywords": "context store, rag, vector database, pgvector, llm token management, context assembly",
   "author": {
@@ -196,7 +196,7 @@ Events are published via Redis Streams and consumed by `AxiomWorker`.
 **Monitor Events:**
 ```bash
 # Tail the event stream in real-time
-meridian events listen --stream document_updated
+fabra events listen --stream document_updated
 ```
 
 [Learn more about Event-Driven Features →](event-driven-features.md)
@@ -288,8 +288,8 @@ fabra context explain ctx_12345
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Context Store for LLMs: RAG Infrastructure",
-  "description": "Build production RAG applications with Fabra.s Context Store. Vector search with pgvector, automatic chunking, token budgets, and priority-based context assembly.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "description": "Build production RAG applications with Fabra's Context Store. Vector search with pgvector, automatic chunking, token budgets, and priority-based context assembly.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "context store, rag, llm, pgvector, vector search",
   "articleSection": "Documentation"
 }

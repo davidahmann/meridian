@@ -8,7 +8,7 @@ keywords: unit testing features, mlops testing, testing feature store, python ml
 
 Fabra is designed to be **testable by default**. You don't need to spin up Docker containers or mock complex database interactions to test your feature logic.
 
-By using the default configuration (DuckDB + In-Memory), you can treat Meridian as a library rather than a service during your test suite execution.
+By using the default configuration (DuckDB + In-Memory), you can treat Fabra as a library rather than a service during your test suite execution.
 
 ## The Strategy: "Trojan Horse" Testing
 
@@ -99,7 +99,7 @@ Start small by using Fabra to organize your test data. When you're ready, the ex
   "@type": "TechArticle",
   "headline": "Unit Testing ML Features with Fabra",
   "description": "How to unit test your ML features with Fabra. Use the local in-memory store to mock data and test logic without external dependencies.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "unit testing features, mlops testing, testing feature store, python ml testing",
   "articleSection": "Testing"
 }

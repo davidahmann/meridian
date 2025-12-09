@@ -1,12 +1,12 @@
 ---
-title: "Retrievers: Semantic Search with @retriever | Meridian"
-description: "Define semantic search functions with Fabra.s @retriever decorator. Automatic embedding, pgvector search, result caching, and DAG wiring."
+title: "Retrievers: Semantic Search with @retriever | Fabra"
+description: "Define semantic search functions with Fabra's @retriever decorator. Automatic embedding, pgvector search, result caching, and DAG wiring."
 keywords: retriever, semantic search, vector search, pgvector, embedding, rag retrieval, context retrieval
 ---
 
 # Retrievers
 
-> **TL;DR:** Use `@retriever` to define semantic search functions. Meridian handles embedding, vector search, and caching automatically.
+> **TL;DR:** Use `@retriever` to define semantic search functions. Fabra handles embedding, vector search, and caching automatically.
 
 ## At a Glance
 
@@ -210,9 +210,9 @@ sequenceDiagram
 ## FAQ
 
 **Q: How do I implement semantic search in Python?**
-A: Use Fabra.s `@retriever` decorator: `@retriever(index="docs", top_k=5)`. Define an async function with a query parameter. Meridian handles embedding and pgvector search automatically.
+A: Use Fabra's `@retriever` decorator: `@retriever(index="docs", top_k=5)`. Define an async function with a query parameter. Fabra handles embedding and pgvector search automatically.
 
-**Q: What vector database does Meridian use?**
+**Q: What vector database does Fabra use?**
 A: Fabra uses **pgvector** (Postgres extension) for vector search. No separate vector database required—your vectors live alongside your relational data.
 
 **Q: How do I cache retriever results?**
@@ -240,8 +240,8 @@ A: Add filter parameters to your retriever function: `async def search(query: st
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Retrievers: Semantic Search with @retriever",
-  "description": "Define semantic search functions with Fabra.s @retriever decorator. Automatic embedding, pgvector search, result caching, and DAG wiring.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "description": "Define semantic search functions with Fabra's @retriever decorator. Automatic embedding, pgvector search, result caching, and DAG wiring.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "retriever, semantic search, vector search, pgvector, rag",
   "articleSection": "Documentation"
 }

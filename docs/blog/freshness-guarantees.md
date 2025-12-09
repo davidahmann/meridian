@@ -27,7 +27,7 @@ Traditional observability doesn't help. You can see latency, error rates, token 
 
 ## Introducing Freshness SLAs
 
-Meridian v1.5 brings explicit freshness guarantees to your AI contexts. You declare how fresh your data needs to be, and Meridian enforces it.
+Fabra v1.5 brings explicit freshness guarantees to your AI contexts. You declare how fresh your data needs to be, and Fabra enforces it.
 
 ```python
 from fabra.context import context, ContextItem
@@ -101,16 +101,16 @@ Freshness SLAs automatically expose Prometheus metrics:
 
 ```
 # How many contexts are fresh vs degraded?
-meridian_context_freshness_status_total{status="guaranteed"} 15420
-meridian_context_freshness_status_total{status="degraded"} 234
+fabra_context_freshness_status_total{status="guaranteed"} 15420
+fabra_context_freshness_status_total{status="degraded"} 234
 
 # Which features are causing violations?
-meridian_context_freshness_violations_total{feature="user_tier"} 89
-meridian_context_freshness_violations_total{feature="inventory"} 145
+fabra_context_freshness_violations_total{feature="user_tier"} 89
+fabra_context_freshness_violations_total{feature="inventory"} 145
 
 # How stale are we getting?
-meridian_context_stalest_feature_seconds_bucket{le="60"} 14500
-meridian_context_stalest_feature_seconds_bucket{le="300"} 15600
+fabra_context_stalest_feature_seconds_bucket{le="60"} 14500
+fabra_context_stalest_feature_seconds_bucket{le="300"} 15600
 ```
 
 Build dashboards. Set alerts. **Know when your AI is operating on stale data.**
@@ -185,4 +185,4 @@ pip install --upgrade fabra
 
 ---
 
-*Questions? Issues? [Open a GitHub issue](https://github.com/davidahmann/fabra/issues) or check the [full documentation](https://davidahmann.github.io/meridian/freshness-sla).*
+*Questions? Issues? [Open a GitHub issue](https://github.com/davidahmann/fabra/issues) or check the [full documentation](https://davidahmann.github.io/fabra/freshness-sla).*

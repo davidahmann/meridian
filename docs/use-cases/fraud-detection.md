@@ -21,7 +21,7 @@ def score_transaction(user_id):
     # No monitoring (is this query slow? stale?)
 ```
 
-## The Meridian Way
+## The Fabra Way
 
 **Define once:**
 ```python
@@ -56,12 +56,12 @@ score = store.get_online_features(
 
 **Company:** Series C Fintech, 2M transactions/day
 
-**Before Meridian:**
+**Before Fabra:**
 - Feature latency: 50-200ms (direct Postgres queries)
 - Training/serving skew: 3 bugs in 6 months
 - Maintenance: 1 engineer full-time debugging SQL
 
-**After Meridian:**
+**After Fabra:**
 - Feature latency: 3ms (Redis cache)
 - Training/serving skew: Zero (same code path)
 - Maintenance: Zero (auto-refresh handles staleness)

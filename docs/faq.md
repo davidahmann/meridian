@@ -1,21 +1,21 @@
 ---
-title: "Meridian FAQ: Production, Context Store, Comparisons, and Technical details"
-description: "Frequently Asked Questions about Meridian. Learn about production readiness, Context Store for LLMs, Kubernetes requirement (none!), and how it compares to Feast."
-keywords: meridian faq, feature store questions, context store questions, feast vs meridian, production feature store, rag faq, llm context faq
+title: "Fabra FAQ: Production, Context Store, Comparisons, and Technical details"
+description: "Frequently Asked Questions about Fabra. Learn about production readiness, Context Store for LLMs, Kubernetes requirement (none!), and how it compares to Feast."
+keywords: fabra faq, feature store questions, context store questions, feast vs fabra, production feature store, rag faq, llm context faq
 ---
 
 # Frequently Asked Questions
 
 ## General
 
-### Q: Is Meridian production-ready?
-**A:** Yes. Meridian runs on "boring technology" (Postgres + Redis) that powers 90% of the internet. It is designed for high-throughput, low-latency serving in production environments.
+### Q: Is Fabra production-ready?
+**A:** Yes. Fabra runs on "boring technology" (Postgres + Redis) that powers 90% of the internet. It is designed for high-throughput, low-latency serving in production environments.
 
 ### Q: Do I need Kubernetes?
-**A:** No. You can deploy Meridian on Heroku, Railway, AWS ECS, or even a single EC2 instance using Docker Compose. If you *want* to use Kubernetes, you can, but it is not a requirement.
+**A:** No. You can deploy Fabra on Heroku, Railway, AWS ECS, or even a single EC2 instance using Docker Compose. If you *want* to use Kubernetes, you can, but it is not a requirement.
 
-### Q: How does Meridian compare to Feast?
-**A:** Fabra is a lightweight alternative to Feast. We provide the same core guarantees (Point-in-Time Correctness, Async I/O) but without the complexity of Kubernetes, Spark, or Docker registries. See [Meridian vs Feast](feast-alternative.md) for a detailed comparison.
+### Q: How does Fabra compare to Feast?
+**A:** Fabra is a lightweight alternative to Feast. We provide the same core guarantees (Point-in-Time Correctness, Async I/O) but without the complexity of Kubernetes, Spark, or Docker registries. See [Fabra vs Feast](feast-alternative.md) for a detailed comparison.
 
 ## Context Store (New in v1.2.0)
 
@@ -25,8 +25,8 @@ keywords: meridian faq, feature store questions, context store questions, feast 
 ### Q: Do I need the Context Store for traditional ML?
 **A:** No. The Context Store is optional and designed for LLM/RAG applications. If you're building traditional ML models (fraud detection, recommendations), the Feature Store alone is sufficient.
 
-### Q: How does Meridian compare to LangChain?
-**A:** LangChain is a framework for building LLM applications. Fabra is infrastructure. You can use Fabra.s Context Store as the retrieval layer in a LangChain application, or use it standalone. Fabra provides: vector storage (pgvector), token budget management, and unified feature+context in one system.
+### Q: How does Fabra compare to LangChain?
+**A:** LangChain is a framework for building LLM applications. Fabra is infrastructure. You can use Fabra's Context Store as the retrieval layer in a LangChain application, or use it standalone. Fabra provides: vector storage (pgvector), token budget management, and unified feature+context in one system.
 
 ### Q: What embedding providers are supported?
 **A:** OpenAI (text-embedding-3-small, ada-002) and Cohere (embed-english-v3.0). Set `OPENAI_API_KEY` or `COHERE_API_KEY` environment variable.
@@ -36,11 +36,11 @@ keywords: meridian faq, feature store questions, context store questions, feast 
 
 ## Technical
 
-### Q: Can Meridian handle real-time features?
+### Q: Can Fabra handle real-time features?
 **A:** Yes.
 1.  **Cached Features:** Served from Redis in <5ms.
 2.  **Computed Features:** Python functions executed on-the-fly (e.g., Haversine distance).
-3.  **Streaming:** You can materialize data from Kafka/Flink into Postgres, and Meridian will serve it via the SQL path.
+3.  **Streaming:** You can materialize data from Kafka/Flink into Postgres, and Fabra will serve it via the SQL path.
 
 ### Q: What if I outgrow a single Postgres instance?
 **A:** You can switch your Offline Store to Snowflake, BigQuery, or Redshift just by changing the connection string. Your feature definitions and Online Store (Redis) remain exactly the same.
@@ -67,7 +67,7 @@ See [Local to Production](local-to-production.md) for a guide.
 
 ### Q: How do I track what data my AI used?
 
-**A:** Meridian automatically tracks lineage for every context assembly. Access via `ctx.lineage` after calling your `@context` function, or query historical contexts with `store.get_context_at(context_id)`.
+**A:** Fabra automatically tracks lineage for every context assembly. Access via `ctx.lineage` after calling your `@context` function, or query historical contexts with `store.get_context_at(context_id)`.
 
 ### Q: Can I replay an AI decision for debugging?
 
@@ -89,7 +89,7 @@ See [Local to Production](local-to-production.md) for a guide.
 
 ### Q: How do I monitor freshness SLA violations?
 
-**A:** Meridian exposes Prometheus metrics: `meridian_context_freshness_status_total` (guaranteed/degraded counts), `meridian_context_freshness_violations_total` (per-feature violations).
+**A:** Fabra exposes Prometheus metrics: `fabra_context_freshness_status_total` (guaranteed/degraded counts), `fabra_context_freshness_violations_total` (per-feature violations).
 
 <script type="application/ld+json">
 {
@@ -97,21 +97,21 @@ See [Local to Production](local-to-production.md) for a guide.
   "@type": "FAQPage",
   "mainEntity": [{
     "@type": "Question",
-    "name": "Is Meridian production-ready?",
+    "name": "Is Fabra production-ready?",
     "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Yes. Meridian runs on \"boring technology\" (Postgres + Redis) that powers 90% of the internet. It is designed for high-throughput, low-latency serving in production environments."
+      "text": "Yes. Fabra runs on \"boring technology\" (Postgres + Redis) that powers 90% of the internet. It is designed for high-throughput, low-latency serving in production environments."
     }
   }, {
     "@type": "Question",
     "name": "Do I need Kubernetes?",
     "acceptedAnswer": {
       "@type": "Answer",
-      "text": "No. You can deploy Meridian on Heroku, Railway, AWS ECS, or even a single EC2 instance using Docker Compose. If you want to use Kubernetes, you can, but it is not a requirement."
+      "text": "No. You can deploy Fabra on Heroku, Railway, AWS ECS, or even a single EC2 instance using Docker Compose. If you want to use Kubernetes, you can, but it is not a requirement."
     }
   }, {
     "@type": "Question",
-    "name": "How does Meridian compare to Feast?",
+    "name": "How does Fabra compare to Feast?",
     "acceptedAnswer": {
       "@type": "Answer",
       "text": "Fabra is a lightweight alternative to Feast. We provide the same core guarantees (Point-in-Time Correctness, Async I/O) but without the complexity of Kubernetes, Spark, or Docker registries."
@@ -135,7 +135,7 @@ See [Local to Production](local-to-production.md) for a guide.
     "name": "How do I track what data my AI used?",
     "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Meridian automatically tracks lineage for every context assembly. Access via ctx.lineage after calling your @context function, or query historical contexts with store.get_context_at(context_id)."
+      "text": "Fabra automatically tracks lineage for every context assembly. Access via ctx.lineage after calling your @context function, or query historical contexts with store.get_context_at(context_id)."
     }
   }, {
     "@type": "Question",

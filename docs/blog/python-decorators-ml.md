@@ -99,7 +99,7 @@ def is_active(user_id: str) -> bool:
 
 Return types are explicit. Your IDE knows. Your tests know.
 
-## Fabra.s @feature Decorator
+## Fabra's @feature Decorator
 
 ### Basic Usage
 
@@ -221,7 +221,7 @@ def purchase_score(user_id: str) -> float:
     return total * 0.7 + avg * 0.3
 ```
 
-Meridian handles the dependency resolution and caching.
+Fabra handles the dependency resolution and caching.
 
 ## Feature Groups
 
@@ -304,7 +304,7 @@ feature_view:
       dtype: INT64
 ```
 
-**After (Meridian):**
+**After (Fabra):**
 
 ```python
 @feature(entity=User, refresh="5m")

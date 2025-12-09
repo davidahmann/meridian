@@ -51,9 +51,9 @@ Problems:
 2. **Arbitrary truncation** — you might cut off mid-sentence or mid-document
 3. **No priority** — you lose important content while keeping fluff
 
-## The Meridian Solution
+## The Fabra Solution
 
-Fabra.s `@context` decorator handles this properly:
+Fabra's `@context` decorator handles this properly:
 
 ```python
 from fabra.context import context, ContextItem
@@ -138,7 +138,7 @@ Different models use different tokenizers:
 - Claude: Different tokenizer (approximate)
 - Local models: Varies
 
-Meridian defaults to OpenAI's tokenizer but the counter is configurable.
+Fabra defaults to OpenAI's tokenizer but the counter is configurable.
 
 ## Cost Estimation
 

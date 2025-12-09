@@ -11,7 +11,7 @@
 | **Default Mode** | Degraded (assembly succeeds, flags violations) |
 | **Strict Mode** | `freshness_strict=True` (raises `FreshnessSLAError`) |
 | **Check Status** | `ctx.is_fresh` or `ctx.meta["freshness_status"]` |
-| **Metrics** | `meridian_context_freshness_violations_total` |
+| **Metrics** | `fabra_context_freshness_violations_total` |
 
 ---
 
@@ -137,30 +137,30 @@ Freshness SLAs expose Prometheus metrics for monitoring:
 
 ```
 # Total contexts by freshness status
-meridian_context_freshness_status_total{name="build_prompt", status="guaranteed"} 1542
-meridian_context_freshness_status_total{name="build_prompt", status="degraded"} 23
+fabra_context_freshness_status_total{name="build_prompt", status="guaranteed"} 1542
+fabra_context_freshness_status_total{name="build_prompt", status="degraded"} 23
 
 # SLA violations by feature
-meridian_context_freshness_violations_total{name="build_prompt", feature="user_tier"} 15
-meridian_context_freshness_violations_total{name="build_prompt", feature="purchase_history"} 8
+fabra_context_freshness_violations_total{name="build_prompt", feature="user_tier"} 15
+fabra_context_freshness_violations_total{name="build_prompt", feature="purchase_history"} 8
 
 # Age of stalest feature (histogram)
-meridian_context_stalest_feature_seconds_bucket{name="build_prompt", le="60"} 1200
-meridian_context_stalest_feature_seconds_bucket{name="build_prompt", le="300"} 1550
+fabra_context_stalest_feature_seconds_bucket{name="build_prompt", le="60"} 1200
+fabra_context_stalest_feature_seconds_bucket{name="build_prompt", le="300"} 1550
 ```
 
 ### Grafana Dashboard Example
 
 ```promql
 # Freshness violation rate (per minute)
-rate(meridian_context_freshness_violations_total[5m]) * 60
+rate(fabra_context_freshness_violations_total[5m]) * 60
 
 # Percentage of degraded contexts
-sum(rate(meridian_context_freshness_status_total{status="degraded"}[5m])) /
-sum(rate(meridian_context_freshness_status_total[5m])) * 100
+sum(rate(fabra_context_freshness_status_total{status="degraded"}[5m])) /
+sum(rate(fabra_context_freshness_status_total[5m])) * 100
 
 # 95th percentile stalest feature age
-histogram_quantile(0.95, rate(meridian_context_stalest_feature_seconds_bucket[5m]))
+histogram_quantile(0.95, rate(fabra_context_stalest_feature_seconds_bucket[5m]))
 ```
 
 ---
@@ -217,8 +217,8 @@ Set up alerts when degraded contexts exceed a threshold:
 # Prometheus alert rule
 - alert: HighContextDegradation
   expr: >
-    sum(rate(meridian_context_freshness_status_total{status="degraded"}[5m])) /
-    sum(rate(meridian_context_freshness_status_total[5m])) > 0.1
+    sum(rate(fabra_context_freshness_status_total{status="degraded"}[5m])) /
+    sum(rate(fabra_context_freshness_status_total[5m])) > 0.1
   for: 5m
   labels:
     severity: warning
@@ -260,7 +260,7 @@ def context(
 ### FreshnessSLAError
 
 ```python
-class FreshnessSLAError(MeridianError):
+class FreshnessSLAError(FabraError):
     message: str
     violations: List[Dict[str, Any]]
     # Each violation: {"feature": str, "age_ms": int, "sla_ms": int}
@@ -318,9 +318,9 @@ A: Add `freshness_sla` to your `@context` decorator: `@context(store, freshness_
 A: By default (degraded mode), context assembly succeeds but `freshness_status` becomes "degraded". Use `freshness_strict=True` to raise `FreshnessSLAError` instead.
 
 **Q: How do I monitor freshness SLA violations?**
-A: Meridian exposes Prometheus metrics: `meridian_context_freshness_status_total` (guaranteed/degraded counts), `meridian_context_freshness_violations_total` (per-feature violations).
+A: Fabra exposes Prometheus metrics: `fabra_context_freshness_status_total` (guaranteed/degraded counts), `fabra_context_freshness_violations_total` (per-feature violations).
 
-**Q: What SLA format does Fabra.support?**
+**Q: What SLA format does Fabra support?**
 A: Human-readable durations: `500ms`, `30s`, `5m`, `1h`, `1d`. Decimals supported: `1.5h` = 90 minutes.
 
 **Q: Should I use strict mode or degraded mode?**
@@ -343,7 +343,7 @@ A: Catch `FreshnessSLAError` and fall back to a simpler context or cached respon
   "@type": "TechArticle",
   "headline": "Freshness SLAs: Data Freshness Guarantees for AI Context",
   "description": "Track and enforce data freshness guarantees for your AI contexts. Degraded mode, strict mode, and Prometheus metrics.",
-  "author": {"@type": "Organization", "name": "Meridian Team"},
+  "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "freshness sla, data freshness, stale data, ai context, feature freshness",
   "articleSection": "Documentation"
 }
