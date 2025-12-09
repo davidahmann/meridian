@@ -74,7 +74,6 @@ def user_tier(user_id: str) -> str:
     return "premium" if hash(user_id) % 2 == 0 else "free"
 
 # 2. THE CONTEXT STORE (Unstructured Data)
-# 2. THE CONTEXT STORE (Unstructured Data)
 @retriever(index="docs", top_k=3)
 async def find_docs(query: str):
     # Magic Wiring: This automatically runs vector search against 'docs' index
