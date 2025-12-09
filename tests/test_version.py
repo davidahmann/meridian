@@ -2,4 +2,4 @@ from meridian import __version__
 
 
 def test_version() -> None:
-    assert __version__ == "1.5.1"
+    assert __version__ == "1.5.2"
