@@ -1,7 +1,7 @@
 theme: jekyll-theme-minimal
-title: Meridian Feature Store & Context Store
+title: Fabra - Craft ML Features
 description: Heroku for ML Features & LLM Context. Define features and RAG context in Python. Get training data, production serving, and intelligent context assembly for free.
-logo: https://img.shields.io/pypi/v/meridian-oss?color=blue&label=meridian-oss
+logo: https://img.shields.io/pypi/v/fabra_ai?color=blue&label=fabra_ai
 show_downloads: true
 google_analytics:
 plugins:
@@ -10,4 +10,4 @@ author: David Ahmann
 twitter_username: davidahmann
 github_username: davidahmann
 url: "https://davidahmann.github.io"
-baseurl: "/meridian"
+baseurl: "/fabra"
