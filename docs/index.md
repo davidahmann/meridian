@@ -1,34 +1,44 @@
 ---
-title: "Meridian - The Context Store for LLMs & ML Features | RAG + Feature Store"
-description: "Define RAG pipelines and ML features in Python. Meridian is a local-first Context Store for LLM applications and Feature Store for ML engineers. No YAML, no infrastructure tax."
+title: "Meridian - The Context Store for LLMs & ML Features"
+description: "The only tool that unifies RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds."
 keywords: context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search
 ---
 
 # Meridian: The Context Store for LLMs & ML Features
 
-> **"Define RAG pipelines in Python. Get production retrieval and vector search for free."**
+> **The only tool that unifies RAG pipelines and ML features in a single Python decorator.**
 
-Meridian is a developer-first **Context Store + Feature Store** designed to take you from a "Notebook Prototype" to "Production RAG" in 30 seconds. It eliminates the infrastructure tax of existing tools—no Kubernetes, no Spark, no YAML. Just pure Python and SQL.
+From notebook prototype to production in 30 seconds. No Kubernetes. No Spark. No YAML.
 
-**Core Capabilities:**
-1. **Context Store (v1.2.0):** Full RAG infrastructure with vector search (pgvector), token budgets, and intelligent context assembly.
-2. **Feature Store:** Traditional ML feature serving with point-in-time correctness.
+[Get Started →](quickstart.md) | [Try in Browser →](https://meridianoss.vercel.app)
 
 ---
 
-## ⚡ The 30-Second Quickstart
+## The Problem
 
-**1. Install**
+You're building an AI app. You need:
+
+- **Structured features** (user tier, purchase history) for personalization
+- **Unstructured context** (relevant docs, chat history) for your LLM
+- **Vector search** for semantic retrieval
+- **Token budgets** to fit your context window
+
+Today, this means stitching together LangChain, Pinecone, a feature store, Redis, and prayer.
+
+**Meridian unifies all of this in one Python decorator.**
+
+---
+
+## The 30-Second Quickstart
+
 ```bash
 pip install "meridian-oss[ui]"
 ```
 
-**2. Define Features & Context (`features.py`)**
 ```python
 from meridian.core import FeatureStore, entity, feature
 from meridian.context import context, ContextItem
 from meridian.retrieval import retriever
-import random
 
 store = FeatureStore()
 
@@ -36,150 +46,141 @@ store = FeatureStore()
 class User:
     user_id: str
 
-# 1. THE FEATURE STORE (Structured Data)
-@feature(entity=User, refresh="daily", materialize=True)
+@feature(entity=User, refresh="daily")
 def user_tier(user_id: str) -> str:
-    # Imagine a DB lookup here; we'll simulate it for speed.
     return "premium" if hash(user_id) % 2 == 0 else "free"
 
-# 2. THE CONTEXT STORE (Unstructured Data)
 @retriever(index="docs", top_k=3)
 async def find_docs(query: str):
-    # Magic wiring: automatically searches "docs" index via pgvector
-    # Here we simulate a semantic search result for local dev.
-    return [{"content": "Meridian bridges the gap between ML features and RAG.", "score": 0.9}]
-
-# 3. THE UNIFICATION (Context Assembly)
-@context(store)
-async def build_prompt(user_id: str, query: str):
-    # Fetch feature and docs in parallel
-    tier = await store.get_feature("user_tier", user_id)
-    docs = await find_docs(query)
-
-    return [
-        ContextItem(content=f"User is {tier}. Adjust tone accordingly.", priority=0),
-        ContextItem(content=str(docs), priority=1)
-    ]
-```
-
-**3. Serve (Optional)**
-```bash
-meridian serve features.py
-# 🚀 Server running on http://localhost:8000
-```
-
-[Get Started Now →](quickstart.md) | [Try in Browser →](https://meridianoss.vercel.app)
-
----
-
-## 🚀 Why Meridian?
-
-### 1. Local-First, Cloud-Ready
-Most feature stores require a platform team to set up. Meridian runs on your laptop with zero dependencies (DuckDB + In-Memory) and scales to production with boring technology (Postgres + Redis).
-
-### 2. No Magic, Just Python
-We don't use YAML for configuration. Your code is your config.
-- **Explicit Caching:** Use `@feature(materialize=True)` to cache hot features.
-- **Explicit Refresh:** Use `@feature(refresh="5m")` to define freshness.
-
-### 3. Instant Wow ✨
-- **Meridian UI:** A built-in Streamlit dashboard with **Visual Dependency Graphs**.
-- **Rich Terminal:** Production-grade TUI with live metrics.
-- **Jupyter Integration:** Beautiful HTML representations of your feature store objects.
-
-### 4. Production-Grade Reliability 🛡️
-- **Self-Healing:** Run `meridian doctor` to diagnose environment issues.
-- **Fallback Chain:** Cache -> Compute -> Default. If Redis fails, we compute on-demand.
-- **Circuit Breakers:** Built-in protection against cascading failures (fail fast).
-- **Deep Observability:** Prometheus metrics (`meridian_feature_requests_total`) and structured JSON logging out of the box.
-- **Async Core:** Fully async I/O for high-throughput serving.
-
-### 5. Hybrid Features (New in v1.1.0) 🏭
-- **Python Features:** Use `@feature` with Python logic for complex math (e.g., Haversine distance).
-- **SQL Features:** Use `@feature(sql="...")` to delegate heavy joins to your warehouse (DuckDB/Postgres).
-- **Materialization:** Automatically run SQL queries and bulk-load results into Redis.
-
-### 6. Point-in-Time Correctness (New in v1.1.0) 🕰️
-- **No Data Leakage:** We use `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres) to ensure training data reflects the world *exactly* as it was at the event time.
-- **Consistent:** Same logic for offline training and online serving.
-
-### 7. Write Once, Run Anywhere (New in v1.1.0) 🛠️
-- **Dev:** `MERIDIAN_ENV=development` (default) uses DuckDB + In-Memory.
-- **Prod:** `MERIDIAN_ENV=production` uses Async Postgres + Redis.
-- **Zero Code Changes:** Your feature definitions stay exactly the same.
-
-### 8. Context Store for LLMs (New in v1.2.0) 🤖
-Meridian isn't just for ML features. It's now a full **Context Infrastructure** for LLM applications.
-
-- **Vector Search:** Built-in pgvector integration with automatic chunking and embedding (OpenAI, Cohere).
-- **Retrievers:** Use `@retriever` to define semantic search functions with caching and DAG wiring.
-- **Context Assembly:** Use `@context` to compose multiple retrievers with token budgets and priority-based truncation.
-- **Event-Driven Updates:** Push fresh context instantly via Redis Streams with `trigger="event_name"`.
-- **Explainability:** Debug context assembly with `/context/{id}/explain` API endpoint.
-
-```python
-from meridian.core import FeatureStore
-from meridian.retrieval import retriever
-from meridian.context import context
-
-store = FeatureStore()
-
-@retriever(index="docs", top_k=3)
-async def relevant_docs(query: str) -> list[str]:
-    # Automatic vector search via pgvector
-    pass
+    pass  # Automatic vector search via pgvector
 
 @context(store, max_tokens=4000)
-async def chat_context(user_id: str, query: str) -> list[ContextItem]:
-    docs = await relevant_docs(query)
-    user_prefs = await user_preferences(user_id)  # Feature from store
+async def build_prompt(user_id: str, query: str):
+    tier = await store.get_feature("user_tier", user_id)
+    docs = await find_docs(query)
     return [
-        ContextItem(content=str(docs), priority=1, required=True),
-        ContextItem(content=str(user_prefs), priority=2),
+        ContextItem(content=f"User is {tier}.", priority=0),
+        ContextItem(content=str(docs), priority=1),
     ]
 ```
 
-[Learn More About Context Store →](context-store.md)
+```bash
+meridian serve features.py
+# Server running on http://localhost:8000
+```
+
+**That's it.** No infrastructure. No config files. Just Python.
 
 ---
 
-## 📚 Documentation
+## Why Meridian?
 
-- **[Quickstart](quickstart.md):** Go from zero to served features in 30 seconds.
-- **[Philosophy & Trade-offs](philosophy.md):** Why we built this and who it's for.
-- **[Meridian vs Feast](feast-alternative.md):** The lightweight alternative for ML engineers.
-- **[Local to Production](local-to-production.md):** How to migrate when you're ready.
-- **[Architecture](architecture.md):** Boring technology, properly applied.
+| | Traditional Stack | Meridian |
+|:---|:---|:---|
+| **Config** | 500 lines of YAML | Python decorators |
+| **Infrastructure** | Kubernetes + Spark + Pinecone | Your laptop (DuckDB) |
+| **RAG Pipeline** | LangChain spaghetti | `@retriever` + `@context` |
+| **Feature Serving** | Separate feature store | Same `@feature` decorator |
+| **Time to Production** | Weeks | 30 seconds |
 
-### Feature Store
-- **[Use Cases](use-cases/fraud-detection.md):**
-    - [Fraud Detection](use-cases/fraud-detection.md)
-    - [Churn Prediction (PIT)](use-cases/churn-prediction.md)
-    - [Real-Time Recommendations (Async)](use-cases/real-time-recommendations.md)
-- **[Hybrid Features](hybrid-features.md):** Mixing Python logic and SQL power.
-- **[Hooks](hooks.md):** Before/After hooks for customizing pipelines.
-- **[Unit Testing](unit_testing.md):** Testing your features in isolation.
+### One Decorator for Everything
 
-### Context Store (New in v1.2.0)
-- **[Context Store Overview](context-store.md):** Vector search and RAG infrastructure.
-- **[Retrievers](retrievers.md):** Define semantic search with `@retriever`.
-- **[Context Assembly](context-assembly.md):** Token budgets and priority-based composition.
-- **[Event-Driven Features](event-driven-features.md):** Real-time updates via Redis Streams.
-- **[Use Case: RAG Chatbot](use-cases/rag-chatbot.md):** Build a production RAG application.
+Other tools make you choose: LangChain for RAG, Feast for features, a separate vector DB. Meridian gives you `@feature`, `@retriever`, and `@context` — all wired together, all in Python.
+
+### Local-First, Production-Ready
+
+```bash
+MERIDIAN_ENV=development  # DuckDB + In-Memory (default)
+MERIDIAN_ENV=production   # Postgres + Redis + pgvector
+```
+
+Same code. Zero changes. Just flip an environment variable.
+
+### Point-in-Time Correctness
+
+Training ML models? We use `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres) to ensure your training data reflects the world exactly as it was — no data leakage, ever.
+
+### Token Budget Management
+
+```python
+@context(store, max_tokens=4000)
+async def build_prompt(user_id: str, query: str):
+    return [
+        ContextItem(content=critical_info, priority=0, required=True),
+        ContextItem(content=nice_to_have, priority=2),  # Dropped if over budget
+    ]
+```
+
+Automatically assembles context that fits your LLM's window. Priority-based truncation. No more "context too long" errors.
+
+### Production-Grade Reliability
+
+- **Self-Healing:** `meridian doctor` diagnoses environment issues
+- **Fallback Chain:** Cache → Compute → Default
+- **Circuit Breakers:** Built-in protection against cascading failures
+- **Observability:** Prometheus metrics, structured JSON logging, OpenTelemetry
+
+---
+
+## Key Capabilities
+
+### For AI Engineers (Context Store)
+
+- **[Vector Search](context-store.md):** Built-in pgvector with automatic chunking and embedding
+- **[Magic Retrievers](retrievers.md):** `@retriever` auto-wires to your vector index
+- **[Context Assembly](context-assembly.md):** Token budgets, priority truncation, explainability API
+- **Semantic Cache:** Cache expensive LLM calls and retrieval results
+
+### For ML Engineers (Feature Store)
+
+- **[Hybrid Features](hybrid-features.md):** Mix Python logic and SQL in the same pipeline
+- **[Event-Driven](event-driven-features.md):** Trigger updates via Redis Streams
+- **[Point-in-Time Joins](use-cases/churn-prediction.md):** Zero data leakage for training
+- **[Hooks](hooks.md):** Before/After hooks for custom pipelines
+
+### For Everyone
+
+- **[One-Command Deploy](local-to-production.md):** `meridian deploy fly|cloudrun|ecs|railway|render`
+- **Visual UI:** Dependency graphs, live metrics, context debugging
+- **[Unit Testing](unit_testing.md):** Test features in isolation
+
+---
+
+## Use Cases
+
+- **[RAG Chatbot](use-cases/rag-chatbot.md):** Build a production RAG application
+- **[Fraud Detection](use-cases/fraud-detection.md):** Real-time feature serving
+- **[Churn Prediction](use-cases/churn-prediction.md):** Point-in-time correct training data
+- **[Real-Time Recommendations](use-cases/real-time-recommendations.md):** Async feature pipelines
+
+---
+
+## Documentation
+
+### Getting Started
+
+- [Quickstart](quickstart.md) — Zero to served features in 30 seconds
+- [Philosophy](philosophy.md) — Why we built this and who it's for
+- [Architecture](architecture.md) — Boring technology, properly applied
+
+### Guides
+
+- [Local to Production](local-to-production.md) — Deploy when you're ready
+- [Meridian vs Feast](feast-alternative.md) — The lightweight alternative
+- [Comparisons](comparisons.md) — vs other tools
 
 ### Reference
-- **[Glossary](glossary.md):** Definitions of key terms (Context Store, Feature, Entity).
-- **[FAQ](faq.md):** Common questions about production, scaling, and comparisons.
-- **[Comparisons](comparisons.md):** Meridian vs other feature stores and RAG tools.
-- **[Troubleshooting](troubleshooting.md):** Common issues and fixes.
-- **[Changelog](changelog.md):** Version history and release notes.
-- **[Why We Built Meridian](why-we-built-meridian.md):** The story behind the "Heroku for ML Features".
+
+- [Glossary](glossary.md) — Key terms defined
+- [FAQ](faq.md) — Common questions
+- [Troubleshooting](troubleshooting.md) — Common issues and fixes
+- [Changelog](changelog.md) — Version history
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-We love contributions! Please read our [CONTRIBUTING.md](https://github.com/davidahmann/meridian/blob/main/CONTRIBUTING.md) to get started.
+We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/meridian/blob/main/CONTRIBUTING.md) to get started.
 
 <script type="application/ld+json">
 {
@@ -188,7 +189,7 @@ We love contributions! Please read our [CONTRIBUTING.md](https://github.com/davi
   "name": "Meridian",
   "operatingSystem": "Linux, macOS, Windows",
   "applicationCategory": "DeveloperApplication",
-  "description": "Heroku for ML Features & Context. Define features in Python. Get training data, production serving, and LLM context assembly for free.",
+  "description": "The only tool that unifies RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds.",
   "offers": {
     "@type": "Offer",
     "price": "0",
@@ -196,11 +197,11 @@ We love contributions! Please read our [CONTRIBUTING.md](https://github.com/davi
   },
   "url": "https://davidahmann.github.io/meridian/",
   "featureList": [
-    "Feature Store with Point-in-Time Correctness",
-    "Context Store for LLM/RAG Applications",
+    "Unified RAG and ML Feature Store",
     "Vector Search with pgvector",
     "Token Budget Management",
-    "Event-Driven Updates via Redis Streams"
+    "Point-in-Time Correctness",
+    "One-Command Cloud Deploy"
   ]
 }
 </script>
