@@ -81,7 +81,7 @@ def test_features_non_existent_entity() -> None:
 
     client = TestClient(app)
     response = client.post(
-        "/features",
+        "/v1/features",
         json={"entity_name": "Ghost", "entity_id": "123", "features": ["f1"]},
     )
     # Online store returns empty dict for valid request even if entity doesn't exist?

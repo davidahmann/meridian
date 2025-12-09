@@ -29,7 +29,7 @@ async def test_api_get_features() -> None:
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # 3. Request Features
         response = await client.post(
-            "/features",
+            "/v1/features",
             json={
                 "entity_name": "User",
                 "entity_id": "u1",
@@ -84,7 +84,7 @@ async def test_api_visualize_context() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         # 3. Request Visualization
-        response = await client.get("/context/test_ctx_123/visualize")
+        response = await client.get("/v1/context/test_ctx_123/visualize")
 
     # 4. Assertions
     assert response.status_code == 200

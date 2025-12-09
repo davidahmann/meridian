@@ -50,7 +50,8 @@ def test_audit_middleware(mock_store: MagicMock) -> None:
     with patch("meridian.server.logger") as mock_logger:
         # POST request should trigger audit
         client.post(
-            "/features", json={"entity_name": "E", "entity_id": "1", "features": ["f"]}
+            "/v1/features",
+            json={"entity_name": "E", "entity_id": "1", "features": ["f"]},
         )
 
         # Verify audit log
@@ -81,7 +82,7 @@ async def test_cache_invalidation(mock_store: MagicMock) -> None:
     # because server logic checks hasattr(store.online_store, "delete")
     mock_store.online_store.delete = AsyncMock()
 
-    res = client.delete("/cache/User/u1")
+    res = client.delete("/v1/cache/User/u1")
     assert res.status_code == 200
     assert res.json()["status"] == "invalidated"
 

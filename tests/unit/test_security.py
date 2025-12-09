@@ -14,13 +14,14 @@ def test_api_key_enforcement() -> None:
 
     # Request without key -> 403
     response = client.post(
-        "/features", json={"entity_name": "User", "entity_id": "u1", "features": ["f1"]}
+        "/v1/features",
+        json={"entity_name": "User", "entity_id": "u1", "features": ["f1"]},
     )
     assert response.status_code == 403
 
     # Request with wrong key -> 403
     response = client.post(
-        "/features",
+        "/v1/features",
         json={"entity_name": "User", "entity_id": "u1", "features": ["f1"]},
         headers={"X-API-Key": "wrong-key"},
     )
@@ -32,7 +33,7 @@ def test_api_key_enforcement() -> None:
     # Actually, let's mock the store to return something valid or handle the error gracefully.
     # But for now, checking != 403 is enough to prove auth worked.
     response = client.post(
-        "/features",
+        "/v1/features",
         json={"entity_name": "User", "entity_id": "u1", "features": ["f1"]},
         headers={"X-API-Key": "secret-key"},
     )
@@ -53,6 +54,7 @@ def test_dev_mode_no_key() -> None:
 
     # Request without key -> 200 (or not 403)
     response = client.post(
-        "/features", json={"entity_name": "User", "entity_id": "u1", "features": ["f1"]}
+        "/v1/features",
+        json={"entity_name": "User", "entity_id": "u1", "features": ["f1"]},
     )
     assert response.status_code != 403

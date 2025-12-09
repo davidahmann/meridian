@@ -81,7 +81,7 @@ async def find_docs(query: str):
     return [{"content": "Meridian bridges the gap between ML features and RAG.", "score": 0.9}]
 
 # 3. THE UNIFICATION (Context Assembly)
-@context(max_tokens=4000)
+@context(store, max_tokens=4000)
 async def build_prompt(user_id: str, query: str):
     # Fetch feature and docs in parallel
     tier = await store.get_feature("user_tier", user_id)
@@ -100,8 +100,11 @@ from features import build_prompt
 
 async def main():
     ctx = await build_prompt(user_id="u1", query="How does Meridian help?")
-    print(ctx.items)
-    # Output: [ContextItem(content='User is free...', ...), ContextItem(content='[{"content":...}]', ...)]
+    print(ctx.content)
+    # Output: "User is free... \n [{'content':...}]"
+
+    print(ctx.meta)
+    # Output: {'timestamp': '...', 'dropped_items': 0, ...}
 
 if __name__ == "__main__":
     asyncio.run(main())

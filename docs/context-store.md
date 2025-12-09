@@ -36,17 +36,17 @@ async def search_docs(query: str) -> list[str]:
     return [] # Implement actual search here
 
 # 2. Define context assembly with token budget
-@context(max_tokens=4000)
-async def chat_context(user_id: str, query: str) -> Context:
+@context(store, max_tokens=4000)
+async def chat_context(user_id: str, query: str) -> list[ContextItem]:
     docs = await search_docs(query)
     # Access store instance via global or closure if needed
     user_prefs = await store.get_feature("user_preferences", user_id)
 
-    return Context(items=[
+    return [
         ContextItem("You are a helpful assistant.", priority=0, required=True),
         ContextItem(str(docs), priority=1, required=True),
         ContextItem(f"User preferences: {user_prefs}", priority=2),
-    ])
+    ]
 ```
 
 ## Core Concepts
@@ -118,19 +118,19 @@ async def search_docs(query: str) -> list[str]:
 A **Context** combines multiple sources under a token budget.
 
 ```python
-from meridian.context import context, Context, ContextItem
+from meridian.context import context, ContextItem
 
-@context(max_tokens=4000)
-async def chat_context(user_id: str, query: str) -> Context:
+@context(store, max_tokens=4000)
+async def chat_context(user_id: str, query: str) -> list[ContextItem]:
     # Fetch from multiple sources
     docs = await search_docs(query)
     history = await get_chat_history(user_id)
 
-    return Context(items=[
+    return [
         ContextItem(system_prompt, priority=0, required=True),
         ContextItem(str(docs), priority=1, required=True),
         ContextItem(history, priority=2),  # Truncated first if over budget
-    ])
+    ]
 ```
 
 **Example: Multiple Retrievers**
@@ -147,20 +147,20 @@ async def search_tickets(query: str) -> list[str]:
     return []
 
 # Combine in context assembly
-@context(max_tokens=4000)
-async def support_context(query: str) -> Context:
+@context(store, max_tokens=4000)
+async def support_context(query: str) -> list[ContextItem]:
     products = await search_products(query)
     tickets = await search_tickets(query)
-    return Context(items=[
+    return [
         ContextItem(str(products), priority=1),
         ContextItem(str(tickets), priority=2),
-    ])
+    ]
 ```
 
 **Priority-Based Truncation:**
 - Items sorted by priority (0 = highest priority, kept first).
 - Lower-priority items truncated when budget exceeded.
-- `required=True` items raise `ContextBudgetError` if they can't fit.
+- `required=True` items raise `ContextBudgetError` (or return partial context with warning) if they can't fit.
 
 [Learn more about Context Assembly →](context-assembly.md)
 
@@ -257,34 +257,30 @@ graph LR
 
 Meridian provides built-in observability for your context assembly. Because context is often assembled from multiple stochastic sources (vector search, cached features), understanding *why* a specific prompt was built is crucial.
 
-### The `meridian context` Command
+### The `meridian context explain` Command
 
 You can trace any context request by its ID:
 
 ```bash
-meridian context ctx_12345
+meridian context explain ctx_12345
 ```
 
 **Output:**
 ```json
 {
   "context_id": "ctx_12345",
-  "total_tokens": 3450,
-  "budget": 4000,
-  "items": [
-    {
-      "priority": 0,
-      "tokens": 150,
-      "content": "System Prompt...",
-      "status": "INCLUDED"
-    },
-    {
-      "priority": 2,
-      "tokens": 500,
-      "content": "User Preferences...",
-      "status": "DROPPED (Budget Exceeded)"
-    }
-  ]
+  "created_at": "2025-12-08T21:00:00Z",
+  "latency_ms": 45.2,
+  "token_usage": 3450,
+  "cost_usd": 0.002,
+  "freshness_status": "guaranteed",
+  "source_ids": ["doc_123", "user_prefs_456"],
+  "stale_sources": [],
+  "cache_hit": false,
+  "meta": {
+    "dropped_items": 1,
+    "budget_exceeded": false
+  }
 }
 ```
 

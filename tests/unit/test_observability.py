@@ -113,7 +113,7 @@ def test_server_explain_endpoint() -> None:
 
     # Call API
     # Note: API requires X-API-Key or dev-mode logic (which defaults to allowed if env var not set)
-    response = client.get(f"/context/{trace_id}/explain")
+    response = client.get(f"/v1/context/{trace_id}/explain")
     assert response.status_code == 200
     data = response.json()
     assert data["context_id"] == trace_id

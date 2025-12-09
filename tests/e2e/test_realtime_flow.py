@@ -50,7 +50,7 @@ async def test_event_triggers_refresh(redis_client: Redis[str]) -> None:
             # 4. Ingest Event
             payload = {"amount": 500}
             resp = await client.post(
-                "/ingest/transaction", json=payload, params={"entity_id": "u1"}
+                "/v1/ingest/transaction", json=payload, params={"entity_id": "u1"}
             )
             assert resp.status_code == 202, f"Response: {resp.text}"
 

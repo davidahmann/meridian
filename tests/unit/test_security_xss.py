@@ -47,7 +47,7 @@ async def test_xss_prevention() -> None:
 
     encoded_id = urllib.parse.quote(malicious_id, safe="")
 
-    response = client.get(f"/context/{encoded_id}/visualize")
+    response = client.get(f"/v1/context/{encoded_id}/visualize")
     assert response.status_code == 200
     html_content = response.text
 
