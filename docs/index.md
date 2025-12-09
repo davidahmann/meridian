@@ -211,6 +211,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - [What Did Your AI Know? Introducing Context Replay](blog/context-replay.md)
 - [Building an Audit Trail for AI Decisions](blog/ai-audit-trail.md)
 - [Freshness SLAs: When Your AI Needs Fresh Data](blog/freshness-guarantees.md)
+- [Fabra vs Context Engineering Platforms: Choosing the Right Tool](blog/fabra-vs-context-platforms.md)
 
 ---
 
@@ -260,7 +261,7 @@ We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/fabr
     "Context Accountability (v1.4)",
     "Freshness SLAs (v1.5)"
   ],
-  "softwareVersion": "2.0.1",
+  "softwareVersion": "2.0.2",
   "license": "https://opensource.org/licenses/Apache-2.0"
 }
 </script>
