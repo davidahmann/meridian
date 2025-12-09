@@ -68,7 +68,7 @@ meridian serve features.py
 # 🚀 Server running on http://localhost:8000
 ```
 
-[Get Started Now →](quickstart.md) | [Try in Browser →](https://meridian-playground.vercel.app)
+[Get Started Now →](quickstart.md) | [Try in Browser →](https://meridianoss.vercel.app)
 
 ---
 

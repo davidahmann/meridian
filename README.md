@@ -26,7 +26,7 @@
     <b>📚 <a href="https://davidahmann.github.io/meridian/">Documentation</a></b> |
     <b>🤖 <a href="https://davidahmann.github.io/meridian/context-store">Context Store</a></b> |
     <b>🛠️ <a href="docs/unit_testing.md">Testing Guide</a></b> |
-    <b>🎮 <a href="https://meridian-playground.vercel.app">Try in Browser</a></b>
+    <b>🎮 <a href="https://meridianoss.vercel.app">Try in Browser</a></b>
   </p>
 </div>
 
