@@ -8,6 +8,7 @@ import hashlib
 import json
 from datetime import datetime, timezone, timedelta
 from meridian.utils.tokens import TokenCounter, OpenAITokenCounter
+from meridian.utils.pricing import estimate_cost
 from meridian.models import ContextTrace
 from meridian.observability import ContextMetrics
 import time
@@ -42,6 +43,7 @@ class Context(BaseModel):
         default_factory=dict,
         description="Metadata including timestamp, source_ids, and freshness_status",
     )
+    version: str = Field("v1", description="Schema version of this context")
 
     @property
     def is_fresh(self) -> bool:
@@ -81,9 +83,11 @@ class Context(BaseModel):
 def context(
     name: Optional[str] = None,
     max_tokens: Optional[int] = None,
-    cache_ttl: Optional[timedelta] = None,
+    cache_ttl: Optional[timedelta] = timedelta(minutes=5),
     token_counter: Optional[TokenCounter] = None,
     max_staleness: Optional[timedelta] = None,
+    version: str = "v1",
+    model: str = "gpt-4",
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator to define a Context Assembly function.
@@ -162,6 +166,8 @@ def context(
                 # Timestamps for sources to determine overall freshness if needed
 
                 # 3. Handle Prioritization if List[ContextItem]
+                token_usage = 0  # Initialize for usage in step 4
+
                 if isinstance(result, list) and all(
                     isinstance(x, ContextItem) for x in result
                 ):
@@ -209,9 +215,14 @@ def context(
                                 indices_to_drop.add(idx)
 
                             if total_tokens > max_tokens:
-                                raise ContextBudgetError(
-                                    f"Budget {max_tokens} exceeded ({total_tokens}) with only required items."
+                                # Graceful Degradation: Do not raise, just warn and flag.
+                                logger.warning(
+                                    "context_budget_overflow",
+                                    total=total_tokens,
+                                    limit=max_tokens,
+                                    msg="Required items exceed budget. Returning partial/overflow context.",
                                 )
+                                # We continue with what we have (required items)
 
                             items = [
                                 item
@@ -220,15 +231,25 @@ def context(
                             ]
                             dropped_items = len(indices_to_drop)
 
+                        token_usage = total_tokens
+
                     final_content = "\n".join(i.content for i in items)
 
                 else:
                     final_content = str(result)
                     if max_tokens and counter:
-                        if counter.count(final_content) > max_tokens:
-                            raise ContextBudgetError(
-                                f"Budget {max_tokens} exceeded on raw string context."
+                        current_tokens = counter.count(final_content)
+                        if current_tokens > max_tokens:
+                            logger.warning(
+                                "context_budget_overflow",
+                                total=current_tokens,
+                                limit=max_tokens,
+                                msg="Raw string context exceeds budget.",
                             )
+                            # We optionally truncate here?
+                            # For raw string, let's just flag it.
+                            pass
+                        token_usage = current_tokens
 
                 # Determine Freshness Status
                 # "guaranteed" = newly assembled (we just ran it)
@@ -252,7 +273,11 @@ def context(
                         "source_ids": source_ids,
                         "freshness_status": freshness_status,
                         "stale_sources": stale_sources,
+                        "budget_exceeded": (token_usage > max_tokens)
+                        if max_tokens
+                        else False,
                     },
+                    version=version,
                 )
 
                 # 5. Write to Cache
@@ -281,11 +306,29 @@ def context(
                         logger.warning("context_cache_write_error", error=str(e))
 
                 # 6. Observability: Record Trace & Metrics
-                # Recalculate tokens for metric if not done
-                token_usage = 0
+                # usage is already calculated? If counter set.
+                if counter and token_usage == 0:
+                    # This happens if max_tokens was None but we want usage?
+                    # The default counter is set if max_tokens is set.
+                    # If max_tokens is None, counter might be None.
+                    # But we allow passing explicit token_counter even if max_tokens None?
+                    # Decorator: `_default_counter = OpenAITokenCounter() if max_tokens else None`
+                    # So if max_tokens is None and no counter passed, counter is None.
+                    pass
+                elif not counter and token_counter:
+                    # Should not happen
+                    pass
+
+                # If we have a counter but didn't run budget logic (e.g. max_tokens None), we should count now?
+                # The existing code did "Recalculate tokens for metric if not done"
+                # Logic:
                 if counter:
-                    token_usage = counter.count(final_content)
+                    if token_usage == 0 and len(final_content) > 0:
+                        token_usage = counter.count(final_content)
                     metrics.record_tokens(token_usage)
+
+                # Calculate Cost
+                cost_usd = estimate_cost(model, token_usage)
 
                 trace = ContextTrace(
                     context_id=ctx_id,
@@ -294,9 +337,12 @@ def context(
                     freshness_status=freshness_status,
                     source_ids=source_ids,  # collected in step 3
                     stale_sources=stale_sources,
-                    cost_usd=None,
+                    cost_usd=cost_usd,
                     cache_hit=False,
                 )
+
+                # Add cost to context meta
+                ctx.meta["cost_usd"] = cost_usd
 
                 if backend:
                     try:
@@ -311,6 +357,7 @@ def context(
                     "context_assembly_complete",
                     context_id=ctx_id,
                     length=len(final_content),
+                    cost=cost_usd,
                 )
                 return ctx
 

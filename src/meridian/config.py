@@ -1,6 +1,21 @@
 import os
 from abc import ABC, abstractmethod
 
+__all__ = [
+    "BaseConfig",
+    "DevConfig",
+    "ProdConfig",
+    "get_config",
+    "get_store_factory",
+    "get_redis_url",
+    "OfflineStore",
+    "OnlineStore",
+    "DuckDBOfflineStore",
+    "InMemoryOnlineStore",
+    "PostgresOfflineStore",
+    "RedisOnlineStore",
+]
+
 from meridian.store.offline import OfflineStore, DuckDBOfflineStore
 from meridian.store.online import OnlineStore, InMemoryOnlineStore
 
@@ -36,6 +51,12 @@ class DevConfig(BaseConfig):
         return DuckDBOfflineStore()
 
     def get_online_store(self) -> OnlineStore:
+        # Auto-detect Redis
+        redis_url = os.environ.get("MERIDIAN_REDIS_URL") or os.environ.get("REDIS_URL")
+
+        if redis_url and RedisOnlineStore is not None:
+            return RedisOnlineStore(redis_url=redis_url)
+
         return InMemoryOnlineStore()
 
 

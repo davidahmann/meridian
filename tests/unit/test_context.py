@@ -142,6 +142,7 @@ async def test_context_freshness_sla() -> None:
         id="old",
         content="Old Content",
         meta={"timestamp": old_time.isoformat(), "name": "fresh_ctx"},
+        version="v1",
     )
 
     mock_store.get.return_value = old_ctx.model_dump_json()

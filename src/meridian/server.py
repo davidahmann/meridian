@@ -11,6 +11,7 @@ from .core import FeatureStore
 from .models import ContextTrace
 import structlog
 import json
+import html
 
 logger = structlog.get_logger()
 
@@ -198,7 +199,7 @@ def create_app(store: FeatureStore) -> FastAPI:
                 raise HTTPException(status_code=404, detail="Context trace not found")
 
             # Parse
-            if isinstance(raw_trace, bytes):
+            if isinstance(raw_trace, (bytes, str)):
                 data = json.loads(raw_trace)
             else:
                 data = raw_trace
@@ -268,17 +269,22 @@ def create_app(store: FeatureStore) -> FastAPI:
         # Build Source Pills
         sources_html = ""
         for src in trace.source_ids:
+            safe_src = html.escape(str(src))
             is_stale = src in (trace.stale_sources or [])
             bg = "#fce8e6" if is_stale else "#e6f4ea"
             color = "#c5221f" if is_stale else "#137333"
             icon = "⚠️" if is_stale else "✅"
-            sources_html += f'<span style="background: {bg}; color: {color}; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-right: 5px; display: inline-block;">{icon} {src}</span>'
+            sources_html += f'<span style="background: {bg}; color: {color}; padding: 4px 8px; border-radius: 12px; font-size: 12px; margin-right: 5px; display: inline-block;">{icon} {safe_src}</span>'
+
+        safe_context_id = html.escape(context_id)
+        safe_status = html.escape(str(trace.freshness_status).upper())
+        safe_stale_sources = html.escape(str(trace.stale_sources or "None"))
 
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Context Trace: {context_id}</title>
+            <title>Context Trace: {safe_context_id}</title>
             <style>
                 body {{ font-family: -apple-system, system-ui, sans-serif; background: #f8f9fa; padding: 40px; margin: 0; }}
                 .card {{ background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 24px; max-width: 800px; margin: 0 auto; }}
@@ -300,9 +306,9 @@ def create_app(store: FeatureStore) -> FastAPI:
                 <div class="header">
                     <div>
                         <span class="title">Context Assembly Trace</span>
-                        <span class="badge" style="background-color: {fresh_color}">{trace.freshness_status.upper()}</span>
+                        <span class="badge" style="background-color: {fresh_color}">{safe_status}</span>
                     </div>
-                    <div class="subtitle">{context_id}</div>
+                    <div class="subtitle">{safe_context_id}</div>
                 </div>
 
                 <div class="metrics">
@@ -329,7 +335,7 @@ def create_app(store: FeatureStore) -> FastAPI:
                     <div class="section-title">Details</div>
                      <div style="background: #202124; color: #e8eaed; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 12px; overflow-x: auto;">
                         Cache Hit: {trace.cache_hit}<br>
-                        Stale Sources: {trace.stale_sources or "None"}<br>
+                        Stale Sources: {safe_stale_sources}<br>
                         Cost: {trace.cost_usd if trace.cost_usd else "N/A"}
                     </div>
                 </div>
