@@ -10,6 +10,7 @@ from datetime import datetime, timezone, timedelta
 from contextvars import ContextVar
 from meridian.utils.tokens import TokenCounter, OpenAITokenCounter
 from meridian.utils.pricing import estimate_cost
+from meridian.utils.time import parse_duration_to_ms, InvalidSLAFormatError
 from meridian.models import (
     ContextTrace,
     ContextLineage,
@@ -17,6 +18,7 @@ from meridian.models import (
     RetrieverLineage,
 )
 from meridian.observability import ContextMetrics
+from meridian.exceptions import FreshnessSLAError
 import time
 
 # Type for freshness status
@@ -254,6 +256,8 @@ def context(
     max_staleness: Optional[timedelta] = None,
     version: str = "v1",
     model: str = "gpt-4",
+    freshness_sla: Optional[str] = None,  # e.g., "5m", "1h", "30s"
+    freshness_strict: bool = False,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """
     Decorator to define a Context Assembly function.
@@ -265,10 +269,23 @@ def context(
         cache_ttl: TTL.
         token_counter: Counter to use (defaults to OpenAI if max_tokens set).
         max_staleness: Max acceptable age of the context.
+        freshness_sla: Maximum age for features used in this context.
+            If any feature exceeds this age, freshness_status becomes "degraded".
+            Format: "30s", "5m", "1h", "1d"
+        freshness_strict: If True, raise FreshnessSLAError when SLA is breached.
+            Default is False (graceful degradation).
     """
     # Handle case where named args are used but store is passed as name or skipped
     # If store is really a name (str)? No, type hint helps.
     # But python decorators are tricky. @context(max_tokens=100) -> store is None.
+
+    # Parse and validate freshness_sla upfront
+    freshness_sla_ms: Optional[int] = None
+    if freshness_sla:
+        try:
+            freshness_sla_ms = parse_duration_to_ms(freshness_sla)
+        except InvalidSLAFormatError as e:
+            raise InvalidSLAFormatError(f"Invalid freshness_sla format: {e}") from e
 
     # Default counter if needed
     _default_counter = OpenAITokenCounter() if max_tokens else None
@@ -438,8 +455,52 @@ def context(
                 # BUT if input sources were stale, is it "degraded"?
                 # Plan says: "Result includes stale_sources".
                 freshness_status: FreshnessStatus = "guaranteed"
+                freshness_violations: List[Dict[str, Any]] = []
+
+                # Check freshness SLA against tracked features (v1.5)
+                if freshness_sla_ms:
+                    for feat in tracker.features:
+                        if feat.freshness_ms > freshness_sla_ms:
+                            freshness_violations.append(
+                                {
+                                    "feature": feat.feature_name,
+                                    "age_ms": feat.freshness_ms,
+                                    "sla_ms": freshness_sla_ms,
+                                }
+                            )
+                            # Also add to stale_sources for backwards compat
+                            if feat.feature_name not in stale_sources:
+                                stale_sources.append(feat.feature_name)
+
+                    if freshness_violations:
+                        freshness_status = "degraded"
+                        # Record metrics for each violation
+                        for v in freshness_violations:
+                            metrics.record_freshness_violation(v["feature"])
+                        logger.warning(
+                            "context_freshness_sla_breached",
+                            context_id=ctx_id,
+                            violations=freshness_violations,
+                        )
+
+                        # Strict mode: raise exception on SLA breach
+                        if freshness_strict:
+                            raise FreshnessSLAError(
+                                f"Freshness SLA breached for {len(freshness_violations)} feature(s)",
+                                violations=freshness_violations,
+                            )
+
+                # Legacy: also mark degraded if stale_sources were found via max_staleness
                 if stale_sources:
                     freshness_status = "degraded"
+
+                # Record freshness metrics (v1.5)
+                metrics.record_freshness_status(freshness_status)
+                stalest_ms = tracker.get_stalest_feature_ms()
+                if stalest_ms > 0:
+                    metrics.record_stalest_feature(
+                        stalest_ms / 1000.0
+                    )  # Convert to seconds
 
                 # 4. Construct Context (lineage will be attached later if offline_store available)
                 ctx = Context(
@@ -452,6 +513,8 @@ def context(
                         "dropped_items": dropped_items,
                         "source_ids": source_ids,
                         "freshness_status": freshness_status,
+                        "freshness_violations": freshness_violations,  # v1.5
+                        "freshness_sla_ms": freshness_sla_ms,  # v1.5
                         "stale_sources": stale_sources,
                         "budget_exceeded": (token_usage > max_tokens)
                         if max_tokens

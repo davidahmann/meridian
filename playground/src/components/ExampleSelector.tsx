@@ -11,12 +11,14 @@ const categoryLabels: Record<Example['category'], string> = {
   'feature-store': 'Feature Store',
   'context-store': 'Context Store',
   rag: 'RAG',
+  accountability: 'Accountability',
 };
 
 const categoryColors: Record<Example['category'], string> = {
   'feature-store': 'bg-blue-500',
   'context-store': 'bg-purple-500',
   rag: 'bg-green-500',
+  accountability: 'bg-amber-500',
 };
 
 export default function ExampleSelector({

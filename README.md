@@ -90,6 +90,19 @@ print(ctx.id)       # UUIDv7 identifier for replay
 print(ctx.lineage)  # Full audit trail: features, retrievers, freshness
 ```
 
+**Freshness SLAs (v1.5+):** Ensure your AI decisions are based on fresh data:
+
+```python
+@context(store, max_tokens=4000, freshness_sla="5m")  # Features must be <5m old
+async def build_prompt(user_id: str, query: str):
+    tier = await store.get_feature("user_tier", user_id)
+    return [ContextItem(content=f"User is {tier}.", priority=0)]
+
+ctx = await build_prompt("user_123", "query")
+print(ctx.is_fresh)                    # True if all features within SLA
+print(ctx.meta["freshness_violations"])  # Details on any stale features
+```
+
 ---
 
 ## Why Meridian?
@@ -147,6 +160,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - **Context Assembly:** Token budgets, priority truncation, explainability API
 - **Semantic Cache:** Cache expensive LLM calls and retrieval results
 - **Context Accountability:** Full lineage tracking, context replay, and audit trails for AI decisions
+- **Freshness SLAs:** Ensure data freshness with configurable SLAs and degraded mode handling
 
 ### For ML Engineers
 - **Hybrid Features:** Mix Python logic and SQL in the same pipeline
@@ -205,7 +219,8 @@ meridian deploy fly --name my-app
 - [x] **v1.2:** Context Store (pgvector, retrievers, token budgets)
 - [x] **v1.3:** UI, Magic Retrievers, One-Command Deploy
 - [x] **v1.4:** Context Accountability (lineage tracking, context replay, audit trails)
-- [ ] **v1.5:** Drift detection, RBAC, multi-region
+- [x] **v1.5:** Freshness SLAs (data freshness guarantees, degraded mode, strict mode)
+- [ ] **v1.6:** Drift detection, RBAC, multi-region
 
 ---
 

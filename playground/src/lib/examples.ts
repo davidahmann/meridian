@@ -3,7 +3,7 @@ export interface Example {
   title: string;
   description: string;
   code: string;
-  category: 'feature-store' | 'context-store' | 'rag';
+  category: 'feature-store' | 'context-store' | 'rag' | 'accountability';
 }
 
 export const examples: Example[] = [
@@ -691,6 +691,375 @@ async def simulate_events():
 
 # Run simulation (await works in Pyodide)
 await simulate_events()
+`,
+  },
+  {
+    id: 'context-accountability',
+    title: 'Context Accountability',
+    description: 'Track lineage and replay AI decisions (v1.4)',
+    category: 'accountability',
+    code: `# Context Accountability Example (v1.4)
+# Track exactly what data was used in each AI decision
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+import uuid
+import random
+
+def generate_uuid7() -> str:
+    """Generate a time-sortable UUID (simplified UUIDv7)."""
+    timestamp = int(datetime.now().timestamp() * 1000)
+    random_bits = random.getrandbits(62)
+    # Simplified: just combine timestamp and random
+    return f"ctx_{timestamp:012x}_{random_bits:015x}"
+
+@dataclass
+class FeatureLineage:
+    """Records which features were retrieved."""
+    feature_name: str
+    entity_id: str
+    value: Any
+    retrieved_at: datetime
+    freshness_ms: int = 0
+
+@dataclass
+class RetrieverLineage:
+    """Records which retrievers were called."""
+    retriever_name: str
+    query: str
+    result_count: int
+    latency_ms: float
+
+@dataclass
+class ContextLineage:
+    """Full lineage for a context assembly."""
+    context_id: str
+    assembled_at: datetime
+    features: List[FeatureLineage] = field(default_factory=list)
+    retrievers: List[RetrieverLineage] = field(default_factory=list)
+    total_tokens: int = 0
+    items_dropped: int = 0
+
+class AccountableContextStore:
+    """Context store with full lineage tracking."""
+
+    def __init__(self):
+        self.contexts: Dict[str, ContextLineage] = {}
+        self.features: Dict[str, Any] = {
+            "user_tier": {"u1": "premium", "u2": "free"},
+            "preferences": {"u1": "technical", "u2": "simple"},
+        }
+
+    async def assemble_context(
+        self,
+        user_id: str,
+        query: str
+    ) -> tuple[str, ContextLineage]:
+        """Assemble context with full lineage tracking."""
+        context_id = generate_uuid7()
+        lineage = ContextLineage(
+            context_id=context_id,
+            assembled_at=datetime.now()
+        )
+
+        # Track feature retrieval
+        for feature_name, values in self.features.items():
+            if user_id in values:
+                lineage.features.append(FeatureLineage(
+                    feature_name=feature_name,
+                    entity_id=user_id,
+                    value=values[user_id],
+                    retrieved_at=datetime.now(),
+                    freshness_ms=random.randint(100, 5000)
+                ))
+
+        # Track retriever call
+        lineage.retrievers.append(RetrieverLineage(
+            retriever_name="search_docs",
+            query=query,
+            result_count=3,
+            latency_ms=random.uniform(10, 100)
+        ))
+
+        lineage.total_tokens = random.randint(2000, 3500)
+        lineage.items_dropped = random.randint(0, 2)
+
+        # Store for replay
+        self.contexts[context_id] = lineage
+
+        return context_id, lineage
+
+    def get_context_at(self, context_id: str) -> Optional[ContextLineage]:
+        """Replay: retrieve any historical context."""
+        return self.contexts.get(context_id)
+
+    def list_contexts(self, limit: int = 10) -> List[ContextLineage]:
+        """List recent contexts for debugging."""
+        sorted_contexts = sorted(
+            self.contexts.values(),
+            key=lambda c: c.assembled_at,
+            reverse=True
+        )
+        return sorted_contexts[:limit]
+
+# --- DEMO ---
+async def demo():
+    print("🔍 Context Accountability Demo (v1.4)\\n")
+
+    store = AccountableContextStore()
+
+    # Assemble some contexts
+    contexts = []
+    queries = [
+        ("u1", "How do I use feature stores?"),
+        ("u2", "What is RAG?"),
+        ("u1", "Deploy to production"),
+    ]
+
+    for user_id, query in queries:
+        ctx_id, lineage = await store.assemble_context(user_id, query)
+        contexts.append((ctx_id, lineage))
+        print(f"📋 Context: {ctx_id}")
+        print(f"   User: {user_id}")
+        print(f"   Query: '{query}'")
+        print(f"   Tokens: {lineage.total_tokens}")
+        print()
+
+    # Demonstrate replay
+    print("=" * 50)
+    print("🔄 Context Replay Demo")
+    print("=" * 50)
+
+    # Get the first context by ID
+    replay_id = contexts[0][0]
+    replayed = store.get_context_at(replay_id)
+
+    if replayed:
+        print(f"\\n📦 Replaying context: {replay_id}")
+        print(f"   Assembled at: {replayed.assembled_at.isoformat()}")
+        print(f"\\n   Features used:")
+        for feat in replayed.features:
+            print(f"      - {feat.feature_name}: {feat.value} (age: {feat.freshness_ms}ms)")
+        print(f"\\n   Retrievers called:")
+        for ret in replayed.retrievers:
+            print(f"      - {ret.retriever_name}: '{ret.query[:30]}...' ({ret.result_count} results)")
+
+    # List all contexts
+    print(f"\\n📊 All contexts: {len(store.list_contexts())}")
+
+    print("\\n✨ Demo complete!")
+    print("\\nWith Context Accountability, you can:")
+    print("  • Debug exactly what data influenced each AI decision")
+    print("  • Audit AI behavior for compliance")
+    print("  • Reproduce past context states for testing")
+
+await demo()
+`,
+  },
+  {
+    id: 'freshness-sla',
+    title: 'Freshness SLAs',
+    description: 'Ensure AI uses fresh data with SLA guarantees (v1.5)',
+    category: 'accountability',
+    code: `# Freshness SLAs Example (v1.5)
+# Ensure your AI decisions are based on fresh data
+
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+import random
+import re
+
+def parse_duration_to_ms(duration: str) -> int:
+    """Parse duration string like '5m', '1h', '30s' to milliseconds."""
+    pattern = r'^(\\d+)(ms|s|m|h|d)$'
+    match = re.match(pattern, duration.lower().strip())
+    if not match:
+        raise ValueError(f"Invalid duration format: {duration}")
+
+    value = int(match.group(1))
+    unit = match.group(2)
+
+    multipliers = {
+        'ms': 1,
+        's': 1000,
+        'm': 60 * 1000,
+        'h': 60 * 60 * 1000,
+        'd': 24 * 60 * 60 * 1000,
+    }
+    return value * multipliers[unit]
+
+@dataclass
+class FreshnessSLAError(Exception):
+    """Raised when freshness SLA is breached in strict mode."""
+    message: str
+    violations: List[Dict[str, Any]]
+
+@dataclass
+class FeatureData:
+    """A feature with timestamp for freshness tracking."""
+    name: str
+    value: Any
+    updated_at: datetime
+
+    @property
+    def age_ms(self) -> int:
+        """Age of the feature in milliseconds."""
+        delta = datetime.now() - self.updated_at
+        return int(delta.total_seconds() * 1000)
+
+@dataclass
+class ContextResult:
+    """Result of context assembly with freshness info."""
+    content: str
+    is_fresh: bool
+    freshness_status: str  # "guaranteed" or "degraded"
+    freshness_violations: List[Dict[str, Any]] = field(default_factory=list)
+
+class FreshnessAwareStore:
+    """Feature store with freshness SLA support."""
+
+    def __init__(self):
+        # Simulate features with different ages
+        now = datetime.now()
+        self.features: Dict[str, FeatureData] = {
+            "user_tier": FeatureData(
+                "user_tier", "premium",
+                now - timedelta(seconds=30)  # 30s old - fresh
+            ),
+            "account_balance": FeatureData(
+                "account_balance", 1250.00,
+                now - timedelta(seconds=120)  # 2 min old
+            ),
+            "preferences": FeatureData(
+                "preferences", "dark_mode=true",
+                now - timedelta(minutes=10)  # 10 min old - stale
+            ),
+            "inventory_count": FeatureData(
+                "inventory_count", 42,
+                now - timedelta(minutes=30)  # 30 min old - very stale
+            ),
+        }
+
+    def get_feature(self, name: str) -> FeatureData:
+        return self.features[name]
+
+    async def assemble_context(
+        self,
+        feature_names: List[str],
+        freshness_sla: str = "5m",
+        freshness_strict: bool = False
+    ) -> ContextResult:
+        """Assemble context with freshness checking."""
+
+        sla_ms = parse_duration_to_ms(freshness_sla)
+        violations = []
+        contents = []
+
+        for name in feature_names:
+            feature = self.get_feature(name)
+            contents.append(f"{name}: {feature.value}")
+
+            # Check freshness
+            if feature.age_ms > sla_ms:
+                violations.append({
+                    "feature": name,
+                    "age_ms": feature.age_ms,
+                    "sla_ms": sla_ms,
+                })
+
+        # Handle strict mode
+        if freshness_strict and violations:
+            raise FreshnessSLAError(
+                f"Freshness SLA breached for {len(violations)} feature(s)",
+                violations
+            )
+
+        is_fresh = len(violations) == 0
+        return ContextResult(
+            content="\\n".join(contents),
+            is_fresh=is_fresh,
+            freshness_status="guaranteed" if is_fresh else "degraded",
+            freshness_violations=violations
+        )
+
+# --- DEMO ---
+async def demo():
+    print("⏱️  Freshness SLAs Demo (v1.5)\\n")
+
+    store = FreshnessAwareStore()
+
+    # Show current feature ages
+    print("📊 Current Feature Ages:")
+    print("-" * 40)
+    for name, feature in store.features.items():
+        age_sec = feature.age_ms / 1000
+        print(f"   {name}: {age_sec:.1f}s old")
+
+    # Test 1: Lenient SLA (10 minutes)
+    print("\\n" + "=" * 50)
+    print("Test 1: Lenient SLA (freshness_sla='10m')")
+    print("=" * 50)
+
+    result = await store.assemble_context(
+        ["user_tier", "account_balance", "preferences"],
+        freshness_sla="10m"
+    )
+
+    print(f"\\n   Status: {result.freshness_status}")
+    print(f"   Is Fresh: {result.is_fresh}")
+    if result.freshness_violations:
+        print(f"   Violations: {len(result.freshness_violations)}")
+        for v in result.freshness_violations:
+            print(f"      - {v['feature']}: {v['age_ms']}ms > {v['sla_ms']}ms")
+
+    # Test 2: Strict SLA (1 minute) - will show violations
+    print("\\n" + "=" * 50)
+    print("Test 2: Strict SLA (freshness_sla='1m')")
+    print("=" * 50)
+
+    result = await store.assemble_context(
+        ["user_tier", "account_balance", "preferences"],
+        freshness_sla="1m"
+    )
+
+    print(f"\\n   Status: {result.freshness_status}")
+    print(f"   Is Fresh: {result.is_fresh}")
+    if result.freshness_violations:
+        print(f"   ⚠️  Violations: {len(result.freshness_violations)}")
+        for v in result.freshness_violations:
+            age_sec = v['age_ms'] / 1000
+            sla_sec = v['sla_ms'] / 1000
+            print(f"      - {v['feature']}: {age_sec:.1f}s old (limit: {sla_sec:.0f}s)")
+
+    # Test 3: Strict mode - raises exception
+    print("\\n" + "=" * 50)
+    print("Test 3: Strict Mode (freshness_strict=True)")
+    print("=" * 50)
+
+    try:
+        result = await store.assemble_context(
+            ["user_tier", "inventory_count"],  # inventory_count is very stale
+            freshness_sla="1m",
+            freshness_strict=True
+        )
+    except FreshnessSLAError as e:
+        print(f"\\n   ❌ FreshnessSLAError: {e.message}")
+        print(f"   Violations:")
+        for v in e.violations:
+            age_sec = v['age_ms'] / 1000
+            print(f"      - {v['feature']}: {age_sec:.1f}s old")
+
+    print("\\n" + "=" * 50)
+    print("✨ Demo complete!")
+    print("\\nWith Freshness SLAs, you can:")
+    print("  • Ensure your AI uses current data")
+    print("  • Monitor degraded contexts via metrics")
+    print("  • Fail fast for critical decisions (strict mode)")
+    print("  • Build trust in AI decision-making")
+
+await demo()
 `,
   },
 ];

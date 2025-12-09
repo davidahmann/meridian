@@ -234,8 +234,52 @@ Context assembly is fast:
 
 For very large contexts (>50 items), consider pre-filtering.
 
+## Freshness SLAs
+
+Ensure your context uses fresh data with freshness guarantees (v1.5+):
+
+```python
+@context(store, max_tokens=4000, freshness_sla="5m")
+async def time_sensitive_context(user_id: str, query: str) -> Context:
+    tier = await store.get_feature("user_tier", user_id)  # Must be <5m old
+    balance = await store.get_feature("account_balance", user_id)
+    return [
+        ContextItem(content=f"User tier: {tier}", priority=0),
+        ContextItem(content=f"Balance: ${balance}", priority=1),
+    ]
+```
+
+### Checking Freshness
+
+```python
+ctx = await time_sensitive_context("user_123", "query")
+
+# Check overall status
+print(ctx.is_fresh)  # True if all features within SLA
+print(ctx.meta["freshness_status"])  # "guaranteed" or "degraded"
+
+# See violations
+for v in ctx.meta["freshness_violations"]:
+    print(f"{v['feature']} is {v['age_ms']}ms old (limit: {v['sla_ms']}ms)")
+```
+
+### Strict Mode
+
+For critical contexts, fail on stale data:
+
+```python
+from meridian.exceptions import FreshnessSLAError
+
+@context(store, freshness_sla="30s", freshness_strict=True)
+async def critical_context(...):
+    pass  # Raises FreshnessSLAError if any feature exceeds SLA
+```
+
+See [Freshness SLAs](freshness-sla.md) for the full guide.
+
 ## Next Steps
 
+- [Freshness SLAs](freshness-sla.md): Data freshness guarantees
 - [Retrievers](retrievers.md): Define semantic search
 - [Event-Driven Features](event-driven-features.md): Fresh context
 - [Use Case: RAG Chatbot](use-cases/rag-chatbot.md): Full example

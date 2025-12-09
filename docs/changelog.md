@@ -8,6 +8,40 @@ keywords: meridian changelog, release notes, feature store updates, context stor
 
 All notable changes to this project will be documented in this file.
 
+## [v1.5.0] - 2025-12-09
+
+### 🚀 Major Features: Freshness SLAs
+
+*   **Freshness SLA Parameter:** Configure maximum age for features used in context assembly.
+    *   `@context(store, freshness_sla="5m")` - Require features to be less than 5 minutes old.
+    *   Supports multiple formats: `"30s"`, `"5m"`, `"1h"`, `"1d"`, `"500ms"`.
+*   **Degraded Mode:** Graceful handling when features exceed SLA threshold.
+    *   Context assembly succeeds but `freshness_status` becomes `"degraded"`.
+    *   `freshness_violations` list provides details on stale features.
+    *   Structured logging warns when SLA is breached.
+*   **Strict Mode:** Optional hard failure on SLA breach.
+    *   `@context(store, freshness_sla="30s", freshness_strict=True)` - Raise `FreshnessSLAError` on violation.
+    *   Exception includes full violation details for debugging.
+*   **Prometheus Metrics:**
+    *   `meridian_context_freshness_status_total{status="guaranteed|degraded"}` - Track freshness status.
+    *   `meridian_context_freshness_violations_total{feature="..."}` - Track violations by feature.
+    *   `meridian_context_stalest_feature_seconds` - Histogram of stalest feature ages.
+
+### 🔧 Improvements
+
+*   Added `src/meridian/utils/time.py` with `parse_duration_to_ms()` and `format_ms_to_human()` utilities.
+*   Added `FreshnessSLAError` exception with structured violation data.
+*   Context meta now includes `freshness_violations` and `freshness_sla_ms` fields.
+*   Added `is_fresh` property to `Context` class for easy checking.
+
+### 📚 Documentation
+
+*   Added [Freshness SLAs](freshness-sla.md) full guide.
+*   Added [Freshness SLAs: When Your AI Needs Fresh Data](blog/freshness-guarantees.md) blog post.
+*   40 new unit and integration tests for freshness SLA feature.
+
+---
+
 ## [v1.4.0] - 2025-12-09
 
 ### 🚀 Major Features: Context Accountability

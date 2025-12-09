@@ -149,6 +149,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - **[Context Accountability](context-accountability.md):** Full lineage tracking for AI decisions
 - **Context Replay:** Reproduce exactly what your AI knew at any point in time
 - **Audit Trails:** UUIDv7-based context IDs with complete data provenance
+- **[Freshness SLAs](freshness-sla.md):** Ensure data freshness with configurable thresholds and degraded mode
 
 ---
 
@@ -196,6 +197,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - [Deploy ML Features Without Kubernetes](blog/deploy-without-kubernetes.md)
 - [What Did Your AI Know? Introducing Context Replay](blog/context-replay.md)
 - [Building an Audit Trail for AI Decisions](blog/ai-audit-trail.md)
+- [Freshness SLAs: When Your AI Needs Fresh Data](blog/freshness-guarantees.md)
 
 ---
 

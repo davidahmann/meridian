@@ -32,6 +32,27 @@ INDEX_WRITE_TOTAL = Counter(
     ["index_name"],
 )
 
+# --- Freshness SLA Metrics (v1.5) ---
+
+CONTEXT_FRESHNESS_STATUS_TOTAL = Counter(
+    "meridian_context_freshness_status_total",
+    "Total contexts by freshness status",
+    ["name", "status"],  # status: "guaranteed" or "degraded"
+)
+
+CONTEXT_FRESHNESS_VIOLATIONS_TOTAL = Counter(
+    "meridian_context_freshness_violations_total",
+    "Total freshness SLA violations by feature",
+    ["name", "feature"],
+)
+
+CONTEXT_STALEST_FEATURE_SECONDS = Histogram(
+    "meridian_context_stalest_feature_seconds",
+    "Age of the stalest feature used in context assembly",
+    ["name"],
+    buckets=(0.1, 0.5, 1, 5, 10, 30, 60, 300, 600, 1800, 3600),
+)
+
 
 class ContextMetrics:
     """Helper to track context metrics."""
@@ -61,3 +82,15 @@ class ContextMetrics:
 
     def record_cache_hit(self) -> None:
         CONTEXT_CACHE_HIT_TOTAL.labels(name=self.name).inc()
+
+    def record_freshness_status(self, status: str) -> None:
+        """Record freshness status (guaranteed or degraded)."""
+        CONTEXT_FRESHNESS_STATUS_TOTAL.labels(name=self.name, status=status).inc()
+
+    def record_freshness_violation(self, feature: str) -> None:
+        """Record a freshness SLA violation for a specific feature."""
+        CONTEXT_FRESHNESS_VIOLATIONS_TOTAL.labels(name=self.name, feature=feature).inc()
+
+    def record_stalest_feature(self, age_seconds: float) -> None:
+        """Record the age of the stalest feature in seconds."""
+        CONTEXT_STALEST_FEATURE_SECONDS.labels(name=self.name).observe(age_seconds)
