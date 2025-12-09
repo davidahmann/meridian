@@ -12,7 +12,7 @@
 
   <br />
 
-  <p><b>The only tool that unifies RAG pipelines and ML features in a single Python decorator.</b></p>
+  <p><b>Unify RAG pipelines and ML features in a single Python decorator.</b></p>
   <p><i>From notebook prototype to production in 30 seconds. No Kubernetes. No Spark. No YAML.</i></p>
 
   <br />

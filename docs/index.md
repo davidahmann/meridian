@@ -1,12 +1,12 @@
 ---
 title: "Meridian - The Context Store for LLMs & ML Features"
-description: "The only tool that unifies RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds."
+description: "Unify RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds."
 keywords: context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search
 ---
 
 # Meridian: The Context Store for LLMs & ML Features
 
-> **The only tool that unifies RAG pipelines and ML features in a single Python decorator.**
+> **Unify RAG pipelines and ML features in a single Python decorator.**
 
 From notebook prototype to production in 30 seconds. No Kubernetes. No Spark. No YAML.
 
@@ -189,7 +189,7 @@ We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/meri
   "name": "Meridian",
   "operatingSystem": "Linux, macOS, Windows",
   "applicationCategory": "DeveloperApplication",
-  "description": "The only tool that unifies RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds.",
+  "description": "Unify RAG pipelines and ML features in a single Python decorator. From notebook to production in 30 seconds.",
   "offers": {
     "@type": "Offer",
     "price": "0",
