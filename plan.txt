@@ -60,44 +60,6 @@ Implementation approach:
 
 # src/meridian/utils/pricing.py
 
-# Source: https://platform.openai.com/docs/pricing?latest-pricing=standard
-# Source: https://www.claude.com/pricing#api
-# Source: https://cohere.com/pricing
-check actual pricing using links provided above. for openai use top 5 their currently popular generative models and 2 embed models for anthropic use all their api pricing. for cohere two models provided in the example pricing.
-Example pricing:
-MODEL_PRICING = {
-    # OpenAI (per 1M tokens)
-    "gpt-4o": {"input": 2.50, "output": 10.00},
-
-
-    # Anthropic (per 1M tokens)
-
-    "claude-3-5-haiku-20241022": {"input": 0.80, "output": 4.00},
-
-    # Cohere (per 1M tokens)
-    "command-A": {"input": 2.50, "output": 10.00},
-    "embed-4": {"input": 0.12, "output": 0.47},
-}
-
-def estimate_cost(model: str, input_tokens: int, output_tokens: int = 0) -> float:
-    """Returns estimated cost in USD."""
-    if model not in MODEL_PRICING:
-        return 0.0  # Unknown model
-
-    rates = MODEL_PRICING[model]
-    cost = (input_tokens / 1_000_000) * rates["input"]
-    cost += (output_tokens / 1_000_000) * rates["output"]
-    return round(cost, 6)
-
-Usage in context assembly:
-
-# In context.py, after token counting
-from meridian.utils.pricing import estimate_cost
-
-ctx.meta["estimated_cost_usd"] = estimate_cost(
-    model="gpt-4o",  # Could be configurable
-    input_tokens=token_usage
-)
 
 Maintenance strategy:
 

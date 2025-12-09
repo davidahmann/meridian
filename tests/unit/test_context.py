@@ -2,7 +2,7 @@ from __future__ import annotations
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from datetime import timedelta, datetime, timezone
-from meridian.context import context, Context, ContextItem, ContextBudgetError
+from meridian.context import context, Context, ContextItem
 
 
 @pytest.mark.asyncio
@@ -106,7 +106,7 @@ async def test_context_budgeting_trimming() -> None:
 
 
 @pytest.mark.asyncio
-async def test_context_budget_error() -> None:
+async def test_context_budget_graceful_degradation() -> None:
     mock_counter = MagicMock()
     mock_counter.count.side_effect = lambda x: len(x)
 
@@ -116,8 +116,10 @@ async def test_context_budget_error() -> None:
             ContextItem(content="TooLongForBudget", required=True)  # 16 tokens
         ]
 
-    with pytest.raises(ContextBudgetError):
-        await assemble_fail()
+    # Graceful degradation: Should NOT raise, but flag budget_exceeded
+    result = await assemble_fail()
+    assert result.meta["budget_exceeded"] is True
+    assert result.content == "TooLongForBudget"
 
 
 @pytest.mark.asyncio

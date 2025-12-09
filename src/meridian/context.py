@@ -81,6 +81,7 @@ class Context(BaseModel):
 
 
 def context(
+    store: Optional[Any] = None,  # Accepts FeatureStore
     name: Optional[str] = None,
     max_tokens: Optional[int] = None,
     cache_ttl: Optional[timedelta] = timedelta(minutes=5),
@@ -93,12 +94,17 @@ def context(
     Decorator to define a Context Assembly function.
 
     Args:
+        store: FeatureStore instance (optional, enables caching).
         name: Logical name.
         max_tokens: Hard budget.
         cache_ttl: TTL.
         token_counter: Counter to use (defaults to OpenAI if max_tokens set).
         max_staleness: Max acceptable age of the context.
     """
+    # Handle case where named args are used but store is passed as name or skipped
+    # If store is really a name (str)? No, type hint helps.
+    # But python decorators are tricky. @context(max_tokens=100) -> store is None.
+
     # Default counter if needed
     _default_counter = OpenAITokenCounter() if max_tokens else None
 
@@ -108,11 +114,15 @@ def context(
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Context:
             metrics = ContextMetrics(context_name)
-            # 0. Check Cache (implementation omitted for brevity in this view, assuming previous code remains)
-            # ... (Existing cache logic) ...
 
-            # (Re-implementing Cache check here to ensure contiguous replacement works)
+            # Resolve Backend: Use passed store or attached attribute
             backend = getattr(wrapper, "_cache_backend", None)
+            if not backend and store and hasattr(store, "online_store"):
+                backend = store.online_store
+                # Cache it for future calls
+                setattr(wrapper, "_cache_backend", backend)
+
+            # 0. Check Cache (implementation omitted for brevity in this view, assuming previous code remains)
 
             if cache_ttl and backend:
                 key_str = f"{args}-{kwargs}"

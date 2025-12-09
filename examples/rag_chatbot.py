@@ -46,7 +46,7 @@ async def search_docs(query: str, top_k: int = 3) -> list[str]:
 
 
 # --- 4. Define Context Assembly ---
-@context(max_tokens=200)  # Small budget to demonstrate dropping
+@context(store, max_tokens=200)  # Small budget to demonstrate dropping
 async def chat_context(user_id: str, query: str) -> Context:
     # 1. Fetch personalization features
     # Note: get_online_features returns a dict, we extract values

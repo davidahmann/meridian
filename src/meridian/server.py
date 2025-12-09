@@ -1,4 +1,12 @@
-from fastapi import FastAPI, HTTPException, Request, Response, Depends, Security
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    Depends,
+    Security,
+    APIRouter,
+)
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 from fastapi.security.api_key import APIKeyHeader
@@ -13,7 +21,19 @@ import structlog
 import json
 import html
 
+try:
+    from opentelemetry import trace  # type: ignore
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # type: ignore
+
+    OTEL_AVAILABLE = True
+except ImportError:
+    OTEL_AVAILABLE = False
+    trace = None
+
 logger = structlog.get_logger()
+
+# Trace Provider (No-op if not configured by environment)
+tracer = trace.get_tracer("meridian") if OTEL_AVAILABLE else None
 
 # Metrics
 REQUEST_COUNT = Counter(
@@ -27,6 +47,12 @@ REQUEST_LATENCY = Histogram(
 class FeatureRequest(BaseModel):
     entity_name: str
     entity_id: str
+    features: List[str]
+
+
+class BatchFeatureRequest(BaseModel):
+    name: str  # entity_name
+    ids: List[str]
     features: List[str]
 
 
@@ -67,6 +93,11 @@ def create_app(store: FeatureStore) -> FastAPI:
 
     app = FastAPI(title="Meridian Feature Store API", lifespan=lifespan)
 
+    if OTEL_AVAILABLE:
+        # Instrument FastAPI automatically
+        # This adds spans for every request
+        FastAPIInstrumentor.instrument_app(app)
+
     @app.middleware("http")
     async def metrics_middleware(request: Request, call_next: Any) -> Response:
         start_time = time.time()
@@ -106,7 +137,33 @@ def create_app(store: FeatureStore) -> FastAPI:
     async def metrics() -> Response:
         return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
-    @app.post("/features")
+    # V1 Router
+    v1_router = APIRouter(prefix="/v1")
+
+    @v1_router.post("/features/batch")
+    async def get_batch_features(
+        request: BatchFeatureRequest, api_key: str = Depends(get_api_key)
+    ) -> Dict[str, Any]:
+        """
+        Batch retrieve features for multiple entities.
+        """
+        results = {}
+        for entity_id in request.ids:
+            try:
+                # Reuse existing logic (sequentially for MVP, parallelize later)
+                # In a real impl, we'd add store.get_online_features_batch
+                feats = await store.get_online_features(
+                    entity_name=request.name,
+                    entity_id=entity_id,
+                    features=request.features,
+                )
+                results[entity_id] = feats
+            except Exception as e:
+                logger.error("batch_feature_error", entity_id=entity_id, error=str(e))
+                results[entity_id] = {"error": str(e)}
+        return results
+
+    @v1_router.post("/features")
     async def get_features(
         request: FeatureRequest, api_key: str = Depends(get_api_key)
     ) -> Dict[str, Any]:
@@ -124,7 +181,7 @@ def create_app(store: FeatureStore) -> FastAPI:
             logger.error("Error retrieving features", error=str(e))
             raise HTTPException(status_code=500, detail=str(e))
 
-    @app.post("/ingest/{event_type}", status_code=202)
+    @v1_router.post("/ingest/{event_type}", status_code=202)
     async def ingest_event(
         event_type: str,
         payload: Dict[str, Any],
@@ -134,9 +191,10 @@ def create_app(store: FeatureStore) -> FastAPI:
         """
         Ingests an event into the Axiom Event Bus.
         """
-        if not event_type.isalnum():
+        if not event_type.replace("_", "").isalnum():
             raise HTTPException(
-                status_code=400, detail="Event type must be alphanumeric"
+                status_code=400,
+                detail="Event type must be alphanumeric (underscores allowed)",
             )
 
         from meridian.events import AxiomEvent
@@ -174,13 +232,18 @@ def create_app(store: FeatureStore) -> FastAPI:
         # To avoid complexity, let's rely on Python GC or context manager if possible.
         # Ideally, use dependency injection with lifecycle.
 
+        # Trigger Hooks
+        await store.hooks.trigger_after_ingest(
+            event_type=event_type, entity_id=entity_id, payload=payload
+        )
+
         return {"msg_id": msg_id, "event_id": str(event.id)}
 
     @app.get("/health")
     async def health() -> Dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/context/{context_id}/explain", response_model=ContextTrace)
+    @v1_router.get("/context/{context_id}/explain", response_model=ContextTrace)
     async def explain_context(
         context_id: str, api_key: str = Depends(get_api_key)
     ) -> ContextTrace:
@@ -212,7 +275,7 @@ def create_app(store: FeatureStore) -> FastAPI:
             logger.error("explain_context_failed", error=str(e))
             raise HTTPException(status_code=500, detail=str(e))
 
-    @app.delete("/cache/{entity_name}/{entity_id}")
+    @v1_router.delete("/cache/{entity_name}/{entity_id}")
     async def invalidate_cache(
         entity_name: str, entity_id: str, api_key: str = Depends(get_api_key)
     ) -> Dict[str, str]:
@@ -253,7 +316,7 @@ def create_app(store: FeatureStore) -> FastAPI:
             logger.error("cache_invalidation_failed", error=str(e))
             raise HTTPException(status_code=500, detail=str(e))
 
-    @app.get("/context/{context_id}/visualize", response_class=HTMLResponse)
+    @v1_router.get("/context/{context_id}/visualize", response_class=HTMLResponse)
     async def visualize_context(
         context_id: str, api_key: str = Depends(get_api_key)
     ) -> HTMLResponse:
@@ -348,5 +411,7 @@ def create_app(store: FeatureStore) -> FastAPI:
         </html>
         """
         return HTMLResponse(content=html_content)
+
+    app.include_router(v1_router)
 
     return app

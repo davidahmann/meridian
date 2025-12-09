@@ -19,6 +19,7 @@ from .store import (
 )
 from .scheduler import Scheduler
 from .scheduler_dist import DistributedScheduler
+from .hooks import Hook, HookManager
 
 import structlog
 from prometheus_client import Counter, Histogram
@@ -147,10 +148,12 @@ class FeatureStore:
         self,
         offline_store: Optional[OfflineStore] = None,
         online_store: Optional[OnlineStore] = None,
+        hooks: Optional[List[Hook]] = None,
     ) -> None:
         self.registry = FeatureRegistry()
         self.retriever_registry = RetrieverRegistry()
         self.index_registry = IndexRegistry()
+        self.hooks = HookManager(hooks or [])
 
         # Auto-configure stores if not provided
         if offline_store is None or online_store is None:
@@ -397,6 +400,10 @@ class FeatureStore:
         log = logger.bind(
             entity_name=entity_name, entity_id=entity_id, features=features
         )
+
+        # Trigger Before Hooks
+        await self.hooks.trigger_before_retrieval(entity_name, entity_id, features)
+
         start_time = time.perf_counter()
 
         # 0. Time Travel Check
@@ -497,6 +504,12 @@ class FeatureStore:
         log.info(
             "get_online_features_complete", duration=duration, found=len(final_results)
         )
+
+        # Trigger After Hooks
+        await self.hooks.trigger_after_retrieval(
+            entity_name, entity_id, features, final_results
+        )
+
         return final_results
 
     async def get_feature(self, feature_name: str, entity_id: str) -> Any:

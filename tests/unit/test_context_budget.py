@@ -1,5 +1,5 @@
 import pytest
-from meridian.context import ContextBudgetError, ContextItem, context
+from meridian.context import ContextItem, context
 from meridian.utils.tokens import TokenCounter
 
 
@@ -24,8 +24,11 @@ async def test_context_budget_strict() -> None:
         ]
 
     # Must invoke wrapper
-    with pytest.raises(ContextBudgetError):
-        await strict_ctx()
+    # Graceful: Should not raise, but flag
+    result = await strict_ctx()
+    assert result.meta["budget_exceeded"] is True
+    assert "123" in result.content
+    assert "456" in result.content
 
 
 @pytest.mark.asyncio
