@@ -26,4 +26,4 @@ Allow: /
 User-agent: cohere-ai
 Allow: /
 
-Sitemap: https://davidahmann.github.io/fabra/docs/sitemap.xml
+Sitemap: https://davidahmann.github.io/fabra/sitemap.xml

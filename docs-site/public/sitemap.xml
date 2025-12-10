@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Core Pages -->
+  <!-- Homepage -->
+  <url>
+    <loc>https://davidahmann.github.io/fabra/</loc>
+    <lastmod>2025-12-10</lastmod>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Core Docs Pages -->
   <url>
     <loc>https://davidahmann.github.io/fabra/docs/</loc>
     <lastmod>2025-12-09</lastmod>
@@ -156,89 +163,94 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Blog Posts -->
+  <!-- Blog -->
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/feast-alternative/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/</loc>
+    <lastmod>2025-12-10</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://davidahmann.github.io/fabra/blog/feast-alternative/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/local-feature-store/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/local-feature-store/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/rag-without-langchain/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/rag-without-langchain/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/feature-store-for-startups/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/feature-store-for-startups/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/context-assembly/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/context-assembly/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/point-in-time-features/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/point-in-time-features/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/pgvector-vs-pinecone/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/pgvector-vs-pinecone/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/token-budget-management/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/token-budget-management/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/python-decorators-ml/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/python-decorators-ml/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/deploy-without-kubernetes/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/deploy-without-kubernetes/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/context-replay/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/context-replay/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/ai-audit-trail/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/ai-audit-trail/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/freshness-guarantees/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/freshness-guarantees/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/fabra-vs-context-platforms/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/fabra-vs-context-platforms/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/feast-too-complex/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/feast-too-complex/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/rag-compliance-fintech/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/rag-compliance-fintech/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://davidahmann.github.io/fabra/docs/blog/rag-compliance-healthcare/</loc>
+    <loc>https://davidahmann.github.io/fabra/blog/rag-compliance-healthcare/</loc>
     <lastmod>2025-12-09</lastmod>
     <priority>0.6</priority>
   </url>
