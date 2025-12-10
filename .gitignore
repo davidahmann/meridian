@@ -52,6 +52,7 @@ gtm/
 
 # Generated Artifacts
 *.html
+!docs-site/public/google*.html
 fixes.txt
 
 # Testing Artifacts
