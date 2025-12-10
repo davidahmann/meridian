@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### 🎉 Major Release: Rebrand to Fabra
 
-*   **Rebrand:** Project renamed from Meridian to **Fabra** ("Craft ML Features").
+*   **Rebrand:** Project renamed from Meridian to **Fabra** (context infrastructure for AI applications).
     *   Package renamed from `meridian-oss` to `fabra` on PyPI.
     *   CLI command changed from `meridian` to `fabra`.
     *   All imports changed from `from meridian` to `from fabra`.

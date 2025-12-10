@@ -1,10 +1,10 @@
 ---
-title: "Fabra - The Audit Trail for AI Decisions"
+title: "Fabra - Context Infrastructure for AI Applications"
 description: "Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision."
-keywords: context infrastructure, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search, ai audit trail, rag audit trail, feature store without kubernetes, langchain alternative simple, what did ai know, ai decision audit, context replay
+keywords: context infrastructure, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search, ai traceability, rag lineage, feature store without kubernetes, langchain alternative simple, what did ai know, context replay
 ---
 
-# Fabra: The Audit Trail for AI Decisions
+# Fabra: Context Infrastructure for AI Applications
 
 > **Know what your AI knew.**
 
@@ -16,7 +16,7 @@ Fabra stores, indexes, and serves the data your AI uses — and tracks exactly w
 
 | | |
 |:---|:---|
-| **What** | The audit trail for AI decisions — we own the write path |
+| **What** | Context infrastructure — we own the write path |
 | **Install** | `pip install "fabra-ai[ui]"` |
 | **Features** | `@feature` decorator for ML features |
 | **RAG** | `@retriever` + `@context` for LLM context assembly |
@@ -40,7 +40,7 @@ Today, this means stitching together LangChain, Pinecone, a feature store, Redis
 
 **Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision.**
 
-This is "write path ownership": we ingest and manage your context data, not just query it. This enables replay, lineage, and auditability that read-only wrappers cannot provide.
+This is "write path ownership": we ingest and manage your context data, not just query it. This enables replay, lineage, and traceability that read-only wrappers cannot provide.
 
 ---
 
@@ -163,11 +163,11 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - **Visual UI:** Dependency graphs, live metrics, context debugging
 - **[Unit Testing](unit_testing.md):** Test features in isolation
 
-### For Compliance & Auditability
+### For Compliance & Debugging
 
 - **[Context Accountability](context-accountability.md):** Full lineage tracking — every AI decision traces back through the data that informed it
-- **Context Replay:** Reproduce exactly what your AI knew at any point in time for regulators and auditors
-- **Audit Trails:** UUIDv7-based context IDs with complete data provenance for compliance requirements
+- **Context Replay:** Reproduce exactly what your AI knew at any point in time for debugging and compliance
+- **Traceability:** UUIDv7-based context IDs with complete data provenance
 - **[Freshness SLAs](freshness-sla.md):** Ensure data freshness with configurable thresholds and degraded mode
 
 ---
@@ -185,8 +185,8 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 
 | **I'm an ML Engineer** | **I'm an AI Engineer** |
 |:---|:---|
-| *"I need to serve features without Kubernetes"* | *"I need RAG with audit trails"* |
-| [Feature Store Without K8s →](feature-store-without-kubernetes.md) | [RAG Audit Trail →](rag-audit-trail.md) |
+| *"I need to serve features without Kubernetes"* | *"I need RAG with traceability"* |
+| [Feature Store Without K8s →](feature-store-without-kubernetes.md) | [Context Accountability →](context-accountability.md) |
 | [Feast vs Fabra →](feast-alternative.md) | [Context Store →](context-store.md) |
 | [Quickstart (ML Track) →](quickstart.md#feature-store-in-30-seconds) | [Quickstart (AI Track) →](quickstart.md#context-store-in-60-seconds) |
 
@@ -210,8 +210,8 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 
 ### For AI Engineers
 
-- [Context Store](context-store.md) — RAG infrastructure with audit trails
-- [RAG Audit Trail](rag-audit-trail.md) — Know what your AI knew
+- [Context Store](context-store.md) — RAG infrastructure with full lineage
+- [Context Accountability](context-accountability.md) — Know what your AI knew
 - [Compliance Guide](compliance-guide.md) — GDPR, SOC2, and regulated industries
 
 ### Guides
@@ -238,7 +238,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - [Python Decorators for ML Feature Engineering](blog/python-decorators-ml.md)
 - [Deploy ML Features Without Kubernetes](blog/deploy-without-kubernetes.md)
 - [What Did Your AI Know? Introducing Context Replay](blog/context-replay.md)
-- [Building an Audit Trail for AI Decisions](blog/ai-audit-trail.md)
+- [Traceability for AI Decisions](blog/ai-audit-trail.md)
 - [Freshness SLAs: When Your AI Needs Fresh Data](blog/freshness-guarantees.md)
 - [Fabra vs Context Engineering Platforms: Choosing the Right Tool](blog/fabra-vs-context-platforms.md)
 
@@ -247,10 +247,10 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 ## Quick FAQ
 
 **Q: What is Fabra?**
-A: Fabra is the audit trail for AI decisions. It stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision. We call this "write path ownership": we manage your context data, not just query it.
+A: Fabra is context infrastructure for AI applications. It stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision. We call this "write path ownership": we manage your context data, not just query it.
 
 **Q: How is Fabra different from LangChain?**
-A: LangChain is a framework (orchestration). Fabra is infrastructure (storage + serving). LangChain queries external stores; Fabra owns the write path with freshness tracking, replay, and audit trails. You can use both together.
+A: LangChain is a framework (orchestration). Fabra is infrastructure (storage + serving). LangChain queries external stores; Fabra owns the write path with freshness tracking, replay, and full lineage. You can use both together.
 
 **Q: How is Fabra different from Feast?**
 A: Fabra is a lightweight alternative with Python decorators instead of YAML, plus built-in context/RAG support (vector search, token budgeting, lineage) that Feast doesn't have.
@@ -283,14 +283,14 @@ We love contributions! See [CONTRIBUTING.md](https://github.com/davidahmann/fabr
   "url": "https://davidahmann.github.io/fabra/",
   "featureList": [
     "Context Infrastructure with Write Path Ownership",
-    "Full Lineage and Audit Trails",
+    "Full Lineage and Traceability",
     "Vector Search with pgvector",
     "Token Budget Management",
     "Point-in-Time Correctness",
     "Context Replay for Compliance",
     "Freshness SLAs"
   ],
-  "softwareVersion": "2.0.3",
+  "softwareVersion": "2.0.4",
   "license": "https://opensource.org/licenses/Apache-2.0"
 }
 </script>

@@ -96,7 +96,7 @@ If you value "works on my laptop" over "scales to exabytes", Fabra is for you.
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Fabra Philosophy: The 95% Rule, Local-First Design, and Unified Context",
-  "description": "Why we built Fabra. The 'Heroku for ML Features' philosophy: prioritizing developer experience, simple infrastructure, and unified feature+context over Google-scale complexity.",
+  "description": "Why we built Fabra. Prioritizing developer experience, simple infrastructure, and unified feature+context over Google-scale complexity.",
   "author": {"@type": "Organization", "name": "Fabra Team"},
   "keywords": "fabra philosophy, feature store design, local-first software, mlops",
   "articleSection": "Philosophy"

@@ -1,6 +1,6 @@
 theme: jekyll-theme-minimal
-title: Fabra - Craft ML Features
-description: Heroku for ML Features & LLM Context. Define features and RAG context in Python. Get training data, production serving, and intelligent context assembly for free.
+title: Fabra - Context Infrastructure for AI Applications
+description: Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision.
 logo: https://img.shields.io/pypi/v/fabra_ai?color=blue&label=fabra_ai
 show_downloads: true
 google_analytics:
