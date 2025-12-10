@@ -244,3 +244,15 @@ print(ctx.content)
 No chains. No abstractions. Just Python.
 
 [Full RAG tutorial →](../use-cases/rag-chatbot.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "RAG Without LangChain: Building Retrieval Pipelines in Plain Python",
+  "description": "How to build production RAG applications without LangChain's complexity. Using Python decorators for vector search, context assembly, and token budgets.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-13",
+  "keywords": "rag without langchain, langchain alternative, simple rag pipeline, python rag, vector search python"
+}
+</script>

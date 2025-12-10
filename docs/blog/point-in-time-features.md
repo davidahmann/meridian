@@ -231,3 +231,15 @@ def login_count(user_id: str) -> int:
 ```
 
 [Churn prediction example →](../use-cases/churn-prediction.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Point-in-Time Features: Preventing ML Data Leakage",
+  "description": "How to generate training data without data leakage. Using ASOF JOIN and LATERAL JOIN for point-in-time correct feature retrieval.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-10",
+  "keywords": "point in time features, ml data leakage, feature store training data, asof join, temporal join"
+}
+</script>

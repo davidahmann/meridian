@@ -1,7 +1,7 @@
 ---
 title: "Context Store for LLMs: Infrastructure That Owns the Write Path | Fabra"
 description: "Build production RAG applications with Fabra's Context Store. We own the write path — ingesting, indexing, and tracking freshness — enabling lineage, replay, and auditability."
-keywords: context store, context infrastructure, llm context, pgvector, vector search, token budget, context assembly, ai audit trail, context lineage
+keywords: context store, context infrastructure, llm context, pgvector, vector search, token budget, context assembly, ai audit trail, context lineage, what did ai know, llm compliance, context replay, rag audit trail, ai explainability, gdpr ai compliance
 ---
 
 # Context Store for LLMs
@@ -29,7 +29,6 @@ from fabra.retrieval import retriever
 
 store = FeatureStore()
 
-# 1. Define a retriever for semantic search
 # 1. Define a retriever for semantic search
 @retriever(index="knowledge_base", top_k=5)
 async def search_docs(query: str):
@@ -253,6 +252,14 @@ graph LR
 - [Event-Driven Features](event-driven-features.md): Real-time updates
 - [Use Case: RAG Chatbot](use-cases/rag-chatbot.md): End-to-end example
 
+---
+
+## Also Need ML Features?
+
+Fabra includes a Feature Store for serving ML features — user personalization, risk scores, recommendations. Same infrastructure, same deployment.
+
+[Feature Store →](feature-store-without-kubernetes.md) | [Feast vs Fabra →](feast-alternative.md)
+
 ## 🐛 Debugging & Tracing
 
 Fabra provides built-in observability for your context assembly. Because context is often assembled from multiple stochastic sources (vector search, cached features), understanding *why* a specific prompt was built is crucial.
@@ -283,6 +290,36 @@ fabra context explain ctx_12345
   }
 }
 ```
+
+## FAQ
+
+**Q: How do I audit what data my LLM used for a decision?**
+A: Fabra automatically tracks lineage for every context assembly. Access via `ctx.lineage` after calling your `@context` function, or use `store.get_context_at(context_id)` to replay any historical context. See [Context Accountability](context-accountability.md).
+
+**Q: Can I replay exactly what my AI knew at a specific time?**
+A: Yes. Every context gets a UUIDv7 ID. Use `store.get_context_at(id)` to retrieve the exact content, features, and retriever results that were assembled — critical for debugging and compliance.
+
+**Q: How is Fabra different from LangChain for RAG?**
+A: LangChain is a framework (orchestration layer). Fabra is infrastructure (storage + serving). LangChain queries external stores; Fabra owns the write path with freshness tracking, lineage, and audit trails. You can use both together.
+
+**Q: What vector database does Fabra use?**
+A: pgvector (Postgres extension). Your vectors live alongside your relational data — no separate vector database required. This simplifies ops and enables transactional consistency.
+
+**Q: How do I ensure my RAG context is fresh?**
+A: Use Fabra's [Freshness SLAs](freshness-sla.md). Configure `max_staleness` on features and contexts. Fabra tracks when data was last updated and can fail-safe or degrade gracefully when data is stale.
+
+**Q: Do I need separate infrastructure for features and RAG?**
+A: No. Fabra unifies ML features (`@feature`) and RAG context (`@retriever` + `@context`) in one infrastructure layer. Same Postgres + Redis stack, same deployment.
+
+---
+
+## You Might Also Search For
+
+- "context store for llm"
+- "rag token budget management"
+- "what did ai know"
+- "vector search pgvector"
+- "llm context assembly"
 
 <script type="application/ld+json">
 {

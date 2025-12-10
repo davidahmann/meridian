@@ -177,3 +177,15 @@ curl http://localhost:8000/features/login_count?user_id=test123
 No Docker. No Kubernetes. No YAML. Just Python.
 
 [Get started →](../quickstart.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Running a Feature Store Locally Without Docker: The DuckDB Approach",
+  "description": "How to run a production-grade feature store on your laptop without Docker or Kubernetes. Using DuckDB for local development that scales to Postgres.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-14",
+  "keywords": "local feature store, feature store without docker, duckdb feature store, local ml development"
+}
+</script>

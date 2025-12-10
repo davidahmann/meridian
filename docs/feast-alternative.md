@@ -1,7 +1,7 @@
 ---
 title: "Fabra vs Feast: Context Infrastructure That Owns the Write Path"
 description: "Detailed comparison: Fabra vs Feast. Why write path ownership matters for AI infrastructure. Python decorators vs YAML config. Lineage and compliance comparison."
-keywords: feast alternative, context infrastructure, python feature store, fabra vs feast, open source feature store, ml feature store, ai audit trail, write path ownership
+keywords: feast alternative, context infrastructure, python feature store, fabra vs feast, open source feature store, ml feature store, ai audit trail, write path ownership, feast too complex, feast alternative without kubernetes, simple python feature store, feature store no docker, feature store startup
 ---
 
 # Fabra vs Feast: Context Infrastructure That Owns the Write Path
@@ -120,10 +120,48 @@ pip install "fabra-ai[ui]"
 fabra serve features.py
 ```
 
+## FAQ
+
+**Q: Why is Feast so complicated to set up?**
+A: Feast was designed for "big tech" scale — it assumes Kubernetes, Spark/Flink pipelines, and a dedicated platform team. For most companies (Series A-C, <500 engineers), this is overkill.
+
+**Q: Can I run a feature store without Kubernetes?**
+A: Yes. Fabra uses DuckDB for local development and standard Postgres + Redis for production. No K8s required. Deploy to Fly.io, Railway, or any container platform.
+
+**Q: How do I migrate from Feast to Fabra?**
+A: Convert your YAML feature definitions to Python `@feature` decorators. Same data access patterns, but simpler. Run `pip install "fabra-ai[ui]"` and `fabra serve features.py`.
+
+**Q: Does Fabra have the same guarantees as Feast?**
+A: Yes for the hard problems: Point-in-Time Correctness (ASOF/LATERAL joins), Async I/O (asyncpg + redis-py). Plus we add lineage, context replay, and RAG support that Feast doesn't have.
+
+**Q: What if I need RAG/LLM features alongside ML features?**
+A: Fabra's Context Store handles this natively with `@retriever` and `@context` decorators. Feast has no RAG support — you'd need to add LangChain, Pinecone, and custom glue code.
+
+**Q: Is Fabra production-ready?**
+A: Yes. We use asyncpg connection pooling, Redis caching with circuit breakers, and Prometheus metrics. Same reliability patterns as Feast, without the infrastructure complexity.
+
 ## Conclusion
 
 If you want "Google Scale" complexity, use Feast.
 If you want **context infrastructure that owns the write path**—with lineage, replay, and auditability built-in—use Fabra.
+
+---
+
+## Also Building LLM/RAG Features?
+
+Fabra includes a Context Store for LLM applications — vector search, token budgets, and full audit trails. Same infrastructure, same deployment.
+
+[Context Store →](context-store.md) | [RAG Audit Trail →](rag-audit-trail.md) | [Compliance Guide →](compliance-guide.md)
+
+---
+
+## You Might Also Search For
+
+- "feast alternative without kubernetes"
+- "feast too complex"
+- "simple python feature store"
+- "feature store for startups"
+- "mlops without platform team"
 
 <script type="application/ld+json">
 {

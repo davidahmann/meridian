@@ -196,3 +196,15 @@ fabra serve examples/basic_features.py
 Ship ML features this week, not this quarter.
 
 [Quickstart guide →](../quickstart.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "The Feature Store for Startups: ML Infrastructure Without the Platform Team",
+  "description": "Why Series A-D startups don't need enterprise feature stores. How to ship ML features without Kubernetes, Spark, or a dedicated platform team.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-12",
+  "keywords": "feature store startups, ml infrastructure startup, lightweight mlops, feature store small team"
+}
+</script>

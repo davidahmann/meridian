@@ -336,3 +336,15 @@ def simple_feature(user_id: str) -> int:
 ```
 
 [Quickstart guide →](../quickstart.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Python Decorators for ML Feature Engineering",
+  "description": "How to use Python decorators to define ML features. Replace YAML configuration with clean, testable Python code.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-07",
+  "keywords": "python decorators ml, feature engineering python, ml feature definition, python feature store"
+}
+</script>

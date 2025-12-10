@@ -42,3 +42,27 @@ Fabra ensures that for the label on **Jan 15th**, it only sees the feature value
 - **Correctness:** Your offline metrics (AUC/F1) will match online performance.
 - **Simplicity:** You don't need to write complex window functions or temporal joins manually.
 - **Consistency:** The same logic applies whether you are using DuckDB locally or Postgres in production.
+
+---
+
+## Next Steps
+
+- [Feature Store Without K8s](../feature-store-without-kubernetes.md) — Get started in 30 seconds
+- [Feast vs Fabra](../feast-alternative.md) — Why we're simpler
+- [Quickstart](../quickstart.md) — Full setup guide
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Churn Prediction with Point-in-Time Correctness",
+  "description": "Build churn prediction models with proper point-in-time correctness to prevent data leakage.",
+  "totalTime": "PT20M",
+  "tool": [{"@type": "HowToTool", "name": "Fabra"}],
+  "step": [
+    {"@type": "HowToStep", "name": "Define features", "text": "Create transaction count and other features using @feature decorator."},
+    {"@type": "HowToStep", "name": "Generate training data", "text": "Use get_training_data with ASOF JOIN to prevent future data leakage."},
+    {"@type": "HowToStep", "name": "Train model", "text": "Train your model knowing offline metrics will match production."}
+  ]
+}
+</script>

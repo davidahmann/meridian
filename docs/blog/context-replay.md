@@ -186,3 +186,15 @@ Context Replay is just the foundation. Coming in v1.5:
 ---
 
 *Fabra v1.4 is available now. [Full documentation →](../context-accountability.md)*
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "What Did Your AI Know? Introducing Context Replay",
+  "description": "Debug AI behavior by replaying exactly what context your model received at any point in time.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-15",
+  "keywords": "context replay, ai debugging, llm observability, context accountability"
+}
+</script>

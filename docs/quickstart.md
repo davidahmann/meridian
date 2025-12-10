@@ -1,68 +1,168 @@
 ---
 title: "How to Build Context Infrastructure in 30 Seconds | Fabra Quickstart"
 description: "Step-by-step guide to installing Fabra context infrastructure for AI applications. Own the write path with lineage and replay. No Docker or Kubernetes required."
-keywords: fabra quickstart, context infrastructure, ai audit trail, python feature store, local feature store, rag quickstart, write path ownership
+keywords: fabra quickstart, context infrastructure, ai audit trail, python feature store, local feature store, rag quickstart, write path ownership, feature store 30 seconds, rag quickstart python, no docker feature store, feature store without kubernetes, simple ml features
 ---
 
-# Context Infrastructure That Actually Works Locally: 30-Second Setup
+# Quickstart: 30 Seconds to Production-Ready AI Infrastructure
 
-> **TL;DR:** Install with `pip install "fabra-ai[ui]"`. Define features with `@feature`. Run `fabra serve`. Full lineage and replay included.
+> **TL;DR:** Install with `pip install "fabra-ai[ui]"`. Define features or context with Python decorators. Run `fabra serve`. Full lineage and replay included.
 
-> [!IMPORTANT]
-> **Prerequisites for RAG/Context Store:**
-> To use Vector Search, you need an API Key (OpenAI, Anthropic, or Cohere).
->
-> **Want a Production Stack Locally?**
-> Run `fabra setup` to generate a `docker-compose.yml` with **pgvector** and Redis.
+## Choose Your Track
 
-## The Problem With Read-Only Frameworks
+<table>
+<tr>
+<td width="50%" valign="top">
 
-You want to serve ML features and LLM context. Most tools say:
-1. Install Docker and Kubernetes
-2. Configure 47 YAML files
-3. Integrate 5 different systems
-4. Debug why they don't work together
-5. Give up — and have no audit trail of what your AI knew when it decided
+### 🔧 ML Engineer Track
+**"I need to serve features without Kubernetes"**
 
-## Fabra in 30 Seconds
+You're building ML models and need:
+- Real-time feature serving
+- Point-in-time correctness for training
+- No infrastructure complexity
+
+**Start here:** [Feature Store Quickstart](#feature-store-in-30-seconds)
+
+</td>
+<td width="50%" valign="top">
+
+### 🤖 AI Engineer Track
+**"I need RAG with audit trails"**
+
+You're building LLM apps and need:
+- Vector search and retrieval
+- Token budget management
+- Context replay for debugging/compliance
+
+**Start here:** [Context Store Quickstart](#context-store-in-60-seconds)
+
+</td>
+</tr>
+</table>
+
+---
+
+## Feature Store in 30 Seconds
+
+> **For ML Engineers** — Serve features without Kubernetes, Spark, or YAML.
 
 ```bash
 pip install "fabra-ai[ui]"
-fabra serve examples/basic_features.py
 ```
 
-Done. No Docker. No Kubernetes. No YAML.
+```python
+# features.py
+from fabra.core import FeatureStore, entity, feature
+
+store = FeatureStore()
+
+@entity(store)
+class User:
+    user_id: str
+
+@feature(entity=User, refresh="hourly")
+def purchase_count(user_id: str) -> int:
+    return db.query("SELECT COUNT(*) FROM purchases WHERE user_id = ?", user_id)
+
+@feature(entity=User, refresh="daily")
+def user_tier(user_id: str) -> str:
+    return "premium" if is_premium(user_id) else "free"
+```
+
+```bash
+fabra serve features.py
+# Server running on http://localhost:8000
+
+curl http://localhost:8000/features/purchase_count?user_id=user123
+```
+
+**Done.** No Docker. No Kubernetes. No YAML.
+
+**What you get:**
+- DuckDB offline store (embedded, no setup)
+- In-memory online store (instant reads)
+- Point-in-time correctness for training data
+- Same code works in production with Postgres + Redis
+
+[Feature Store Deep Dive →](feature-store-without-kubernetes.md) | [Compare vs Feast →](feast-alternative.md)
+
+---
 
 ## Context Store in 60 Seconds
 
-Building a RAG app? Add context retrieval:
+> **For AI Engineers** — Build RAG with audit trails and compliance.
+
+> [!IMPORTANT]
+> **Prerequisites:** To use Vector Search, you need an API Key (OpenAI, Anthropic, or Cohere).
+
+```bash
+pip install "fabra-ai[ui]"
+```
 
 ```python
+# chatbot.py
 from fabra.core import FeatureStore
 from fabra.retrieval import retriever
-from fabra.context import context, Context, ContextItem
+from fabra.context import context, ContextItem
 
 store = FeatureStore()
 
 # Index documents
-await store.index("docs", "doc_1", "Fabra is a feature store...")
+await store.index("docs", "doc_1", "Fabra is context infrastructure...")
 
-# Define retriever
+# Define retriever (auto-wired to pgvector)
 @retriever(index="docs", top_k=3)
 async def search_docs(query: str) -> list[str]:
-    pass  # Magic wiring: auto-searches "docs" index via pgvector
+    pass  # Magic wiring
 
 # Assemble context with token budget
 @context(store, max_tokens=4000)
-async def chat_context(query: str) -> list[ContextItem]:
+async def chat_context(user_id: str, query: str) -> list[ContextItem]:
     docs = await search_docs(query)
+    tier = await store.get_feature("user_tier", user_id)
     return [
         ContextItem(content="You are helpful.", priority=0, required=True),
-        ContextItem(content=str(docs), priority=1),
+        ContextItem(content=f"User tier: {tier}", priority=1),
+        ContextItem(content=str(docs), priority=2),
     ]
+
+# Every call is tracked
+ctx = await chat_context("user123", "how do I reset my password?")
+print(f"Context ID: {ctx.id}")      # UUIDv7 for audit trail
+print(f"Lineage: {ctx.lineage}")    # Full data provenance
 ```
 
-[Learn more about Context Store →](context-store.md)
+```bash
+fabra serve chatbot.py
+```
+
+**What you get:**
+- Vector search with pgvector
+- Automatic token budgeting
+- Full lineage tracking (what data was used)
+- Context replay (reproduce any historical context)
+
+[Context Store Deep Dive →](context-store.md) | [RAG Audit Trail →](rag-audit-trail.md)
+
+---
+
+## Production Stack Locally
+
+Want Postgres + Redis locally?
+
+```bash
+fabra setup
+# Generates docker-compose.yml with pgvector and Redis
+
+docker-compose up -d
+```
+
+Then:
+
+```bash
+FABRA_ENV=production fabra serve features.py
+```
 
 ## FAQ
 

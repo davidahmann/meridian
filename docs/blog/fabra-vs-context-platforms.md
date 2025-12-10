@@ -309,3 +309,15 @@ No Docker. No Kubernetes. No YAML. Just Python.
 - [Context Engineering for Agents](https://blog.langchain.com/context-engineering-for-agents/) - LangChain Blog
 - [Context Engineering Guide](https://www.kubiya.ai/blog/context-engineering-ai-agents) - Kubiya
 - [LlamaIndex Context Engineering](https://www.llamaindex.ai/blog/context-engineering-what-it-is-and-techniques-to-consider) - LlamaIndex Blog
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Fabra vs Context Engineering Platforms: Choosing the Right Tool in 2025",
+  "description": "Compare Fabra to Meridian, LangChain, Feast, Tecton, and other context engineering platforms. Why write path ownership matters for AI infrastructure.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-12-09",
+  "keywords": "fabra vs meridian, context engineering, feature store comparison, llm context assembly, rag infrastructure"
+}
+</script>

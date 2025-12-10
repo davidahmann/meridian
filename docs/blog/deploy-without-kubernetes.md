@@ -394,3 +394,15 @@ curl https://my-features.fly.dev/features/login_count?user_id=test123
 No Kubernetes. No YAML. Just features.
 
 [Full deployment guide →](../local-to-production.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Deploy ML Features Without Kubernetes",
+  "description": "How to deploy ML features to production without Kubernetes. One-command deploys to Fly.io, Cloud Run, Railway, and more.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-06",
+  "keywords": "deploy ml features, feature store deployment, mlops without kubernetes, fly.io ml"
+}
+</script>

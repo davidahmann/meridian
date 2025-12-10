@@ -266,3 +266,15 @@ print(results)
 ```
 
 [Vector search docs →](../context-store.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "pgvector vs Pinecone: When to Self-Host Vector Search",
+  "description": "Should you use Pinecone or pgvector for vector search? Cost comparison, performance benchmarks, and when self-hosting makes sense.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-09",
+  "keywords": "pgvector vs pinecone, vector database comparison, self host vector search, postgres vector search"
+}
+</script>

@@ -340,3 +340,15 @@ print(f"Cost: ${ctx.meta['cost_usd']:.6f}")
 ```
 
 [Context assembly docs →](../context-assembly.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Token Budget Management for Production RAG",
+  "description": "How to manage LLM token budgets in production RAG applications. Accurate token counting, priority-based truncation, and cost monitoring.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-08",
+  "keywords": "token budget management, rag token limits, llm context length, token counting, openai token limit"
+}
+</script>

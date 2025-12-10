@@ -1,7 +1,7 @@
 ---
 title: "Fabra - The Audit Trail for AI Decisions"
 description: "Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision."
-keywords: context infrastructure, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search, ai audit trail
+keywords: context infrastructure, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search, ai audit trail, rag audit trail, feature store without kubernetes, langchain alternative simple, what did ai know, ai decision audit, context replay
 ---
 
 # Fabra: The Audit Trail for AI Decisions
@@ -181,6 +181,19 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 
 ---
 
+## Start Here
+
+| **I'm an ML Engineer** | **I'm an AI Engineer** |
+|:---|:---|
+| *"I need to serve features without Kubernetes"* | *"I need RAG with audit trails"* |
+| [Feature Store Without K8s →](feature-store-without-kubernetes.md) | [RAG Audit Trail →](rag-audit-trail.md) |
+| [Feast vs Fabra →](feast-alternative.md) | [Context Store →](context-store.md) |
+| [Quickstart (ML Track) →](quickstart.md#feature-store-in-30-seconds) | [Quickstart (AI Track) →](quickstart.md#context-store-in-60-seconds) |
+
+**Building in a regulated industry?** [Compliance Guide →](compliance-guide.md)
+
+---
+
 ## Documentation
 
 ### Getting Started
@@ -189,11 +202,21 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 - [Philosophy](philosophy.md) — Why we built this and who it's for
 - [Architecture](architecture.md) — Boring technology, properly applied
 
+### For ML Engineers
+
+- [Feature Store Without Kubernetes](feature-store-without-kubernetes.md) — No K8s, no Docker, just Python
+- [Fabra vs Feast](feast-alternative.md) — The lightweight alternative
+- [Local to Production](local-to-production.md) — Deploy when you're ready
+
+### For AI Engineers
+
+- [Context Store](context-store.md) — RAG infrastructure with audit trails
+- [RAG Audit Trail](rag-audit-trail.md) — Know what your AI knew
+- [Compliance Guide](compliance-guide.md) — GDPR, SOC2, and regulated industries
+
 ### Guides
 
-- [Local to Production](local-to-production.md) — Deploy when you're ready
-- [Fabra vs Feast](feast-alternative.md) — The lightweight alternative
-- [Comparisons](comparisons.md) — vs other tools
+- [Comparisons](comparisons.md) — vs Feast, LangChain, Pinecone, Tecton
 
 ### Reference
 

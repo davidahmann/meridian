@@ -1,57 +1,46 @@
 <div align="center">
   <h1>Fabra</h1>
-  <h3>Context Infrastructure for AI Applications</h3>
+  <p><b>Context Infrastructure for AI Applications</b></p>
 
   <p>
     <a href="https://pypi.org/project/fabra-ai/"><img src="https://img.shields.io/pypi/v/fabra-ai?color=blue&label=pypi" alt="PyPI version" /></a>
-    <a href="https://github.com/davidahmann/fabra/actions/workflows/ci.yml"><img src="https://github.com/davidahmann/fabra/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
-    <a href="https://github.com/davidahmann/fabra/security"><img src="https://img.shields.io/badge/security-enabled-brightgreen" alt="Security" /></a>
     <a href="https://github.com/davidahmann/fabra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/davidahmann/fabra?color=green" alt="License" /></a>
     <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python Version" />
   </p>
 
-  <br />
-
-  <p><b>Know what your AI knew.</b></p>
-  <p><i>The audit trail for AI decisions. From notebook to production in 30 seconds.</i></p>
-
-  <br />
-
   <p>
-    <b><a href="https://fabraoss.vercel.app">🎮 Try in Browser</a></b> |
-    <b><a href="https://davidahmann.github.io/fabra/">📚 Docs</a></b> |
-    <b><a href="https://davidahmann.github.io/fabra/context-store">🤖 Context Store</a></b>
+    <a href="https://fabraoss.vercel.app"><b>Try in Browser</b></a> ·
+    <a href="https://davidahmann.github.io/fabra/quickstart"><b>Quickstart</b></a> ·
+    <a href="https://davidahmann.github.io/fabra/"><b>Docs</b></a>
   </p>
 </div>
 
 ---
 
-## The Problem
+**Fabra** is the system of record for what your AI knows. We ingest, index, track freshness, and serve context data — not just query it.
 
-You're building an AI app. You need:
-- **Structured features** (user tier, purchase history) for personalization
-- **Unstructured context** (relevant docs, chat history) for your LLM
-- **Vector search** for semantic retrieval
-- **Token budgets** to fit your context window
-
-Today, this means stitching together LangChain, Pinecone, a feature store, Redis, and prayer.
-
-**Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision.**
-
-This is "write path ownership": we ingest and manage your context data, not just query it. This enables replay, lineage, and auditability that read-only wrappers cannot provide.
-
----
-
-## The 30-Second Quickstart
+This "write path ownership" enables:
+- **Replay any AI decision** — What exactly did the model know?
+- **Full lineage tracking** — Which features, documents, and retrievers were used?
+- **Freshness guarantees** — Was the data stale when the decision was made?
 
 ```bash
 pip install "fabra-ai[ui]"
 ```
 
+---
+
+## Choose Your Path
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### ML Engineers
+**"Feast needs Kubernetes. I just need features."**
+
 ```python
-from fabra.core import FeatureStore, entity, feature
-from fabra.context import context, ContextItem
-from fabra.retrieval import retriever
+from fabra import FeatureStore, entity, feature
 
 store = FeatureStore()
 
@@ -59,185 +48,181 @@ store = FeatureStore()
 class User:
     user_id: str
 
-@feature(entity=User, refresh="daily")
-def user_tier(user_id: str) -> str:
-    return "premium" if hash(user_id) % 2 == 0 else "free"
-
-@retriever(index="docs", top_k=3)
-async def find_docs(query: str):
-    pass  # Automatic vector search via pgvector
-
-@context(store, max_tokens=4000)
-async def build_prompt(user_id: str, query: str):
-    tier = await store.get_feature("user_tier", user_id)
-    docs = await find_docs(query)
-    return [
-        ContextItem(content=f"User is {tier}.", priority=0),
-        ContextItem(content=str(docs), priority=1),
-    ]
+@feature(entity=User, refresh="hourly")
+def purchase_count(user_id: str) -> int:
+    return db.query("SELECT COUNT(*) FROM purchases WHERE user_id = ?", user_id)
 ```
 
 ```bash
 fabra serve features.py
-# Server running on http://localhost:8000
+curl localhost:8000/features/purchase_count?user_id=123
 ```
 
-**That's it.** No infrastructure. No config files. Just Python.
+No Kubernetes. No Spark. No YAML. Just Python.
 
-**Context Accountability (v1.4+):** Full audit trail for compliance and debugging:
+**[Feature Store Without K8s →](https://davidahmann.github.io/fabra/feature-store-without-kubernetes)** · **[Feast vs Fabra →](https://davidahmann.github.io/fabra/feast-alternative)**
 
-```python
-ctx = await build_prompt("user_123", "How do I upgrade?")
-print(ctx.id)       # UUIDv7 identifier — replay exactly what the AI knew
-print(ctx.lineage)  # Complete provenance: features, retrievers, freshness timestamps
-```
+</td>
+<td width="50%" valign="top">
 
-Every AI decision traces back through the data that informed it. Regulators and auditors see exactly what the model knew, when it knew it.
-
-**Freshness SLAs (v1.5+):** Ensure your AI decisions are based on fresh data:
+### AI Engineers
+**"Someone asked what the AI knew. I couldn't tell them."**
 
 ```python
-@context(store, max_tokens=4000, freshness_sla="5m")  # Features must be <5m old
+from fabra import FeatureStore, context, ContextItem
+from fabra.retrieval import retriever
+
+store = FeatureStore()
+
+@retriever(index="docs", top_k=5)
+async def search_docs(query: str):
+    pass  # Auto-wired to pgvector
+
+@context(store, max_tokens=4000)
 async def build_prompt(user_id: str, query: str):
-    tier = await store.get_feature("user_tier", user_id)
-    return [ContextItem(content=f"User is {tier}.", priority=0)]
+    docs = await search_docs(query)
+    return [ContextItem(content=str(docs), priority=0)]
 
 ctx = await build_prompt("user_123", "query")
-print(ctx.is_fresh)                    # True if all features within SLA
-print(ctx.meta["freshness_violations"])  # Details on any stale features
+print(ctx.id)       # Replay this exact context anytime
+print(ctx.lineage)  # What data was used?
 ```
+
+**[Context Traceability →](https://davidahmann.github.io/fabra/rag-audit-trail)** · **[Compliance Guide →](https://davidahmann.github.io/fabra/compliance-guide)**
+
+</td>
+</tr>
+</table>
 
 ---
 
-## Why Fabra?
+## Why Engineers Choose Fabra
 
-| | Traditional Stack | Fabra |
-|:---|:---|:---|
-| **Config** | 500 lines of YAML | Python decorators |
-| **Infrastructure** | Kubernetes + Spark + Pinecone | Your laptop (DuckDB) |
-| **RAG Pipeline** | LangChain spaghetti | `@retriever` + `@context` |
-| **Feature Serving** | Separate feature store | Same `@feature` decorator |
-| **Time to Production** | Weeks | 30 seconds |
+### 1. We Own the Write Path
 
-### What Makes Fabra Different
+LangChain, Pinecone, and other tools are **read-only wrappers** — they query your data but don't manage it. When compliance asks "what did the AI know?", they have no answer.
 
-**1. We Own the Write Path**
+Fabra ingests, indexes, and serves context data. Every decision traces back through the data that informed it.
 
-LangChain and other frameworks are read-only wrappers — they query your data but don't manage it. Fabra ingests, indexes, and serves context data. This enables freshness guarantees, point-in-time replay, and full lineage that read-only tools cannot provide.
-
-**2. Infrastructure, Not a Framework**
-
-Fabra is not an orchestration layer. It's the system of record for what your AI knows. Features, retrievers, and context assembly in one infrastructure layer with production reliability.
-
-**3. Local-First, Production-Ready**
-
-```bash
-# Development (default): DuckDB + In-Memory
-FABRA_ENV=development
-
-# Production: Postgres + Redis + pgvector
-FABRA_ENV=production
+```python
+# Replay any historical context
+ctx = await store.get_context_at("01912345-6789-7abc-def0-123456789abc")
+print(ctx.content)   # Exact prompt from that moment
+print(ctx.lineage)   # Complete data provenance
 ```
 
-Same code. Zero changes. Just flip an environment variable.
+### 2. Local-First, Production-Ready
 
-**4. Point-in-Time Correctness**
+Same code runs everywhere. DuckDB locally, Postgres + Redis in production.
+
+```bash
+# Development (zero setup)
+fabra serve features.py
+
+# Production (just add env vars)
+FABRA_ENV=production \
+FABRA_POSTGRES_URL=postgresql+asyncpg://... \
+FABRA_REDIS_URL=redis://... \
+fabra serve features.py
+```
+
+No Docker for local dev. No Kubernetes for production. Deploy to Fly.io, Railway, Cloud Run, or any container platform with one command.
+
+### 3. Point-in-Time Correctness
 
 Training ML models? We use `ASOF JOIN` (DuckDB) and `LATERAL JOIN` (Postgres) to ensure your training data reflects the world exactly as it was — no data leakage, ever.
 
-**5. Token Budget Management**
+### 4. Token Budget Management
+
+No more "context too long" errors. Priority-based truncation keeps your prompts under budget.
 
 ```python
 @context(store, max_tokens=4000)
 async def build_prompt(user_id: str, query: str):
     return [
-        ContextItem(content=critical_info, priority=0, required=True),
-        ContextItem(content=nice_to_have, priority=2),  # Dropped if over budget
+        ContextItem(content=system_prompt, priority=0, required=True),
+        ContextItem(content=docs, priority=1),
+        ContextItem(content=history, priority=2),  # Dropped first if over budget
     ]
 ```
-
-Automatically assembles context that fits your LLM's window. Priority-based truncation. No more "context too long" errors.
 
 ---
 
 ## Key Capabilities
 
-### For AI Engineers
-- **Vector Search:** Built-in pgvector with automatic chunking and embedding
-- **Magic Retrievers:** `@retriever` auto-wires to your vector index
-- **Context Assembly:** Token budgets, priority truncation, explainability API
-- **Semantic Cache:** Cache expensive LLM calls and retrieval results
-- **Context Accountability:** Full lineage tracking, context replay, and audit trails for AI decisions
-- **Freshness SLAs:** Ensure data freshness with configurable SLAs and degraded mode handling
-
 ### For ML Engineers
-- **Hybrid Features:** Mix Python logic and SQL in the same pipeline
-- **Event-Driven:** Trigger updates via Redis Streams
+
+| Capability | Description |
+|:-----------|:------------|
+| **Python Decorators** | `@feature` instead of 500 lines of YAML |
+| **DuckDB + Postgres** | Local dev with embedded DB, production with Postgres |
+| **Point-in-Time Joins** | ASOF/LATERAL joins for training data correctness |
+| **Hybrid Features** | Mix Python logic and SQL in the same pipeline |
+| **One-Command Deploy** | `fabra deploy fly\|cloudrun\|railway\|render` |
+
+### For AI Engineers
+
+| Capability | Description |
+|:-----------|:------------|
+| **Context Accountability** | UUIDv7 IDs, full lineage, replay any decision |
+| **Vector Search** | Built-in pgvector with automatic chunking |
+| **Token Budgets** | `max_tokens` with priority-based truncation |
+| **Freshness SLAs** | Fail-safe when data is stale |
+| **Export** | `fabra context export` for debugging and compliance |
+
+### Production Features
+
 - **Observability:** Prometheus metrics, OpenTelemetry tracing
-- **Self-Healing:** Circuit breakers, fallback chains, `fabra doctor`
-
-### For Everyone
-- **One-Command Deploy:** `fabra deploy fly|cloudrun|ecs|railway|render`
-- **Visual UI:** Dependency graphs, live metrics, context debugging
-- **Shell Completion:** `fabra --install-completion`
-
-### What Fabra Is NOT
-
-| We Are | We Are NOT |
-|:-------|:-----------|
-| **Audit-ready** — replay any AI decision | Black box — hope your logs are enough |
-| **Write path owner** — ingest, index, track freshness | Read-only wrapper — query external stores |
-| **Infrastructure** — storage, indexing, serving | Framework — orchestration, chains, agents |
-| **Self-hosted first** — your data stays yours | Managed SaaS only |
+- **Reliability:** Circuit breakers, fallback chains, `fabra doctor`
+- **Security:** Self-hosted, your data never leaves your infrastructure
 
 ---
 
 ## Architecture
 
-Fabra scales from laptop to production without code changes.
+```
+Development                         Production
+┌─────────────────────┐            ┌─────────────────────────┐
+│  Your Python Code   │            │   Your Python Code      │
+│  (@feature, @context)│            │   (@feature, @context)  │
+└──────────┬──────────┘            └───────────┬─────────────┘
+           │                                   │
+           ▼                                   ▼
+┌─────────────────────┐            ┌─────────────────────────┐
+│  DuckDB (embedded)  │            │  Postgres + pgvector    │
+│  In-Memory Cache    │            │  Redis                  │
+└─────────────────────┘            └─────────────────────────┘
 
-```mermaid
-graph TD
-    subgraph Dev [Development]
-        A[Your Code] -->|Uses| B(DuckDB)
-        A -->|Uses| C(In-Memory Cache)
-    end
-
-    subgraph Prod [Production]
-        D[Your Code] -->|Async| E[(Postgres + pgvector)]
-        D -->|Async| F[(Redis)]
-    end
-
-    Switch{FABRA_ENV} -->|development| Dev
-    Switch -->|production| Prod
+Same code. Same decorators. Different backends.
+FABRA_ENV=development → FABRA_ENV=production
 ```
 
 ---
 
-## Production in 60 Seconds
+## Comparison
 
-```bash
-# Set environment variables
-export FABRA_ENV=production
-export FABRA_POSTGRES_URL=postgresql+asyncpg://...
-export FABRA_REDIS_URL=redis://...
+### vs Feast (Feature Store)
 
-# Deploy
-fabra deploy fly --name my-app
-```
+| | Feast | Fabra |
+|:---|:---|:---|
+| Setup | Kubernetes + Spark | `pip install` |
+| Configuration | YAML | Python decorators |
+| Time to production | Weeks | 30 seconds |
+| RAG support | None | Built-in Context Store |
+| Traceability | None | Full lineage |
 
-[Full Deployment Guide →](https://davidahmann.github.io/fabra/local-to-production)
+**Use Feast when:** You have a platform team and existing K8s/Spark infrastructure.
 
----
+### vs LangChain (RAG)
 
-## Roadmap
+| | LangChain | Fabra |
+|:---|:---|:---|
+| Type | Framework (orchestration) | Infrastructure (storage + serving) |
+| Traceability | None | Full lineage + replay |
+| Token budgets | DIY | Built-in |
+| Data ownership | Read-only wrapper | Write path owner |
 
-- [x] **v1.0:** Core Feature Store (DuckDB, Postgres, Redis, FastAPI)
-- [x] **v1.2:** Context Store (pgvector, retrievers, token budgets)
-- [x] **v1.3:** UI, Magic Retrievers, One-Command Deploy
-- [x] **v1.4:** Context Accountability (lineage tracking, context replay, audit trails)
-- [x] **v1.5:** Freshness SLAs (data freshness guarantees, degraded mode, strict mode)
-- [ ] **v1.6:** Drift detection, RBAC, multi-region
+**Use LangChain when:** You need agent orchestration and don't need compliance.
 
 ---
 
@@ -245,6 +230,12 @@ fabra deploy fly --name my-app
 
 ```bash
 pip install "fabra-ai[ui]"
+
+# ML Engineers: Serve features
+fabra serve features.py
+
+# AI Engineers: Index documents and serve context
+fabra serve chatbot.py
 ```
 
 <p align="center">
@@ -255,9 +246,20 @@ pip install "fabra-ai[ui]"
 
 ---
 
+## Roadmap
+
+- [x] **v1.0:** Core Feature Store (DuckDB, Postgres, Redis)
+- [x] **v1.2:** Context Store (pgvector, retrievers, token budgets)
+- [x] **v1.3:** UI, Magic Retrievers, One-Command Deploy
+- [x] **v1.4:** Context Accountability (lineage, replay, traceability)
+- [x] **v1.5:** Freshness SLAs (data freshness guarantees)
+- [ ] **v1.6:** Drift detection, RBAC, multi-region
+
+---
+
 ## Contributing
 
-We love contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 <div align="center">
   <p><b>Fabra</b> · Apache 2.0 · 2025</p>

@@ -247,3 +247,15 @@ print(f"Dropped {ctx.meta['items_dropped']} items")
 ```
 
 [Full context store docs →](../context-assembly.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Context Assembly: Fitting LLM Prompts in Token Budgets",
+  "description": "How to assemble LLM context that always fits your token budget. Priority-based truncation, required vs optional content, and token counting that works.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-11",
+  "keywords": "llm context assembly, token budget management, rag context window, prompt engineering"
+}
+</script>

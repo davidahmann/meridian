@@ -39,3 +39,27 @@ features = await store.get_online_features(
 - **Async I/O:** Fabra uses `asyncpg` and `redis-py` to fetch both features in parallel.
 - **Performance:** The SQL feature is fetched from Redis in <2ms. The Python feature runs in the same event loop.
 - **Simplicity:** You don't need a separate "Streaming Feature Store". You just write Python.
+
+---
+
+## Next Steps
+
+- [Feature Store Without K8s](../feature-store-without-kubernetes.md) — Get started in 30 seconds
+- [Hybrid Features](../hybrid-features.md) — Mix SQL and Python
+- [Quickstart](../quickstart.md) — Full setup guide
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Real-Time Recommendations with Fabra",
+  "description": "Build real-time recommendation features combining pre-computed and on-demand data with <50ms latency.",
+  "totalTime": "PT15M",
+  "tool": [{"@type": "HowToTool", "name": "Fabra"}],
+  "step": [
+    {"@type": "HowToStep", "name": "Define materialized features", "text": "Create SQL features for long-term history with materialize=True."},
+    {"@type": "HowToStep", "name": "Define on-demand features", "text": "Create Python features for real-time context like session embeddings."},
+    {"@type": "HowToStep", "name": "Serve features", "text": "Use async get_online_features to fetch both in parallel."}
+  ]
+}
+</script>

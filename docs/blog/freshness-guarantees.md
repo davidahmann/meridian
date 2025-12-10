@@ -186,3 +186,15 @@ pip install --upgrade fabra-ai
 ---
 
 *Questions? Issues? [Open a GitHub issue](https://github.com/davidahmann/fabra/issues) or check the [full documentation](https://davidahmann.github.io/fabra/freshness-sla).*
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Freshness SLAs: When Your AI Needs Fresh Data",
+  "description": "Building confidence that your AI's decisions are based on current information. Explicit freshness guarantees for AI context.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-16",
+  "keywords": "data freshness, ai freshness sla, stale data, context freshness, llm data quality"
+}
+</script>

@@ -1,3 +1,9 @@
+---
+title: "Context Accountability: AI Decision Audit Trail | Fabra"
+description: "Full audit trail for AI decisions. Know exactly what your AI knew when it decided. Lineage tracking, context replay, and compliance support for GDPR, SOC2, and regulated industries."
+keywords: ai decision audit, ai audit trail, llm explainability, context replay, ai compliance, gdpr ai, soc2 ai, what did ai know, rag audit trail, llm debugging, ai lineage, context lineage
+---
+
 # Context Accountability
 
 **v1.4+** - Full audit trail for AI decisions. Know exactly what your AI knew when it decided.

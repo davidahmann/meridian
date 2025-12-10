@@ -294,3 +294,15 @@ Context Accountability is enabled by default. Your contexts are already being tr
 ---
 
 *Have questions about AI compliance? [Open a discussion](https://github.com/davidahmann/fabra/discussions) on GitHub.*
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Building an Audit Trail for AI Decisions",
+  "description": "How to implement full data provenance and accountability for LLM-powered applications.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-15",
+  "keywords": "ai audit trail, llm compliance, ai governance, data provenance, ai accountability"
+}
+</script>

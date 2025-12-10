@@ -134,3 +134,15 @@ fabra serve examples/basic_features.py
 No Docker. No Kubernetes. No YAML.
 
 [Read the full comparison →](../feast-alternative.md)
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Why We Built a Feast Alternative: The Story Behind Fabra",
+  "description": "We spent 6 weeks fighting Feast's Kubernetes complexity. Then we built Fabra in 2 weeks. Here's why Python decorators beat YAML for feature stores.",
+  "author": {"@type": "Organization", "name": "Fabra Team"},
+  "datePublished": "2025-01-15",
+  "keywords": "feast alternative, feature store comparison, python feature store, mlops without kubernetes"
+}
+</script>
