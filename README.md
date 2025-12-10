@@ -10,8 +10,8 @@
 
   <p>
     <a href="https://fabraoss.vercel.app"><b>Try in Browser</b></a> ·
-    <a href="https://davidahmann.github.io/fabra/quickstart"><b>Quickstart</b></a> ·
-    <a href="https://davidahmann.github.io/fabra/"><b>Docs</b></a>
+    <a href="https://davidahmann.github.io/fabra/docs/quickstart"><b>Quickstart</b></a> ·
+    <a href="https://davidahmann.github.io/fabra/docs/"><b>Docs</b></a>
   </p>
 </div>
 
@@ -60,7 +60,7 @@ curl localhost:8000/features/purchase_count?user_id=123
 
 No Kubernetes. No Spark. No YAML. Just Python.
 
-**[Feature Store Without K8s →](https://davidahmann.github.io/fabra/feature-store-without-kubernetes)** · **[Feast vs Fabra →](https://davidahmann.github.io/fabra/feast-alternative)**
+**[Feature Store Without K8s →](https://davidahmann.github.io/fabra/docs/feature-store-without-kubernetes)** · **[Feast vs Fabra →](https://davidahmann.github.io/fabra/docs/feast-alternative)**
 
 </td>
 <td width="50%" valign="top">
@@ -88,7 +88,7 @@ print(ctx.id)       # Replay this exact context anytime
 print(ctx.lineage)  # What data was used?
 ```
 
-**[Context Traceability →](https://davidahmann.github.io/fabra/rag-audit-trail)** · **[Compliance Guide →](https://davidahmann.github.io/fabra/compliance-guide)**
+**[Context Traceability →](https://davidahmann.github.io/fabra/docs/rag-audit-trail)** · **[Compliance Guide →](https://davidahmann.github.io/fabra/docs/compliance-guide)**
 
 </td>
 </tr>
@@ -240,8 +240,8 @@ fabra serve chatbot.py
 
 <p align="center">
   <a href="https://fabraoss.vercel.app"><b>Try in Browser</b></a> ·
-  <a href="https://davidahmann.github.io/fabra/quickstart"><b>Quickstart Guide</b></a> ·
-  <a href="https://davidahmann.github.io/fabra/"><b>Full Documentation</b></a>
+  <a href="https://davidahmann.github.io/fabra/docs/quickstart"><b>Quickstart Guide</b></a> ·
+  <a href="https://davidahmann.github.io/fabra/docs/"><b>Full Documentation</b></a>
 </p>
 
 ---
