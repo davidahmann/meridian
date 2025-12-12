@@ -20,7 +20,7 @@ keywords: fabra quickstart, context infrastructure, ai audit trail, python featu
 You're building ML models and need:
 - Real-time feature serving
 - Point-in-time correctness for training
-- No infrastructure complexity
+- **Context Records** that prove what data your model saw
 
 **Start here:** [Feature Store Quickstart](#feature-store-in-30-seconds)
 
@@ -28,12 +28,12 @@ You're building ML models and need:
 <td width="50%" valign="top">
 
 ### 🤖 AI Engineer Track
-**"I need RAG with audit trails"**
+**"I need to prove what my AI knew"**
 
 You're building LLM apps and need:
 - Vector search and retrieval
 - Token budget management
-- Context replay for debugging/compliance
+- **Immutable Context Records** for compliance and debugging
 
 **Start here:** [Context Store Quickstart](#context-store-in-60-seconds)
 
@@ -139,10 +139,14 @@ async def chat_context(user_id: str, query: str) -> list[ContextItem]:
         ContextItem(content=str(docs), priority=2),
     ]
 
-# Every call is tracked
+# Every call creates an immutable Context Record
 ctx = await chat_context("user123", "how do I reset my password?")
-print(f"Context ID: {ctx.id}")      # UUIDv7 for audit trail
+print(f"Context ID: {ctx.id}")      # ctx_018f3a2b-... (immutable record)
 print(f"Lineage: {ctx.lineage}")    # Full data provenance
+
+# Replay this exact context anytime
+# fabra context show ctx_018f3a2b-...
+# fabra context verify ctx_018f3a2b-...
 ```
 
 ```bash
@@ -152,8 +156,9 @@ fabra serve chatbot.py
 **What you get:**
 - Vector search with pgvector
 - Automatic token budgeting
+- **Immutable Context Records** with cryptographic integrity
 - Full lineage tracking (what data was used)
-- Context replay (reproduce any historical context)
+- Context replay and verification (`fabra context verify`)
 
 [Context Store Deep Dive →](context-store.md) | [RAG Audit Trail →](rag-audit-trail.md)
 

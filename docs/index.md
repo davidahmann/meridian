@@ -1,14 +1,14 @@
 ---
-title: "Fabra - Context Infrastructure for AI Applications"
-description: "Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision."
-keywords: context infrastructure, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search, ai traceability, rag lineage, feature store without kubernetes, langchain alternative simple, what did ai know, context replay
+title: "Fabra - The Inference Context Ledger"
+description: "Prove what your AI knew. Fabra is the Inference Context Ledger — capturing exactly what data an AI used at decision time with full lineage, freshness guarantees, and replay."
+keywords: inference context ledger, context record, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search, ai traceability, rag lineage, feature store without kubernetes, langchain alternative simple, what did ai know, context replay
 ---
 
-# Fabra: Context Infrastructure for AI Applications
+# Fabra: The Inference Context Ledger
 
-> **Know what your AI knew.**
+> **Prove what your AI knew.**
 
-Fabra stores, indexes, and serves the data your AI uses — and tracks exactly what was retrieved for every decision. From notebook to production in 30 seconds.
+Fabra captures exactly what data your AI used at decision time — with full lineage, freshness guarantees, and replay. From notebook to production in 30 seconds.
 
 [Get Started →](quickstart.md) | [Try in Browser →](https://fabraoss.vercel.app)
 
@@ -16,7 +16,8 @@ Fabra stores, indexes, and serves the data your AI uses — and tracks exactly w
 
 | | |
 |:---|:---|
-| **What** | Context infrastructure — we own the write path |
+| **What** | Inference Context Ledger — we own the write path |
+| **Context Record** | Immutable snapshot of AI decision context |
 | **Install** | `pip install fabra-ai` |
 | **Features** | `@feature` decorator for ML features |
 | **RAG** | `@retriever` + `@context` for LLM context assembly |
@@ -114,7 +115,11 @@ curl localhost:8000/features/user_tier?entity_id=user123
 
 ### We Own the Write Path
 
-LangChain and other frameworks are read-only wrappers — they query your data but don't manage it. Fabra ingests, indexes, and serves context data. This enables freshness guarantees, point-in-time replay, and full lineage that read-only tools cannot provide.
+LangChain and other frameworks are read-only wrappers — they query your data but don't manage it. Fabra is the **system of record** for inference context. Every context assembly becomes a durable **Context Record** with:
+
+- **Cryptographic integrity** (tamper-evident hashes)
+- **Full lineage** (what data was used, when, from where)
+- **Point-in-time replay** (reproduce any decision exactly)
 
 ### Infrastructure, Not a Framework
 
@@ -174,7 +179,7 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 ### For Everyone
 
 - **[One-Command Deploy](local-to-production.md):** `fabra deploy fly|cloudrun|ecs|railway|render`
-- **Visual UI:** Dependency graphs, live metrics, context debugging
+- **[Visual UI](webui.md):** Dependency graphs, live metrics, context debugging
 - **[Unit Testing](unit_testing.md):** Test features in isolation
 
 ### For Compliance & Debugging
@@ -231,6 +236,14 @@ Automatically assembles context that fits your LLM's window. Priority-based trun
 ### Guides
 
 - [Comparisons](comparisons.md) — vs Feast, LangChain, Pinecone, Tecton
+
+### Tools
+
+- [WebUI](webui.md) — Visual feature store & context explorer
+
+### Specifications
+
+- [Context Record Spec (CRS-001)](context-record-spec.md) — Technical specification for Context Records
 
 ### Reference
 

@@ -1,13 +1,20 @@
 from datetime import datetime, timezone
 import re
 import os
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
 import json
 import hashlib
 import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from fabra.store.offline import OfflineStore
+
+import structlog
+
+if TYPE_CHECKING:
+    from fabra.models import ContextRecord
+
+logger = structlog.get_logger()
 
 
 class PostgresOfflineStore(OfflineStore):
@@ -532,6 +539,257 @@ class PostgresOfflineStore(OfflineStore):
                         "token_usage": meta.get("token_usage", 0),
                         "freshness_status": meta.get("freshness_status", "unknown"),
                         "version": row.version,
+                    }
+                )
+            return results
+
+    async def _ensure_records_table(self) -> None:
+        """Create context_records table if it doesn't exist."""
+        async with self.engine.begin() as conn:  # type: ignore[no-untyped-call]
+            await conn.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS context_records (
+                        context_id VARCHAR(255) PRIMARY KEY,
+                        created_at TIMESTAMPTZ NOT NULL,
+                        environment VARCHAR(50) NOT NULL,
+                        schema_version VARCHAR(20) NOT NULL,
+                        context_function VARCHAR(255),
+                        inputs JSONB,
+                        content TEXT,
+                        token_count INTEGER,
+                        features JSONB,
+                        retrieved_items JSONB,
+                        assembly JSONB,
+                        lineage JSONB,
+                        integrity JSONB,
+                        record_hash VARCHAR(100) UNIQUE
+                    )
+                    """
+                )
+            )
+            # Create indexes for common queries
+            await conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_records_created ON context_records(created_at)"
+                )
+            )
+            await conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_records_function ON context_records(context_function)"
+                )
+            )
+            await conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_records_env ON context_records(environment)"
+                )
+            )
+
+    async def log_record(self, record: "ContextRecord") -> str:
+        """Persist a ContextRecord to Postgres."""
+        await self._ensure_records_table()
+
+        def json_serializer(obj: Any) -> str:
+            """Handle datetime and other non-serializable types."""
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(
+                f"Object of type {type(obj).__name__} is not JSON serializable"
+            )
+
+        # Serialize complex fields to JSON
+        inputs_json = json.dumps(record.inputs, default=json_serializer)
+        features_json = json.dumps(
+            [f.model_dump(mode="json") for f in record.features],
+            default=json_serializer,
+        )
+        retrieved_items_json = json.dumps(
+            [r.model_dump(mode="json") for r in record.retrieved_items],
+            default=json_serializer,
+        )
+        assembly_json = json.dumps(
+            record.assembly.model_dump(mode="json"), default=json_serializer
+        )
+        lineage_json = json.dumps(
+            record.lineage.model_dump(mode="json"), default=json_serializer
+        )
+        integrity_json = json.dumps(
+            record.integrity.model_dump(mode="json"), default=json_serializer
+        )
+
+        async with self.engine.begin() as conn:  # type: ignore[no-untyped-call]
+            await conn.execute(
+                text(
+                    """
+                    INSERT INTO context_records
+                    (context_id, created_at, environment, schema_version,
+                     context_function, inputs, content, token_count,
+                     features, retrieved_items, assembly, lineage, integrity, record_hash)
+                    VALUES (:context_id, :created_at, :environment, :schema_version,
+                            :context_function, :inputs, :content, :token_count,
+                            :features, :retrieved_items, :assembly, :lineage, :integrity, :record_hash)
+                    ON CONFLICT (context_id) DO UPDATE SET
+                        created_at = EXCLUDED.created_at,
+                        environment = EXCLUDED.environment,
+                        schema_version = EXCLUDED.schema_version,
+                        context_function = EXCLUDED.context_function,
+                        inputs = EXCLUDED.inputs,
+                        content = EXCLUDED.content,
+                        token_count = EXCLUDED.token_count,
+                        features = EXCLUDED.features,
+                        retrieved_items = EXCLUDED.retrieved_items,
+                        assembly = EXCLUDED.assembly,
+                        lineage = EXCLUDED.lineage,
+                        integrity = EXCLUDED.integrity,
+                        record_hash = EXCLUDED.record_hash
+                    """
+                ),
+                {
+                    "context_id": record.context_id,
+                    "created_at": record.created_at,
+                    "environment": record.environment,
+                    "schema_version": record.schema_version,
+                    "context_function": record.context_function,
+                    "inputs": inputs_json,
+                    "content": record.content,
+                    "token_count": record.token_count,
+                    "features": features_json,
+                    "retrieved_items": retrieved_items_json,
+                    "assembly": assembly_json,
+                    "lineage": lineage_json,
+                    "integrity": integrity_json,
+                    "record_hash": record.integrity.record_hash,
+                },
+            )
+            logger.info("record_logged", context_id=record.context_id)
+            return record.context_id
+
+    async def get_record(self, context_id: str) -> Optional["ContextRecord"]:
+        """Retrieve a ContextRecord by ID."""
+        from fabra.models import (
+            ContextRecord,
+            FeatureRecord,
+            RetrievedItemRecord,
+            AssemblyDecisions,
+            LineageMetadata,
+            IntegrityMetadata,
+        )
+
+        await self._ensure_records_table()
+
+        async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
+            result = await conn.execute(
+                text("SELECT * FROM context_records WHERE context_id = :context_id"),
+                {"context_id": context_id},
+            )
+            row = result.fetchone()
+            if row is None:
+                return None
+
+            # Parse JSON fields - Postgres JSONB returns dict directly
+            inputs = (
+                row.inputs
+                if isinstance(row.inputs, dict)
+                else json.loads(row.inputs or "{}")
+            )
+            features_data = (
+                row.features
+                if isinstance(row.features, list)
+                else json.loads(row.features or "[]")
+            )
+            retrieved_items_data = (
+                row.retrieved_items
+                if isinstance(row.retrieved_items, list)
+                else json.loads(row.retrieved_items or "[]")
+            )
+            assembly_data = (
+                row.assembly
+                if isinstance(row.assembly, dict)
+                else json.loads(row.assembly or "{}")
+            )
+            lineage_data = (
+                row.lineage
+                if isinstance(row.lineage, dict)
+                else json.loads(row.lineage or "{}")
+            )
+            integrity_data = (
+                row.integrity
+                if isinstance(row.integrity, dict)
+                else json.loads(row.integrity or "{}")
+            )
+
+            return ContextRecord(
+                context_id=row.context_id,
+                created_at=row.created_at,
+                environment=row.environment,
+                schema_version=row.schema_version,
+                context_function=row.context_function,
+                inputs=inputs or {},
+                content=row.content,
+                token_count=row.token_count,
+                features=[FeatureRecord.model_validate(f) for f in features_data or []],
+                retrieved_items=[
+                    RetrievedItemRecord.model_validate(r)
+                    for r in retrieved_items_data or []
+                ],
+                assembly=AssemblyDecisions.model_validate(assembly_data or {}),
+                lineage=LineageMetadata.model_validate(lineage_data or {}),
+                integrity=IntegrityMetadata.model_validate(integrity_data or {}),
+            )
+
+    async def list_records(
+        self,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        limit: int = 100,
+        context_function: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List context records in time range with optional filters."""
+        await self._ensure_records_table()
+
+        conditions = []
+        params: Dict[str, Any] = {"limit": limit}
+
+        if start:
+            conditions.append("created_at >= :start")
+            params["start"] = start
+        if end:
+            conditions.append("created_at <= :end")
+            params["end"] = end
+        if context_function:
+            conditions.append("context_function = :context_function")
+            params["context_function"] = context_function
+        if environment:
+            conditions.append("environment = :environment")
+            params["environment"] = environment
+
+        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+        query = f"""
+            SELECT context_id, created_at, environment, schema_version,
+                   context_function, token_count, record_hash
+            FROM context_records
+            {where_clause}
+            ORDER BY created_at DESC
+            LIMIT :limit
+        """  # nosec B608 - where_clause built from validated internal conditions
+
+        async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
+            result = await conn.execute(text(query), params)
+            rows = result.fetchall()
+
+            results = []
+            for row in rows:
+                results.append(
+                    {
+                        "context_id": row.context_id,
+                        "created_at": row.created_at,
+                        "environment": row.environment,
+                        "schema_version": row.schema_version,
+                        "context_function": row.context_function,
+                        "token_count": row.token_count,
+                        "record_hash": row.record_hash,
                     }
                 )
             return results

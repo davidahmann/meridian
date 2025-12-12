@@ -1,6 +1,7 @@
 <div align="center">
   <h1>Fabra</h1>
-  <p><strong>The feature store that runs on your laptop.<br/>The context store that knows what your AI knew.</strong></p>
+  <p><strong>Prove what your AI knew.</strong></p>
+  <p>Fabra is the <strong>Inference Context Ledger</strong> — the system of record that captures<br/>exactly what data an AI used at decision time, with full lineage, freshness guarantees, and replay.</p>
 
   <p>
     <a href="https://pypi.org/project/fabra-ai/"><img src="https://img.shields.io/pypi/v/fabra-ai?color=blue&label=pypi" alt="PyPI version" /></a>
@@ -111,8 +112,8 @@ async def build_prompt(user_id: str, query: str):
     ]
 
 ctx = await build_prompt("user_123", "question")
-print(ctx.id)       # ctx_018f3a2b-... (replay this anytime)
-print(ctx.lineage)  # exactly what data was used
+print(ctx.id)       # ctx_018f3a2b-... (stable Context Record ID)
+print(ctx.lineage)  # exact data used, full provenance
 ```
 
 **Full audit trail. Not a black box.**
@@ -120,6 +121,31 @@ print(ctx.lineage)  # exactly what data was used
 </td>
 </tr>
 </table>
+
+---
+
+## Core Concept: Context Record
+
+A **Context Record** is an immutable snapshot of everything an AI knew at a specific moment in time:
+
+- **Structured features** with freshness timestamps
+- **Retrieved documents** with content hashes
+- **Token budget decisions** (what was included vs dropped)
+- **Full lineage metadata** (sources, versions, latencies)
+- **Cryptographic integrity** (tamper-evident hashes)
+
+Every Context Record has a stable ID (`ctx_...`) and can be replayed, diffed, or audited at any time:
+
+```bash
+# Replay any historical context
+fabra context show ctx_018f3a2b-7def-7abc-8901-234567890abc
+
+# Verify cryptographic integrity
+fabra context verify ctx_018f3a2b-7def-7abc-8901-234567890abc
+
+# Compare what changed between two decisions
+fabra context diff ctx_abc123 ctx_def456
+```
 
 ---
 
@@ -319,12 +345,14 @@ fabra context show ctx_018f3a2b-...
 
 ---
 
-## What We Don't Do
+## What Fabra Does Not Do
 
-- **100k+ QPS streaming** - Use Tecton
 - **Agent orchestration** - Use LangChain
-- **50+ SaaS connectors** - Not our focus
+- **Workflow scheduling** - Use Airflow/Dagster
+- **High-QPS streaming inference** - Use Tecton
 - **No-code builders** - This is Python infrastructure
+
+Fabra focuses on one thing: **making inference context provable**.
 
 ---
 
@@ -338,5 +366,5 @@ fabra context show ctx_018f3a2b-...
 
 <div align="center">
   <p><strong>Fabra</strong> · Apache 2.0 · 2025</p>
-  <p><em>Context infrastructure that owns the write path.</em></p>
+  <p><em>Once context is a ledger, everything else follows.</em></p>
 </div>

@@ -5,7 +5,7 @@ Provides functionality to compare two context assemblies and identify
 what features, retrievers, and content changed between them.
 """
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, TYPE_CHECKING
 from datetime import datetime, timezone
 import difflib
 
@@ -18,6 +18,9 @@ from fabra.models import (
     FeatureLineage,
     RetrieverLineage,
 )
+
+if TYPE_CHECKING:
+    from fabra.models import ContextRecord
 
 
 def compare_features(
@@ -386,6 +389,144 @@ def compare_contexts(
     )
 
 
+def compare_records(
+    base: "ContextRecord",
+    comparison: "ContextRecord",
+) -> ContextDiff:
+    """
+    Compare two ContextRecords and return a detailed diff.
+
+    This is the CRS-001 enhanced version of compare_contexts that works
+    directly with ContextRecord objects and includes dropped items
+    and integrity information.
+
+    Args:
+        base: The base (older) ContextRecord.
+        comparison: The comparison (newer) ContextRecord.
+
+    Returns:
+        ContextDiff with all changes between the two records.
+    """
+    # Convert ContextRecord features to FeatureLineage for comparison
+    base_features = [
+        FeatureLineage(
+            feature_name=f.name,
+            entity_id=f.entity_id,
+            value=f.value,
+            timestamp=f.as_of,
+            freshness_ms=f.freshness_ms,
+            source=f.source,
+        )
+        for f in base.features
+    ]
+    comparison_features = [
+        FeatureLineage(
+            feature_name=f.name,
+            entity_id=f.entity_id,
+            value=f.value,
+            timestamp=f.as_of,
+            freshness_ms=f.freshness_ms,
+            source=f.source,
+        )
+        for f in comparison.features
+    ]
+
+    # Calculate time delta
+    time_delta_ms = int(
+        (comparison.created_at - base.created_at).total_seconds() * 1000
+    )
+
+    # Compare features
+    (
+        feature_diffs,
+        features_added,
+        features_removed,
+        features_modified,
+    ) = compare_features(base_features, comparison_features)
+
+    # Retrievers are empty for ContextRecord (not directly stored the same way)
+    retriever_diffs: List[RetrieverDiff] = []
+    retrievers_added = 0
+    retrievers_removed = 0
+    retrievers_modified = 0
+
+    # Compare content
+    content_diff = compare_content(base.content, comparison.content)
+
+    # Calculate token/cost deltas from assembly
+    token_delta = comparison.assembly.tokens_used - base.assembly.tokens_used
+    cost_delta = comparison.lineage.estimated_cost_usd - base.lineage.estimated_cost_usd
+
+    # Determine freshness improvement
+    freshness_order = {"guaranteed": 0, "degraded": 1, "unknown": 2}
+    base_order = freshness_order.get(base.assembly.freshness_status, 2)
+    comp_order = freshness_order.get(comparison.assembly.freshness_status, 2)
+    freshness_improved = comp_order < base_order
+
+    # Get dropped items
+    items_dropped_base = base.assembly.dropped_items
+    items_dropped_comparison = comparison.assembly.dropped_items
+    items_dropped_delta = len(items_dropped_comparison) - len(items_dropped_base)
+
+    # Determine if there are meaningful changes
+    has_changes = (
+        features_added > 0
+        or features_removed > 0
+        or features_modified > 0
+        or content_diff.similarity_score < 1.0
+        or items_dropped_delta != 0
+    )
+
+    # Generate change summary
+    summary_parts = []
+    if features_added > 0:
+        summary_parts.append(f"{features_added} features added")
+    if features_removed > 0:
+        summary_parts.append(f"{features_removed} features removed")
+    if features_modified > 0:
+        summary_parts.append(f"{features_modified} features modified")
+    if content_diff.diff_summary != "No changes":
+        summary_parts.append(f"content: {content_diff.diff_summary}")
+    if token_delta != 0:
+        summary_parts.append(f"tokens: {'+' if token_delta > 0 else ''}{token_delta}")
+    if items_dropped_delta != 0:
+        summary_parts.append(
+            f"dropped items: {'+' if items_dropped_delta > 0 else ''}{items_dropped_delta}"
+        )
+
+    change_summary = (
+        "; ".join(summary_parts) if summary_parts else "No changes detected"
+    )
+
+    return ContextDiff(
+        base_context_id=base.context_id,
+        comparison_context_id=comparison.context_id,
+        timestamp=datetime.now(timezone.utc),
+        time_delta_ms=time_delta_ms,
+        feature_diffs=feature_diffs,
+        features_added=features_added,
+        features_removed=features_removed,
+        features_modified=features_modified,
+        retriever_diffs=retriever_diffs,
+        retrievers_added=retrievers_added,
+        retrievers_removed=retrievers_removed,
+        retrievers_modified=retrievers_modified,
+        content_diff=content_diff,
+        token_delta=token_delta,
+        cost_delta_usd=cost_delta,
+        base_freshness_status=base.assembly.freshness_status,
+        comparison_freshness_status=comparison.assembly.freshness_status,
+        freshness_improved=freshness_improved,
+        items_dropped_base=items_dropped_base,
+        items_dropped_comparison=items_dropped_comparison,
+        items_dropped_delta=items_dropped_delta,
+        base_content_hash=base.integrity.content_hash,
+        comparison_content_hash=comparison.integrity.content_hash,
+        has_changes=has_changes,
+        change_summary=change_summary,
+    )
+
+
 def format_diff_report(diff: ContextDiff, verbose: bool = False) -> str:
     """
     Format a ContextDiff as a human-readable report.
@@ -458,12 +599,46 @@ def format_diff_report(diff: ContextDiff, verbose: bool = False) -> str:
 
     lines.append("")
 
+    # Dropped Items (CRS-001)
+    if diff.items_dropped_base or diff.items_dropped_comparison:
+        lines.append("Dropped Items:")
+        lines.append(f"  Base:       {len(diff.items_dropped_base)} items")
+        lines.append(f"  Comparison: {len(diff.items_dropped_comparison)} items")
+        delta_sign = "+" if diff.items_dropped_delta > 0 else ""
+        lines.append(f"  Delta:      {delta_sign}{diff.items_dropped_delta}")
+
+        if verbose:
+            if diff.items_dropped_base:
+                lines.append("  Base dropped items:")
+                for item in diff.items_dropped_base:
+                    lines.append(
+                        f"    - {item.source_id} (priority={item.priority}, "
+                        f"tokens={item.token_count}, reason={item.reason})"
+                    )
+            if diff.items_dropped_comparison:
+                lines.append("  Comparison dropped items:")
+                for item in diff.items_dropped_comparison:
+                    lines.append(
+                        f"    - {item.source_id} (priority={item.priority}, "
+                        f"tokens={item.token_count}, reason={item.reason})"
+                    )
+        lines.append("")
+
     # Content
     if diff.content_diff:
         lines.append("Content:")
         lines.append(f"  Similarity: {diff.content_diff.similarity_score:.2%}")
         lines.append(f"  {diff.content_diff.diff_summary}")
     lines.append("")
+
+    # Content Hashes (CRS-001)
+    if diff.base_content_hash or diff.comparison_content_hash:
+        lines.append("Content Integrity:")
+        if diff.base_content_hash:
+            lines.append(f"  Base hash:       {diff.base_content_hash[:50]}...")
+        if diff.comparison_content_hash:
+            lines.append(f"  Comparison hash: {diff.comparison_content_hash[:50]}...")
+        lines.append("")
 
     # Token/Cost
     lines.append("Token/Cost Changes:")

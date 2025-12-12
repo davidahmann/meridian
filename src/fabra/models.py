@@ -106,6 +106,10 @@ class ContextLineage(BaseModel):
     )
     items_included: int = Field(0, description="Items that fit within token budget")
     items_dropped: int = Field(0, description="Items dropped due to budget constraints")
+    dropped_items_detail: List["DroppedItem"] = Field(
+        default_factory=list,
+        description="Detailed list of dropped items with reasons (CRS-001)",
+    )
 
     # Freshness tracking
     freshness_status: Literal["guaranteed", "degraded", "unknown"] = Field(
@@ -274,6 +278,25 @@ class ContextDiff(BaseModel):
     )
     freshness_improved: bool = Field(False, description="Whether freshness improved")
 
+    # Dropped items changes (CRS-001)
+    items_dropped_base: List["DroppedItem"] = Field(
+        default_factory=list, description="Items dropped in base context"
+    )
+    items_dropped_comparison: List["DroppedItem"] = Field(
+        default_factory=list, description="Items dropped in comparison context"
+    )
+    items_dropped_delta: int = Field(
+        0, description="Change in number of dropped items (comparison - base)"
+    )
+
+    # Integrity status (CRS-001)
+    base_content_hash: Optional[str] = Field(
+        None, description="Content hash of base context"
+    )
+    comparison_content_hash: Optional[str] = Field(
+        None, description="Content hash of comparison context"
+    )
+
     # Summary
     has_changes: bool = Field(False, description="Whether any meaningful changes exist")
     change_summary: str = Field("", description="Human-readable change summary")
@@ -356,3 +379,184 @@ class RetrieverReplayResult(BaseModel):
     # Summary
     has_drift: bool = Field(False, description="Whether results have drifted")
     drift_summary: str = Field("", description="Human-readable drift summary")
+
+
+# =============================================================================
+# Context Record Types (CRS-001)
+# =============================================================================
+
+
+class FeatureRecord(BaseModel):
+    """A feature value used in a context assembly - part of the Context Record."""
+
+    name: str = Field(..., description="Name of the feature")
+    entity_id: str = Field(..., description="Entity ID for which feature was retrieved")
+    value: Any = Field(..., description="The feature value used")
+    source: Literal["cache", "compute", "fallback"] = Field(
+        ..., description="Where the value came from"
+    )
+    as_of: datetime = Field(..., description="When this value was computed/retrieved")
+    freshness_ms: int = Field(
+        ..., description="Age of the feature in milliseconds at assembly time"
+    )
+
+
+class RetrievedItemRecord(BaseModel):
+    """A retrieved document/chunk used in a context assembly - part of the Context Record."""
+
+    retriever: str = Field(
+        ..., description="Name of the retriever that returned this item"
+    )
+    chunk_id: str = Field(..., description="Unique identifier for this chunk")
+    document_id: str = Field(..., description="Parent document identifier")
+    content_hash: str = Field(..., description="SHA256 hash of chunk content")
+    content: Optional[str] = Field(
+        None, description="Full content (optional, for replay)"
+    )
+    token_count: int = Field(0, description="Number of tokens in this chunk")
+    priority: int = Field(0, description="Priority in context assembly")
+    similarity_score: float = Field(
+        0.0, description="Similarity score from vector search"
+    )
+    source_url: Optional[str] = Field(None, description="Original document URL/path")
+    as_of: datetime = Field(..., description="When this chunk was indexed")
+    freshness_ms: int = Field(0, description="Age in milliseconds at retrieval time")
+    is_stale: bool = Field(
+        False, description="Whether this chunk exceeds freshness SLA"
+    )
+
+
+class DroppedItem(BaseModel):
+    """Record of an item dropped due to budget constraints."""
+
+    source_id: str = Field(..., description="Identifier of the dropped item")
+    priority: int = Field(..., description="Priority of the dropped item")
+    token_count: int = Field(..., description="Token count of the dropped item")
+    reason: Literal["budget_exceeded", "priority_cutoff"] = Field(
+        ..., description="Why the item was dropped"
+    )
+
+
+class AssemblyDecisions(BaseModel):
+    """How context was assembled under constraints - part of the Context Record."""
+
+    max_tokens: Optional[int] = Field(None, description="Token budget limit")
+    tokens_used: int = Field(0, description="Total tokens in final context")
+    items_provided: int = Field(
+        0, description="Total items returned by context function"
+    )
+    items_included: int = Field(0, description="Items that fit within token budget")
+    dropped_items: List[DroppedItem] = Field(
+        default_factory=list, description="Full list of dropped items with reasons"
+    )
+    required_items_included: bool = Field(
+        True, description="Whether all required items were included"
+    )
+    freshness_sla_ms: Optional[int] = Field(
+        None, description="Freshness SLA in milliseconds"
+    )
+    freshness_status: Literal["guaranteed", "degraded", "unknown"] = Field(
+        "unknown", description="Overall freshness of the context"
+    )
+    freshness_violations: List[str] = Field(
+        default_factory=list, description="Feature names that violated freshness SLA"
+    )
+
+
+class LineageMetadata(BaseModel):
+    """Complete dependency graph for audit and replay - part of the Context Record."""
+
+    features_used: List[str] = Field(
+        default_factory=list, description="Names of features used"
+    )
+    retrievers_used: List[str] = Field(
+        default_factory=list, description="Names of retrievers used"
+    )
+    indexes_used: List[str] = Field(
+        default_factory=list, description="Names of indexes/collections searched"
+    )
+    code_version: Optional[str] = Field(None, description="Git SHA of the codebase")
+    fabra_version: str = Field(..., description="Version of Fabra used")
+    assembly_latency_ms: float = Field(
+        0.0, description="Time taken to assemble context"
+    )
+    estimated_cost_usd: float = Field(0.0, description="Estimated cost in USD")
+
+
+class IntegrityMetadata(BaseModel):
+    """Cryptographic guarantees for the Context Record."""
+
+    record_hash: str = Field(
+        ..., description="SHA256 hash of canonical JSON (excluding this field)"
+    )
+    content_hash: str = Field(..., description="SHA256 hash of just the content field")
+    previous_context_id: Optional[str] = Field(
+        None, description="Chain linking to previous context (optional)"
+    )
+    signed_at: Optional[datetime] = Field(
+        None, description="When the record was signed"
+    )
+    signature: Optional[str] = Field(
+        None, description="Optional cryptographic signature"
+    )
+
+
+class ContextRecord(BaseModel):
+    """
+    Immutable, replayable snapshot of all data used to assemble AI context.
+    The atomic unit of the Inference Context Ledger.
+
+    This is the canonical CRS-001 format for context records, combining:
+    - Identity and metadata
+    - Input arguments for replay
+    - Final assembled content
+    - All features and retrieved items used
+    - Assembly decisions (what was included/dropped)
+    - Full lineage metadata
+    - Cryptographic integrity
+    """
+
+    # Identity
+    context_id: str = Field(..., description="Unique identifier in format ctx_<uuid7>")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="When this context was assembled",
+    )
+    environment: str = Field(
+        "development", description="Environment: development, staging, production"
+    )
+    schema_version: str = Field("1.0.0", description="CRS schema version")
+
+    # Inputs (for replay)
+    inputs: Dict[str, Any] = Field(
+        default_factory=dict, description="Arguments passed to context function"
+    )
+    context_function: str = Field(..., description="Name of the context function")
+
+    # Final Output
+    content: str = Field(..., description="The final assembled text content")
+    token_count: int = Field(0, description="Total tokens in final context")
+
+    # Features Used
+    features: List[FeatureRecord] = Field(
+        default_factory=list, description="All features retrieved during assembly"
+    )
+
+    # Retrieved Content
+    retrieved_items: List[RetrievedItemRecord] = Field(
+        default_factory=list, description="All chunks/documents retrieved"
+    )
+
+    # Assembly Decisions
+    assembly: AssemblyDecisions = Field(
+        default_factory=AssemblyDecisions,
+        description="How context was assembled under constraints",
+    )
+
+    # Full Lineage
+    lineage: LineageMetadata = Field(
+        ..., description="Complete dependency graph for audit and replay"
+    )
+
+    # Cryptographic Integrity
+    integrity: IntegrityMetadata = Field(..., description="Cryptographic guarantees")

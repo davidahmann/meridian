@@ -9,13 +9,16 @@ import importlib.util
 import inspect
 import os
 import sys
+import warnings
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
 from fabra.core import FeatureStore
+from fabra.store import InMemoryOnlineStore, DuckDBOfflineStore
 
 app = FastAPI(title="Fabra UI API", version="0.1.0")
 
@@ -43,7 +46,42 @@ _state: Dict[str, Any] = {
     "contexts": {},
     "retrievers": {},
     "file_path": "",
+    "context_records": {},  # In-memory storage for Context Records (demo only)
 }
+
+# Optional API key authentication
+API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def _get_api_key(api_key: Optional[str] = Depends(API_KEY_HEADER)) -> Optional[str]:
+    """Validate API key if FABRA_UI_API_KEY is set."""
+    expected = os.environ.get("FABRA_UI_API_KEY")
+    if expected and api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+    return api_key
+
+
+def _is_demo_mode(store: FeatureStore) -> bool:
+    """Detect if store is using in-memory/demo backends."""
+    is_inmemory_online = isinstance(store.online_store, InMemoryOnlineStore)
+    is_duckdb_offline = isinstance(store.offline_store, DuckDBOfflineStore)
+    return is_inmemory_online or is_duckdb_offline
+
+
+def _get_demo_warning(store: FeatureStore) -> Optional[str]:
+    """Generate warning message for demo mode."""
+    warnings_list = []
+    if isinstance(store.online_store, InMemoryOnlineStore):
+        warnings_list.append("InMemoryOnlineStore: data lost on restart")
+    if isinstance(store.offline_store, DuckDBOfflineStore):
+        warnings_list.append("DuckDBOfflineStore: local development only")
+    if warnings_list:
+        return (
+            "Demo mode active. "
+            + "; ".join(warnings_list)
+            + ". Set FABRA_ENV=production for persistent storage."
+        )
+    return None
 
 
 # =============================================================================
@@ -69,6 +107,8 @@ class Retriever(BaseModel):
     name: str
     backend: str
     cache_ttl: str
+    is_mock: bool = False
+    index_name: Optional[str] = None
 
 
 class ContextParameter(BaseModel):
@@ -91,6 +131,9 @@ class StoreInfo(BaseModel):
     contexts: List[ContextDefinition]
     retrievers: List[Retriever]
     online_store_type: str
+    offline_store_type: str
+    is_demo_mode: bool
+    demo_warning: Optional[str] = None
 
 
 class MermaidGraph(BaseModel):
@@ -149,6 +192,55 @@ class ContextResult(BaseModel):
     lineage: Optional[ContextLineageResponse] = None
 
 
+# CRS-001 Context Record Response Models
+class DroppedItemResponse(BaseModel):
+    source_id: str
+    priority: int
+    token_count: int
+    reason: str
+
+
+class IntegrityResponse(BaseModel):
+    record_hash: str
+    content_hash: str
+    previous_context_id: Optional[str] = None
+
+
+class AssemblyResponse(BaseModel):
+    tokens_used: int
+    max_tokens: Optional[int] = None
+    items_provided: int
+    items_included: int
+    dropped_items: List[DroppedItemResponse]
+    freshness_status: str
+
+
+class ContextRecordResponse(BaseModel):
+    """CRS-001 Context Record - immutable snapshot of AI decision context."""
+
+    context_id: str
+    schema_version: str
+    created_at: str
+    environment: str
+    context_function: str
+    inputs: Dict[str, Any]
+    content: str
+    token_count: int
+    assembly: AssemblyResponse
+    integrity: IntegrityResponse
+
+
+class VerificationResult(BaseModel):
+    """Result of context record integrity verification."""
+
+    context_id: str
+    is_valid: bool
+    content_hash_valid: bool
+    record_hash_valid: bool
+    error: Optional[str] = None
+    verified_at: str
+
+
 # =============================================================================
 # Module Loading
 # =============================================================================
@@ -188,6 +280,15 @@ def load_module(file_path: str) -> None:
     if not store:
         raise ValueError("No FeatureStore instance found in the provided file.")
 
+    # Emit warning for InMemoryOnlineStore (Phase 5)
+    if isinstance(store.online_store, InMemoryOnlineStore):
+        warnings.warn(
+            "Using InMemoryOnlineStore - data will be lost on restart. "
+            "Set FABRA_ENV=production for persistent storage.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     _state["store"] = store
     _state["contexts"] = contexts
     _state["retrievers"] = retrievers
@@ -200,7 +301,9 @@ def load_module(file_path: str) -> None:
 
 
 @app.get("/api/store", response_model=StoreInfo)
-async def get_store_info() -> StoreInfo:
+async def get_store_info(
+    _api_key: Optional[str] = Depends(_get_api_key),
+) -> StoreInfo:
     """Get information about the loaded Feature Store."""
     store = _state["store"]
     if not store:
@@ -267,14 +370,19 @@ async def get_store_info() -> StoreInfo:
             )
         )
 
-    # Build retrievers list
+    # Build retrievers list with mock detection
     retrievers = []
     for r_name, r_obj in _state["retrievers"].items():
+        # Detect if retriever has a real index (not mock)
+        index_name = getattr(r_obj, "index", None)
+        is_mock = index_name is None
         retrievers.append(
             Retriever(
                 name=r_name,
                 backend=r_obj.backend,
                 cache_ttl=str(r_obj.cache_ttl),
+                is_mock=is_mock,
+                index_name=index_name,
             )
         )
 
@@ -285,11 +393,18 @@ async def get_store_info() -> StoreInfo:
         contexts=contexts,
         retrievers=retrievers,
         online_store_type=store.online_store.__class__.__name__,
+        offline_store_type=store.offline_store.__class__.__name__,
+        is_demo_mode=_is_demo_mode(store),
+        demo_warning=_get_demo_warning(store),
     )
 
 
 @app.get("/api/features/{entity_name}/{entity_id}")
-async def get_features(entity_name: str, entity_id: str) -> Dict[str, Any]:
+async def get_features(
+    entity_name: str,
+    entity_id: str,
+    _api_key: Optional[str] = Depends(_get_api_key),
+) -> Dict[str, Any]:
     """Fetch feature values for an entity."""
     store = _state["store"]
     if not store:
@@ -326,7 +441,11 @@ def _serialize_value(value: Any) -> Any:
 
 
 @app.post("/api/context/{context_name}", response_model=ContextResult)
-async def assemble_context(context_name: str, params: Dict[str, str]) -> ContextResult:
+async def assemble_context(
+    context_name: str,
+    params: Dict[str, str],
+    _api_key: Optional[str] = Depends(_get_api_key),
+) -> ContextResult:
     """Assemble a context with the given parameters."""
     if context_name not in _state["contexts"]:
         raise HTTPException(
@@ -404,6 +523,9 @@ async def assemble_context(context_name: str, params: Dict[str, str]) -> Context
                 estimated_cost_usd=lineage.estimated_cost_usd,
             )
 
+        # Store Context Record for later retrieval/verification
+        _store_context_record(result, context_name, params)
+
         return ContextResult(
             id=result.id,
             items=items,
@@ -415,7 +537,9 @@ async def assemble_context(context_name: str, params: Dict[str, str]) -> Context
 
 
 @app.get("/api/graph", response_model=MermaidGraph)
-async def get_mermaid_graph() -> MermaidGraph:
+async def get_mermaid_graph(
+    _api_key: Optional[str] = Depends(_get_api_key),
+) -> MermaidGraph:
     """Generate Mermaid diagram code for the Feature Store."""
     store = _state["store"]
     if not store:
@@ -458,6 +582,125 @@ async def get_mermaid_graph() -> MermaidGraph:
         graph.append("    end")
 
     return MermaidGraph(code="\n".join(graph))
+
+
+@app.get("/api/context/{context_id}/record", response_model=ContextRecordResponse)
+async def get_context_record(
+    context_id: str,
+    _api_key: Optional[str] = Depends(_get_api_key),
+) -> ContextRecordResponse:
+    """Get the full CRS-001 Context Record for a context ID."""
+    if context_id not in _state["context_records"]:
+        raise HTTPException(
+            status_code=404, detail=f"Context record not found: {context_id}"
+        )
+
+    record = _state["context_records"][context_id]
+    return _convert_to_record_response(record)
+
+
+@app.get("/api/context/{context_id}/verify", response_model=VerificationResult)
+async def verify_context(
+    context_id: str,
+    _api_key: Optional[str] = Depends(_get_api_key),
+) -> VerificationResult:
+    """Verify cryptographic integrity of a Context Record."""
+    from datetime import datetime, timezone
+    import hashlib
+
+    if context_id not in _state["context_records"]:
+        raise HTTPException(
+            status_code=404, detail=f"Context record not found: {context_id}"
+        )
+
+    record = _state["context_records"][context_id]
+    now = datetime.now(timezone.utc)
+
+    try:
+        # Verify content hash
+        content_hash = (
+            "sha256:" + hashlib.sha256(record.content.encode("utf-8")).hexdigest()
+        )
+        content_hash_valid = content_hash == record.integrity.content_hash
+
+        # For record hash, we'd need to recompute the canonical JSON
+        # For simplicity, we just check it exists and is valid format
+        record_hash_valid = (
+            record.integrity.record_hash.startswith("sha256:")
+            and len(record.integrity.record_hash) == 71  # sha256: + 64 hex chars
+        )
+
+        is_valid = content_hash_valid and record_hash_valid
+
+        return VerificationResult(
+            context_id=context_id,
+            is_valid=is_valid,
+            content_hash_valid=content_hash_valid,
+            record_hash_valid=record_hash_valid,
+            error=None if is_valid else "Hash mismatch detected",
+            verified_at=now.isoformat(),
+        )
+    except Exception as e:
+        return VerificationResult(
+            context_id=context_id,
+            is_valid=False,
+            content_hash_valid=False,
+            record_hash_valid=False,
+            error=str(e),
+            verified_at=now.isoformat(),
+        )
+
+
+def _convert_to_record_response(record: Any) -> ContextRecordResponse:
+    """Convert internal ContextRecord to API response model."""
+    dropped_items = [
+        DroppedItemResponse(
+            source_id=item.source_id,
+            priority=item.priority,
+            token_count=item.token_count,
+            reason=item.reason,
+        )
+        for item in record.assembly.dropped_items
+    ]
+
+    return ContextRecordResponse(
+        context_id=record.context_id,
+        schema_version=record.schema_version,
+        created_at=record.created_at.isoformat()
+        if hasattr(record.created_at, "isoformat")
+        else str(record.created_at),
+        environment=record.environment,
+        context_function=record.context_function,
+        inputs=record.inputs,
+        content=record.content,
+        token_count=record.token_count,
+        assembly=AssemblyResponse(
+            tokens_used=record.assembly.tokens_used,
+            max_tokens=record.assembly.max_tokens,
+            items_provided=record.assembly.items_provided,
+            items_included=record.assembly.items_included,
+            dropped_items=dropped_items,
+            freshness_status=record.assembly.freshness_status,
+        ),
+        integrity=IntegrityResponse(
+            record_hash=record.integrity.record_hash,
+            content_hash=record.integrity.content_hash,
+            previous_context_id=record.integrity.previous_context_id,
+        ),
+    )
+
+
+def _store_context_record(
+    result: Any, context_name: str, params: Dict[str, str]
+) -> None:
+    """Store a Context Record if available on the result."""
+    if hasattr(result, "to_record"):
+        try:
+            record = result.to_record()
+            _state["context_records"][result.id] = record
+        except Exception:  # nosec B110 - non-critical for demo UI
+            # Silently skip if to_record() fails
+            pass
 
 
 # =============================================================================

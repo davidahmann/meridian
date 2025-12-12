@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 import duckdb
 import pandas as pd
 import asyncio
@@ -8,6 +8,9 @@ from datetime import datetime
 
 
 import structlog
+
+if TYPE_CHECKING:
+    from fabra.models import ContextRecord
 
 logger = structlog.get_logger()
 
@@ -96,6 +99,56 @@ class OfflineStore(ABC):
 
         Returns:
             List of context summaries (without full content for efficiency)
+        """
+        pass
+
+    @abstractmethod
+    async def log_record(self, record: "ContextRecord") -> str:
+        """
+        Persists a ContextRecord to the store.
+
+        Args:
+            record: The ContextRecord to persist.
+
+        Returns:
+            The context_id of the stored record.
+        """
+        pass
+
+    @abstractmethod
+    async def get_record(self, context_id: str) -> Optional["ContextRecord"]:
+        """
+        Retrieves a ContextRecord by ID.
+
+        Args:
+            context_id: The context ID (with ctx_ prefix).
+
+        Returns:
+            The ContextRecord if found, None otherwise.
+        """
+        pass
+
+    @abstractmethod
+    async def list_records(
+        self,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        limit: int = 100,
+        context_function: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Lists context records in a time range.
+
+        Args:
+            start: Filter records created after this time
+            end: Filter records created before this time
+            limit: Maximum number of results
+            context_function: Filter by context function name
+            environment: Filter by environment (development, staging, production)
+
+        Returns:
+            List of record summaries (without full content).
         """
         pass
 
@@ -402,4 +455,274 @@ class DuckDBOfflineStore(OfflineStore):
             return results
         except Exception as e:
             logger.error("context_list_failed", error=str(e))
+            return []
+
+    def _ensure_records_table(self) -> None:
+        """Create context_records table if it doesn't exist."""
+        self.conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS context_records (
+                context_id VARCHAR PRIMARY KEY,
+                created_at TIMESTAMP NOT NULL,
+                environment VARCHAR NOT NULL,
+                schema_version VARCHAR NOT NULL,
+                context_function VARCHAR,
+                inputs JSON,
+                content TEXT,
+                token_count INTEGER,
+                features JSON,
+                retrieved_items JSON,
+                assembly JSON,
+                lineage JSON,
+                integrity JSON,
+                record_hash VARCHAR UNIQUE
+            )
+        """
+        )
+        # Create indexes for common queries
+        try:
+            self.conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_records_created ON context_records(created_at)"
+            )
+            self.conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_records_function ON context_records(context_function)"
+            )
+            self.conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_records_env ON context_records(environment)"
+            )
+        except Exception:  # nosec B110 - Index may already exist, safe to ignore
+            pass
+
+    async def log_record(self, record: "ContextRecord") -> str:
+        """Persist a ContextRecord to DuckDB."""
+        import json
+
+        self._ensure_records_table()
+
+        def json_serializer(obj: Any) -> str:
+            """Handle datetime and other non-serializable types."""
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            raise TypeError(
+                f"Object of type {type(obj).__name__} is not JSON serializable"
+            )
+
+        # Serialize complex fields to JSON
+        inputs_json = json.dumps(record.inputs, default=json_serializer)
+        features_json = json.dumps(
+            [f.model_dump(mode="json") for f in record.features],
+            default=json_serializer,
+        )
+        retrieved_items_json = json.dumps(
+            [r.model_dump(mode="json") for r in record.retrieved_items],
+            default=json_serializer,
+        )
+        assembly_json = json.dumps(
+            record.assembly.model_dump(mode="json"), default=json_serializer
+        )
+        lineage_json = json.dumps(
+            record.lineage.model_dump(mode="json"), default=json_serializer
+        )
+        integrity_json = json.dumps(
+            record.integrity.model_dump(mode="json"), default=json_serializer
+        )
+
+        loop = asyncio.get_running_loop()
+        try:
+            await loop.run_in_executor(
+                None,
+                lambda: self.conn.execute(
+                    """
+                    INSERT INTO context_records
+                    (context_id, created_at, environment, schema_version,
+                     context_function, inputs, content, token_count,
+                     features, retrieved_items, assembly, lineage, integrity, record_hash)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (context_id) DO UPDATE SET
+                        created_at = EXCLUDED.created_at,
+                        environment = EXCLUDED.environment,
+                        schema_version = EXCLUDED.schema_version,
+                        context_function = EXCLUDED.context_function,
+                        inputs = EXCLUDED.inputs,
+                        content = EXCLUDED.content,
+                        token_count = EXCLUDED.token_count,
+                        features = EXCLUDED.features,
+                        retrieved_items = EXCLUDED.retrieved_items,
+                        assembly = EXCLUDED.assembly,
+                        lineage = EXCLUDED.lineage,
+                        integrity = EXCLUDED.integrity,
+                        record_hash = EXCLUDED.record_hash
+                    """,
+                    [
+                        record.context_id,
+                        record.created_at.isoformat(),
+                        record.environment,
+                        record.schema_version,
+                        record.context_function,
+                        inputs_json,
+                        record.content,
+                        record.token_count,
+                        features_json,
+                        retrieved_items_json,
+                        assembly_json,
+                        lineage_json,
+                        integrity_json,
+                        record.integrity.record_hash,
+                    ],
+                ),
+            )
+            logger.info("record_logged", context_id=record.context_id)
+            return record.context_id
+        except Exception as e:
+            logger.error(
+                "record_log_failed", context_id=record.context_id, error=str(e)
+            )
+            raise
+
+    async def get_record(self, context_id: str) -> Optional["ContextRecord"]:
+        """Retrieve a ContextRecord by ID."""
+        import json
+        from fabra.models import (
+            ContextRecord,
+            FeatureRecord,
+            RetrievedItemRecord,
+            AssemblyDecisions,
+            LineageMetadata,
+            IntegrityMetadata,
+        )
+
+        self._ensure_records_table()
+
+        loop = asyncio.get_running_loop()
+        try:
+            df = await loop.run_in_executor(
+                None,
+                lambda: self.conn.execute(
+                    "SELECT * FROM context_records WHERE context_id = ?", [context_id]
+                ).df(),
+            )
+            if df.empty:
+                return None
+
+            row = df.iloc[0]
+
+            # Parse JSON fields
+            inputs = (
+                json.loads(row["inputs"])
+                if isinstance(row["inputs"], str)
+                else row["inputs"]
+            )
+            features_data = (
+                json.loads(row["features"])
+                if isinstance(row["features"], str)
+                else row["features"]
+            )
+            retrieved_items_data = (
+                json.loads(row["retrieved_items"])
+                if isinstance(row["retrieved_items"], str)
+                else row["retrieved_items"]
+            )
+            assembly_data = (
+                json.loads(row["assembly"])
+                if isinstance(row["assembly"], str)
+                else row["assembly"]
+            )
+            lineage_data = (
+                json.loads(row["lineage"])
+                if isinstance(row["lineage"], str)
+                else row["lineage"]
+            )
+            integrity_data = (
+                json.loads(row["integrity"])
+                if isinstance(row["integrity"], str)
+                else row["integrity"]
+            )
+
+            # Parse created_at timestamp
+            created_at = row["created_at"]
+            if isinstance(created_at, str):
+                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+
+            return ContextRecord(
+                context_id=row["context_id"],
+                created_at=created_at,
+                environment=row["environment"],
+                schema_version=row["schema_version"],
+                context_function=row["context_function"],
+                inputs=inputs or {},
+                content=row["content"],
+                token_count=row["token_count"],
+                features=[FeatureRecord.model_validate(f) for f in features_data or []],
+                retrieved_items=[
+                    RetrievedItemRecord.model_validate(r)
+                    for r in retrieved_items_data or []
+                ],
+                assembly=AssemblyDecisions.model_validate(assembly_data or {}),
+                lineage=LineageMetadata.model_validate(lineage_data or {}),
+                integrity=IntegrityMetadata.model_validate(integrity_data or {}),
+            )
+        except Exception as e:
+            logger.error("record_retrieval_failed", context_id=context_id, error=str(e))
+            return None
+
+    async def list_records(
+        self,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        limit: int = 100,
+        context_function: Optional[str] = None,
+        environment: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List context records in time range with optional filters."""
+        self._ensure_records_table()
+
+        conditions = []
+        params: List[Any] = []
+
+        if start:
+            conditions.append("created_at >= ?")
+            params.append(start.isoformat())
+        if end:
+            conditions.append("created_at <= ?")
+            params.append(end.isoformat())
+        if context_function:
+            conditions.append("context_function = ?")
+            params.append(context_function)
+        if environment:
+            conditions.append("environment = ?")
+            params.append(environment)
+
+        where_clause = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+        params.append(limit)
+
+        query = f"""
+            SELECT context_id, created_at, environment, schema_version,
+                   context_function, token_count, record_hash
+            FROM context_records
+            {where_clause}
+            ORDER BY created_at DESC
+            LIMIT ?
+        """  # nosec B608 - where_clause built from validated internal conditions
+
+        loop = asyncio.get_running_loop()
+        try:
+            df = await loop.run_in_executor(
+                None, lambda: self.conn.execute(query, params).df()
+            )
+            results = []
+            for _, row in df.iterrows():
+                results.append(
+                    {
+                        "context_id": row["context_id"],
+                        "created_at": row["created_at"],
+                        "environment": row["environment"],
+                        "schema_version": row["schema_version"],
+                        "context_function": row["context_function"],
+                        "token_count": row["token_count"],
+                        "record_hash": row["record_hash"],
+                    }
+                )
+            return results
+        except Exception as e:
+            logger.error("record_list_failed", error=str(e))
             return []

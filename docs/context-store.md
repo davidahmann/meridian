@@ -6,7 +6,7 @@ keywords: context store, context infrastructure, llm context, pgvector, vector s
 
 # Context Store for LLMs
 
-> **TL;DR:** Fabra's Context Store is context infrastructure that owns the write path. We ingest, index, track freshness, and serve — not just query. This enables lineage, replay, and auditability that read-only frameworks cannot provide.
+> **TL;DR:** Fabra's Context Store is the **Inference Context Ledger** — we own the write path, ingesting, indexing, and serving context data. Every context assembly becomes an immutable **Context Record** with full lineage, cryptographic integrity, and replay capability.
 
 ## Why Context Store?
 
@@ -162,6 +162,50 @@ async def support_context(query: str) -> list[ContextItem]:
 - `required=True` items raise `ContextBudgetError` (or return partial context with warning) if they can't fit.
 
 [Learn more about Context Assembly →](context-assembly.md)
+
+### 4. Context Records (CRS-001)
+
+Every context assembly creates an immutable **Context Record** — a cryptographically verifiable snapshot of everything the AI knew at decision time.
+
+```python
+# Get the Context Record
+ctx = await chat_context("user_123", "how do I reset password?")
+record = ctx.to_record()
+
+print(record.context_id)           # ctx_018f3a2b-... (stable ID)
+print(record.integrity.content_hash)  # sha256:abc123... (tamper-evident)
+print(record.assembly.dropped_items)  # Items that didn't fit token budget
+```
+
+**What's in a Context Record:**
+
+| Field | Description |
+|:------|:------------|
+| `context_id` | Stable ID (`ctx_` prefix + UUIDv7) |
+| `features` | Structured features with freshness timestamps |
+| `retrieved_items` | Documents/chunks with content hashes |
+| `assembly` | Token budget decisions (what was included vs dropped) |
+| `lineage` | Full provenance (sources, versions, latencies) |
+| `integrity` | Cryptographic hashes for tamper detection |
+
+**CLI Commands:**
+
+```bash
+# Show a Context Record
+fabra context show ctx_018f3a2b-7def-7abc-8901-234567890abc
+
+# Verify cryptographic integrity (detect tampering)
+fabra context verify ctx_018f3a2b-7def-7abc-8901-234567890abc
+
+# Compare two Context Records
+fabra context diff ctx_abc123 ctx_def456
+```
+
+**Why This Matters:**
+
+- **Compliance:** Prove exactly what data informed an AI decision
+- **Debugging:** Replay any historical context with exact inputs
+- **Auditing:** Tamper-evident records for regulatory requirements
 
 <script type="application/ld+json">
 {

@@ -18,13 +18,48 @@ from fabra.models import (
     RetrieverLineage,
     DocumentChunkLineage,
     RetrieverSnapshot,
+    ContextRecord,
+    FeatureRecord,
+    RetrievedItemRecord,
+    AssemblyDecisions,
+    DroppedItem,
+    LineageMetadata,
+    IntegrityMetadata,
 )
 from fabra.observability import ContextMetrics
 from fabra.exceptions import FreshnessSLAError
+from fabra.utils.integrity import compute_content_hash, compute_record_hash
 import time
+import os
 
 # Type for freshness status
 FreshnessStatus = Literal["guaranteed", "degraded", "unknown"]
+
+
+def generate_context_id() -> str:
+    """
+    Generate a unique context ID in the CRS-001 format.
+
+    Returns:
+        Context ID in format 'ctx_<uuid7>'
+    """
+    return f"ctx_{uuid6.uuid7()}"
+
+
+def get_fabra_version() -> str:
+    """Get the current Fabra version."""
+    try:
+        from fabra import __version__
+
+        return __version__
+    except ImportError:
+        return "unknown"
+
+
+def get_environment() -> str:
+    """Get the current environment from FABRA_ENV."""
+    return os.environ.get("FABRA_ENV", "development")
+
 
 logger = structlog.get_logger()
 
@@ -67,6 +102,7 @@ class AssemblyTracker:
         self.features: List[FeatureLineage] = []
         self.retrievers: List[RetrieverLineage] = []
         self.snapshots: List[RetrieverSnapshot] = []
+        self.dropped_items: List[DroppedItem] = []
         self.capture_snapshots = capture_snapshots
         self.start_time = datetime.now(timezone.utc)
 
@@ -142,6 +178,31 @@ class AssemblyTracker:
         if not self.features:
             return 0
         return max(f.freshness_ms for f in self.features)
+
+    def record_dropped_item(
+        self,
+        source_id: str,
+        priority: int,
+        token_count: int,
+        reason: str,
+    ) -> None:
+        """
+        Record an item that was dropped during context assembly.
+
+        Args:
+            source_id: Identifier of the dropped item (e.g., feature name, chunk ID).
+            priority: Priority level of the dropped item.
+            token_count: Number of tokens in the dropped item.
+            reason: Why the item was dropped ('budget_exceeded' or 'priority_cutoff').
+        """
+        self.dropped_items.append(
+            DroppedItem(
+                source_id=source_id,
+                priority=priority,
+                token_count=token_count,
+                reason=reason,
+            )
+        )
 
 
 def get_current_tracker() -> Optional[AssemblyTracker]:
@@ -372,6 +433,184 @@ class Context(BaseModel):
         </div>
         """
 
+    def to_record(self, include_content: bool = True) -> ContextRecord:
+        """
+        Export this Context as an immutable ContextRecord (CRS-001 format).
+
+        The ContextRecord is a unified artifact containing all data needed
+        for audit, replay, and compliance purposes.
+
+        Args:
+            include_content: Whether to include retrieved item content
+                             for replay. Set to False for privacy-sensitive logs.
+
+        Returns:
+            ContextRecord with full lineage and cryptographic integrity.
+        """
+        # Parse timestamp from meta
+        timestamp_str = self.meta.get("timestamp")
+        if timestamp_str:
+            created_at = datetime.fromisoformat(timestamp_str)
+        else:
+            created_at = datetime.now(timezone.utc)
+
+        # Convert context ID to ctx_ prefix format if not already
+        context_id = self.id
+        if not context_id.startswith("ctx_"):
+            context_id = f"ctx_{context_id}"
+
+        # Extract features from lineage
+        features: List[FeatureRecord] = []
+        if self.lineage and self.lineage.features_used:
+            for feat in self.lineage.features_used:
+                features.append(
+                    FeatureRecord(
+                        name=feat.feature_name,
+                        entity_id=feat.entity_id,
+                        value=feat.value,
+                        source=feat.source,
+                        as_of=feat.timestamp,
+                        freshness_ms=feat.freshness_ms,
+                    )
+                )
+
+        # Extract retrieved items from lineage
+        retrieved_items: List[RetrievedItemRecord] = []
+        if self.lineage and self.lineage.retrievers_used:
+            for retriever in self.lineage.retrievers_used:
+                for chunk in retriever.chunks_returned:
+                    retrieved_items.append(
+                        RetrievedItemRecord(
+                            retriever=retriever.retriever_name,
+                            chunk_id=chunk.chunk_id,
+                            document_id=chunk.document_id,
+                            content_hash=chunk.content_hash,
+                            content=None,  # Content not stored in current lineage
+                            token_count=0,  # Not tracked in current lineage
+                            priority=chunk.position_in_results,
+                            similarity_score=chunk.similarity_score,
+                            source_url=chunk.source_url,
+                            as_of=chunk.indexed_at,
+                            freshness_ms=chunk.freshness_ms,
+                            is_stale=chunk.is_stale,
+                        )
+                    )
+
+        # Build assembly decisions
+        freshness_violations_list = self.meta.get("freshness_violations", [])
+        freshness_violation_names = [
+            v.get("feature", "unknown")
+            for v in freshness_violations_list
+            if isinstance(v, dict)
+        ]
+
+        # Get dropped items from lineage if available
+        dropped_items_list: List[DroppedItem] = []
+        if self.lineage and self.lineage.dropped_items_detail:
+            dropped_items_list = self.lineage.dropped_items_detail
+
+        assembly = AssemblyDecisions(
+            max_tokens=self.meta.get("max_tokens"),
+            tokens_used=self.meta.get("token_usage", 0),
+            items_provided=self.lineage.items_provided if self.lineage else 1,
+            items_included=self.lineage.items_included if self.lineage else 1,
+            dropped_items=dropped_items_list,
+            required_items_included=not self.meta.get("budget_exceeded", False),
+            freshness_sla_ms=self.meta.get("freshness_sla_ms"),
+            freshness_status=self.meta.get("freshness_status", "unknown"),
+            freshness_violations=freshness_violation_names,
+        )
+
+        # Build lineage metadata
+        feature_names = [f.name for f in features]
+        retriever_names = list(
+            {
+                r.retriever_name
+                for r in (self.lineage.retrievers_used if self.lineage else [])
+            }
+        )
+        index_names = list(
+            {
+                r.index_name
+                for r in (self.lineage.retrievers_used if self.lineage else [])
+                if r.index_name
+            }
+        )
+
+        lineage_meta = LineageMetadata(
+            features_used=feature_names,
+            retrievers_used=retriever_names,
+            indexes_used=index_names,
+            code_version=None,  # Could be populated from git in future
+            fabra_version=get_fabra_version(),
+            assembly_latency_ms=0.0,  # Not tracked in current meta
+            estimated_cost_usd=self.meta.get("cost_usd", 0.0),
+        )
+
+        # Compute integrity hashes
+        content_hash = compute_content_hash(self.content)
+
+        # Create temporary record to compute hash
+        temp_integrity = IntegrityMetadata(
+            record_hash="",
+            content_hash=content_hash,
+            previous_context_id=None,
+            signed_at=None,
+            signature=None,
+        )
+
+        temp_record = ContextRecord(
+            context_id=context_id,
+            created_at=created_at,
+            environment=get_environment(),
+            schema_version="1.0.0",
+            inputs=self.lineage.context_args
+            if self.lineage and self.lineage.context_args
+            else {},
+            context_function=self.lineage.context_name
+            if self.lineage
+            else self.meta.get("name", "unknown"),
+            content=self.content if include_content else "",
+            token_count=self.meta.get("token_usage", 0),
+            features=features,
+            retrieved_items=retrieved_items,
+            assembly=assembly,
+            lineage=lineage_meta,
+            integrity=temp_integrity,
+        )
+
+        # Compute the record hash
+        record_hash = compute_record_hash(temp_record)
+
+        # Create final record with computed hash
+        final_integrity = IntegrityMetadata(
+            record_hash=record_hash,
+            content_hash=content_hash,
+            previous_context_id=None,
+            signed_at=None,
+            signature=None,
+        )
+
+        return ContextRecord(
+            context_id=context_id,
+            created_at=created_at,
+            environment=get_environment(),
+            schema_version="1.0.0",
+            inputs=self.lineage.context_args
+            if self.lineage and self.lineage.context_args
+            else {},
+            context_function=self.lineage.context_name
+            if self.lineage
+            else self.meta.get("name", "unknown"),
+            content=self.content if include_content else "",
+            token_count=self.meta.get("token_usage", 0),
+            features=features,
+            retrieved_items=retrieved_items,
+            assembly=assembly,
+            lineage=lineage_meta,
+            integrity=final_integrity,
+        )
+
 
 def context(
     store: Optional[Any] = None,  # Accepts FeatureStore
@@ -536,6 +775,13 @@ def context(
                                 item_tokens = counter.count(item.content)
                                 total_tokens -= item_tokens
                                 indices_to_drop.add(idx)
+                                # Track dropped item with full metadata
+                                tracker.record_dropped_item(
+                                    source_id=item.source_id or f"item_{idx}",
+                                    priority=item.priority,
+                                    token_count=item_tokens,
+                                    reason="budget_exceeded",
+                                )
 
                             if total_tokens > max_tokens:
                                 # Graceful Degradation: Do not raise, just warn and flag.
@@ -760,6 +1006,7 @@ def context(
                             if isinstance(result, list)
                             else 1,
                             items_dropped=dropped_items,
+                            dropped_items_detail=tracker.dropped_items,
                             # Freshness tracking
                             freshness_status=freshness_status,
                             stalest_feature_ms=tracker.get_stalest_feature_ms(),
