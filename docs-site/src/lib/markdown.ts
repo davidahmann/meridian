@@ -6,14 +6,35 @@ marked.setOptions({
   breaks: false, // Don't convert \n to <br>
 });
 
+// Get basePath for production (GitHub Pages deploys to /fabra/)
+const basePath = process.env.NODE_ENV === 'production' ? '/fabra' : '';
+
 // Custom renderer to handle internal .md links and add classes
 const renderer = new marked.Renderer();
 
 // Override link rendering to handle internal .md links
 renderer.link = function ({ href, title, text }) {
-  // Convert internal .md links to /docs/ paths
+  // Convert internal .md links to proper paths with basePath
   if (href && href.endsWith('.md')) {
-    href = '/docs/' + href.replace('.md', '');
+    // Remove .md extension
+    let path = href.replace('.md', '');
+
+    // Handle relative paths like ../context-accountability.md (from blog posts)
+    if (path.startsWith('../')) {
+      path = path.replace('../', '');
+    }
+
+    // Determine if it's a blog or docs link
+    if (path.startsWith('blog/')) {
+      // Blog links go to /blog/slug
+      href = basePath + '/' + path;
+    } else if (path.startsWith('use-cases/')) {
+      // Use-cases stay under /docs/use-cases/
+      href = basePath + '/docs/' + path;
+    } else {
+      // Regular docs links
+      href = basePath + '/docs/' + path;
+    }
   }
 
   // External links open in new tab
