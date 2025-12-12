@@ -32,6 +32,7 @@ export const navigation: NavItem[] = [
     href: '/docs/context-store',
     children: [
       { title: 'Context Store', href: '/docs/context-store' },
+      { title: 'Context Records (CRS-001)', href: '/docs/context-record-spec' },
       { title: 'Context Assembly', href: '/docs/context-assembly' },
       { title: 'Retrievers', href: '/docs/retrievers' },
       { title: 'Context Accountability', href: '/docs/context-accountability' },
@@ -44,6 +45,7 @@ export const navigation: NavItem[] = [
     href: '/docs/local-to-production',
     children: [
       { title: 'Local to Production', href: '/docs/local-to-production' },
+      { title: 'WebUI Dashboard', href: '/docs/webui' },
       { title: 'Compliance Guide', href: '/docs/compliance-guide' },
       { title: 'Unit Testing', href: '/docs/unit_testing' },
       { title: 'Troubleshooting', href: '/docs/troubleshooting' },

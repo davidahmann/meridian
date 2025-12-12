@@ -175,7 +175,7 @@ Freshness SLAs are the foundation for **trustworthy AI**. When you can prove you
 - **Audit reliably**: Show regulators the data was current
 - **Alert proactively**: Catch staleness before it causes problems
 
-Combined with [Context Accountability](context-accountability.md) from v1.4, you now have complete visibility into your AI's decision-making context.
+Combined with [Context Accountability](../context-accountability.md) from v1.4, you now have complete visibility into your AI's decision-making context.
 
 **Upgrade to v1.5 today:**
 

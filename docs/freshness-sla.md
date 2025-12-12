@@ -334,8 +334,8 @@ A: Catch `FreshnessSLAError` and fall back to a simpler context or cached respon
 ## Related
 
 - [Context Assembly Guide](context-assembly.md)
-- [Observability](observability.md)
 - [Context Accountability (v1.4)](context-accountability.md)
+- [Troubleshooting](troubleshooting.md)
 
 <script type="application/ld+json">
 {
