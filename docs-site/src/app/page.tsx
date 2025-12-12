@@ -34,14 +34,14 @@ export default function Home() {
       {/* Hero Section */}
       <div className="text-center py-12 lg:py-20">
         <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-          Context Infrastructure for{' '}
+          Record What Your AI Saw{' '}
           <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            AI Applications
+            &mdash; Replay &amp; Debug It
           </span>
         </h1>
         <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-          Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses
-          &mdash; and tracks exactly what was retrieved for every decision.
+          Fabra creates a replayable Context Record for every AI call: what data was used,
+          where it came from, what got dropped, and why.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
@@ -64,7 +64,7 @@ export default function Home() {
       {/* Quick Install */}
       <div className="max-w-xl mx-auto mb-16">
         <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
-          <code className="text-cyan-400 text-sm">pip install &quot;fabra-ai[ui]&quot;</code>
+          <code className="text-cyan-400 text-sm">pip install fabra-ai</code>
         </div>
       </div>
 

@@ -4,20 +4,20 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 
 export const metadata: Metadata = {
-  title: 'Fabra - Context Infrastructure for AI Applications',
-  description: 'Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses and tracks exactly what was retrieved for every decision.',
-  keywords: 'context infrastructure, context store, rag pipeline, llm memory, feature store, python features, mlops, pgvector, vector search',
+  title: 'Fabra - Record What Your AI Saw',
+  description: 'Fabra records what your AI saw — so you can replay and debug it. Creates a replayable Context Record for every AI call: what data was used, where it came from, what got dropped, and why.',
+  keywords: 'context record, ai debugging, rag audit trail, llm replay, feature store, context lineage, mlops, pgvector, vector search',
   openGraph: {
-    title: 'Fabra - Context Infrastructure for AI Applications',
-    description: 'Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses.',
+    title: 'Fabra - Record What Your AI Saw',
+    description: 'Fabra records what your AI saw — so you can replay and debug it. Creates a replayable Context Record for every AI call.',
     url: 'https://davidahmann.github.io/fabra',
     siteName: 'Fabra',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Fabra - Context Infrastructure for AI Applications',
-    description: 'Know what your AI knew. Fabra stores, indexes, and serves the data your AI uses.',
+    title: 'Fabra - Record What Your AI Saw',
+    description: 'Fabra records what your AI saw — so you can replay and debug it. Creates a replayable Context Record for every AI call.',
   },
 };
 
