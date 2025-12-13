@@ -30,27 +30,30 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PORT=8765  # Use non-standard port to avoid conflicts
+PORT_FEATURE=8765  # Use non-standard ports to avoid conflicts
+PORT_CONTEXT=8766
 TIMEOUT=30
 MODE=${1:-all}  # all, features, or context
 INSTALL_MODE=${FABRA_INSTALL_MODE:-pypi} # pypi|source
 
 echo -e "${BLUE}=== Fabra 30-Second Quickstart Validation ===${NC}"
 echo -e "Mode: ${MODE}"
-echo -e "Port: ${PORT}"
+echo -e "Port (features): ${PORT_FEATURE}"
+echo -e "Port (context):  ${PORT_CONTEXT}"
 echo -e "Install: ${INSTALL_MODE}"
 echo ""
 
 # Cleanup function
 cleanup() {
     echo -e "\n${YELLOW}Cleaning up...${NC}"
-    if [ -n "$SERVER_PID" ]; then
+    if [ -n "${SERVER_PID:-}" ]; then
         kill $SERVER_PID 2>/dev/null || true
         wait $SERVER_PID 2>/dev/null || true
     fi
-    # Kill any remaining fabra processes on our port
+    # Kill any remaining fabra processes on our ports
     if command -v lsof >/dev/null 2>&1; then
-        lsof -ti:$PORT | xargs kill -9 2>/dev/null || true
+        lsof -ti:$PORT_FEATURE | xargs kill -9 2>/dev/null || true
+        lsof -ti:$PORT_CONTEXT | xargs kill -9 2>/dev/null || true
     fi
 }
 
@@ -87,18 +90,21 @@ test_features() {
 
     # Start server in background
     echo -e "${YELLOW}Starting demo server (features)...${NC}"
-    "$VENV_FABRA" demo --mode features --port $PORT >/dev/null 2>&1 &
+    "$VENV_FABRA" demo --mode features --port $PORT_FEATURE >/dev/null 2>&1 &
     SERVER_PID=$!
 
     # Wait for server to be ready (poll health endpoint)
     echo -e "${YELLOW}Waiting for server to be ready...${NC}"
     for i in {1..20}; do
-        if curl -s "http://localhost:$PORT/health" > /dev/null 2>&1; then
+        if curl -s "http://localhost:$PORT_FEATURE/health" > /dev/null 2>&1; then
             echo -e "${GREEN}Server is ready!${NC}"
             break
         fi
         if [ $i -eq 20 ]; then
             echo -e "${RED}ERROR: Server failed to start within 10 seconds${NC}"
+            kill $SERVER_PID 2>/dev/null || true
+            wait $SERVER_PID 2>/dev/null || true
+            unset SERVER_PID
             return 1
         fi
         sleep 0.5
@@ -106,7 +112,7 @@ test_features() {
 
     # Test feature endpoint
     echo -e "${YELLOW}Testing feature endpoint...${NC}"
-    RESPONSE=$(curl -s "http://localhost:$PORT/features/user_engagement?entity_id=user_123")
+    RESPONSE=$(curl -s "http://localhost:$PORT_FEATURE/features/user_engagement?entity_id=user_123")
     echo -e "Response: ${RESPONSE}"
 
     # Validate response has value
@@ -147,18 +153,21 @@ test_context() {
 
     # Start server in background
     echo -e "${YELLOW}Starting demo server (context)...${NC}"
-    "$VENV_FABRA" demo --mode context --port $PORT >/dev/null 2>&1 &
+    "$VENV_FABRA" demo --mode context --port $PORT_CONTEXT >/dev/null 2>&1 &
     SERVER_PID=$!
 
     # Wait for server to be ready
     echo -e "${YELLOW}Waiting for server to be ready...${NC}"
     for i in {1..20}; do
-        if curl -s "http://localhost:$PORT/health" > /dev/null 2>&1; then
+        if curl -s "http://localhost:$PORT_CONTEXT/health" > /dev/null 2>&1; then
             echo -e "${GREEN}Server is ready!${NC}"
             break
         fi
         if [ $i -eq 20 ]; then
             echo -e "${RED}ERROR: Server failed to start within 10 seconds${NC}"
+            kill $SERVER_PID 2>/dev/null || true
+            wait $SERVER_PID 2>/dev/null || true
+            unset SERVER_PID
             return 1
         fi
         sleep 0.5
@@ -166,7 +175,7 @@ test_context() {
 
     # Test context endpoint
     echo -e "${YELLOW}Testing context endpoint...${NC}"
-    RESPONSE=$(curl -s -X POST "http://localhost:$PORT/v1/context/chat_context" \
+    RESPONSE=$(curl -s -X POST "http://localhost:$PORT_CONTEXT/v1/context/chat_context" \
         -H "Content-Type: application/json" \
         -d '{"user_id":"user_123","query":"how do features work?"}')
 
