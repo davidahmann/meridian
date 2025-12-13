@@ -25,6 +25,17 @@ jobs:
     - name: Set up Python
       run: uv python install 3.11
 
+    - name: Verify tag matches pyproject version
+      run: |
+        TAG="${GITHUB_REF_NAME}"
+        PYPROJECT_VERSION="$(uv run python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")"
+        EXPECTED="v${PYPROJECT_VERSION}"
+        echo "tag=${TAG} expected=${EXPECTED}"
+        if [ "${TAG}" != "${EXPECTED}" ]; then
+          echo "ERROR: Tag ${TAG} does not match pyproject.toml version ${PYPROJECT_VERSION}" >&2
+          exit 1
+        fi
+
     - name: Run Tests
       run: |
         uv venv
