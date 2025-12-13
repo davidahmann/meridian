@@ -1982,40 +1982,27 @@ def demo_cmd(
     import urllib.error
     import json
 
-    # Determine which demo file to use
-    demo_files = {
-        "features": "examples/demo_features.py",
-        "context": "examples/demo_context.py",
+    # Determine which demo module to use (shipped with the package so this works
+    # from a clean install, without a repo checkout).
+    demo_modules = {
+        "features": "fabra.demos.demo_features",
+        "context": "fabra.demos.demo_context",
     }
 
-    if mode not in demo_files:
+    if mode not in demo_modules:
         console.print(
             f"[bold red]Error:[/bold red] Unknown mode '{mode}'. Use 'features' or 'context'."
         )
         raise typer.Exit(1)
 
-    demo_file = demo_files[mode]
+    demo_module = demo_modules[mode]
 
-    # Check if demo file exists (try package location and current dir)
-    import fabra
-
-    package_dir = os.path.dirname(fabra.__file__)
-    possible_paths = [
-        demo_file,  # Current directory
-        os.path.join(os.path.dirname(package_dir), demo_file),  # Package parent
-        os.path.join(package_dir, "..", "..", demo_file),  # Development layout
-    ]
-
-    file_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            file_path = os.path.abspath(path)
-            break
-
-    if not file_path:
+    demo_spec = importlib.util.find_spec(demo_module)
+    file_path = demo_spec.origin if demo_spec else None
+    if not file_path or not os.path.exists(file_path):
         console.print(
-            f"[bold red]Error:[/bold red] Demo file '{demo_file}' not found.\n"
-            "[dim]Make sure you're in the project root or the package is installed correctly.[/dim]"
+            f"[bold red]Error:[/bold red] Demo module '{demo_module}' not found.\n"
+            "[dim]This should ship with Fabra. Try reinstalling.[/dim]"
         )
         raise typer.Exit(1)
 

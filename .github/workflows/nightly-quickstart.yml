@@ -1,0 +1,53 @@
+name: Nightly Quickstart
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: nightly-quickstart
+  cancel-in-progress: true
+
+jobs:
+  quickstart:
+    name: Quickstart smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create venv
+        run: python -m venv .venv
+
+      - name: Build + install wheel (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          ./.venv/bin/python -m pip install -U pip build
+          ./.venv/bin/python -m build --wheel --outdir dist-nightly
+          ./.venv/bin/python -m pip install dist-nightly/*.whl
+
+      - name: Build + install wheel (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\.venv\Scripts\python.exe -m pip install -U pip build
+          .\.venv\Scripts\python.exe -m build --wheel --outdir dist-nightly
+          .\.venv\Scripts\python.exe -m pip install (Get-ChildItem dist-nightly\*.whl | Select-Object -First 1).FullName
+
+      - name: Quickstart smoke (Unix)
+        if: runner.os != 'Windows'
+        run: ./.venv/bin/python scripts/ci/quickstart_smoke.py
+
+      - name: Quickstart smoke (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\.venv\Scripts\python.exe scripts\ci\quickstart_smoke.py
