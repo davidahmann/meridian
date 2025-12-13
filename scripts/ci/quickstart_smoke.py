@@ -51,8 +51,19 @@ def _post_context(port: int, user_id: str, query: str) -> ContextRun:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
-        data = json.loads(resp.read().decode("utf-8"))
+    last_error: Exception | None = None
+    for _ in range(10):
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:  # nosec B310
+                data = json.loads(resp.read().decode("utf-8"))
+            break
+        except (urllib.error.URLError, ConnectionResetError, TimeoutError) as e:
+            last_error = e
+            time.sleep(0.5)
+    else:
+        raise RuntimeError(
+            f"Context POST failed after retries: {last_error}"
+        ) from last_error
     context_id = data.get("id")
     if not isinstance(context_id, str) or not context_id:
         raise RuntimeError(f"Missing context id in response: {data}")
@@ -100,6 +111,7 @@ def main() -> int:
         "demo",
         "--mode",
         "context",
+        "--no-test",
         "--port",
         str(port),
     ]

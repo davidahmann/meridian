@@ -1964,6 +1964,11 @@ def demo_cmd(
         help="Demo mode: 'features' (Feature Store) or 'context' (Context Store)",
     ),
     port: int = typer.Option(8000, help="Port to run demo server on"),
+    no_test: bool = typer.Option(
+        False,
+        "--no-test",
+        help="Skip the automatic demo request (useful for CI).",
+    ),
 ) -> None:
     """
     Run an interactive demo of Fabra.
@@ -2071,7 +2076,7 @@ def demo_cmd(
             except (urllib.error.URLError, OSError):
                 time.sleep(0.5)
 
-        # Make a test request based on mode
+        # Make a test request based on mode (optional).
         if mode == "features":
             test_url = (
                 f"http://127.0.0.1:{port}/features/user_engagement?entity_id=user_123"
@@ -2095,43 +2100,44 @@ def demo_cmd(
         # Show the curl command
         console.print(f"\n[bold]Try this:[/bold]\n  [cyan]{curl_cmd}[/cyan]\n")
 
-        # Make the test request
-        try:
-            if mode == "features":
-                req = urllib.request.Request(test_url)
-            else:
-                data = json.dumps(
-                    {"user_id": "user_123", "query": "how do features work?"}
-                ).encode()
-                req = urllib.request.Request(
-                    test_url,
-                    data=data,
-                    headers={"Content-Type": "application/json"},
-                )
-
-            with urllib.request.urlopen(req, timeout=5) as response:  # nosec B310
-                result = json.loads(response.read().decode())
-                console.print("[bold]Response:[/bold]")
-                console.print(
-                    Panel(
-                        json.dumps(result, indent=2, default=str)[:500],
-                        border_style="dim",
-                    )
-                )
-
+        if not no_test:
+            # Make the test request
+            try:
                 if mode == "features":
-                    console.print(
-                        "\n[green]✓[/green] Feature Store working! "
-                        f"Got value: [bold]{result.get('value')}[/bold]"
-                    )
+                    req = urllib.request.Request(test_url)
                 else:
-                    console.print(
-                        "\n[green]✓[/green] Context Store working! "
-                        f"Context ID: [bold]{result.get('id', 'N/A')[:12]}...[/bold]"
+                    data = json.dumps(
+                        {"user_id": "user_123", "query": "how do features work?"}
+                    ).encode()
+                    req = urllib.request.Request(
+                        test_url,
+                        data=data,
+                        headers={"Content-Type": "application/json"},
                     )
 
-        except urllib.error.URLError as e:
-            console.print(f"[yellow]Warning:[/yellow] Could not test endpoint: {e}")
+                with urllib.request.urlopen(req, timeout=5) as response:  # nosec B310
+                    result = json.loads(response.read().decode())
+                    console.print("[bold]Response:[/bold]")
+                    console.print(
+                        Panel(
+                            json.dumps(result, indent=2, default=str)[:500],
+                            border_style="dim",
+                        )
+                    )
+
+                    if mode == "features":
+                        console.print(
+                            "\n[green]✓[/green] Feature Store working! "
+                            f"Got value: [bold]{result.get('value')}[/bold]"
+                        )
+                    else:
+                        console.print(
+                            "\n[green]✓[/green] Context Store working! "
+                            f"Context ID: [bold]{result.get('id', 'N/A')[:12]}...[/bold]"
+                        )
+
+            except urllib.error.URLError as e:
+                console.print(f"[yellow]Warning:[/yellow] Could not test endpoint: {e}")
 
         # Print help for next steps
         console.print(
