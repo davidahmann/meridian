@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Fabra</h1>
-  <p><strong>Fabra records what your AI saw — so you can replay and debug it.</strong></p>
-  <p>Fabra creates a replayable <strong>Context Record</strong> for every AI call: what data was used,<br/>where it came from, what got dropped, and why.</p>
+  <p><strong>Stop spending hours debugging AI decisions you can't reproduce.</strong></p>
+  <p>When your AI gives a bad answer, you need to know: What did it see? What got dropped?<br/>Can I replay this exact decision? Fabra gives you the answer.</p>
 
   <p>
     <a href="https://pypi.org/project/fabra-ai/"><img src="https://img.shields.io/pypi/v/fabra-ai?color=blue&label=pypi" alt="PyPI version" /></a>
@@ -14,11 +14,13 @@
 
 ## The Problem
 
-**ML Engineers:** Feast needs Kubernetes and Spark. You have a 4-person team and a deadline.
+**Incident risk:** Your AI shipped a bad answer and you can't explain why.
 
-**AI Engineers:** Legal asked what data your AI used for a decision last Tuesday. You had no answer.
+**Credibility risk:** Support escalations are vibes and screenshots — not fixable tickets.
 
-Both problems have the same root cause: **you don't own your data pipeline**.
+**Velocity risk:** You're scared to ship because you can't debug regressions.
+
+Every AI team hits this wall: **you can't fix what you can't reproduce.**
 
 ---
 
@@ -50,6 +52,31 @@ That's it. Server starts, makes a test request, shows you the result. No Docker.
 ```
 
 </details>
+
+---
+
+## The Solution: Context Records
+
+Fabra creates a **Context Record** for every AI decision — an immutable snapshot that turns "the AI was wrong" into a fixable ticket.
+
+```python
+ctx = await build_prompt("user_123", "how do I get a refund?")
+
+print(ctx.id)       # ctx_018f3a2b-... (your receipt)
+print(ctx.lineage)  # Exactly what data was used
+```
+
+That `ctx.id` is permanent. Days later, you can:
+
+```bash
+# See exactly what the AI knew
+fabra context show ctx_018f3a2b-...
+
+# Compare two decisions side-by-side
+fabra context diff ctx_a ctx_b
+```
+
+**This is the difference between "we think it worked" and "here's the proof."**
 
 ---
 
@@ -121,31 +148,6 @@ print(ctx.lineage)  # exact data used, full provenance
 </td>
 </tr>
 </table>
-
----
-
-## Core Concept: Context Record
-
-A **Context Record** is an immutable snapshot of everything an AI knew at a specific moment in time:
-
-- **Structured features** with freshness timestamps
-- **Retrieved documents** with content hashes
-- **Token budget decisions** (what was included vs dropped)
-- **Full lineage metadata** (sources, versions, latencies)
-- **Cryptographic integrity** (tamper-evident hashes)
-
-Every Context Record has a stable ID (`ctx_...`) and can be replayed, diffed, or audited at any time:
-
-```bash
-# Replay any historical context
-fabra context show ctx_018f3a2b-7def-7abc-8901-234567890abc
-
-# Verify cryptographic integrity
-fabra context verify ctx_018f3a2b-7def-7abc-8901-234567890abc
-
-# Compare what changed between two decisions
-fabra context diff ctx_abc123 ctx_def456
-```
 
 ---
 
@@ -258,10 +260,10 @@ Fabra **replaces or complements**:
 
 | | Feast | Fabra |
 |:---|:---|:---|
-| Setup | Kubernetes + Spark | `pip install` |
-| Config | YAML files | Python decorators |
-| Local dev | Docker required | Works immediately |
-| Context/RAG | Not supported | Built-in |
+| Can you prove what happened? | Partial (features only) | Full Context Record |
+| Can you replay a decision? | No | Yes, built-in |
+| Setup time | Days/Weeks | 30 seconds |
+| Infrastructure | Kubernetes | None required |
 
 **Choose Feast if:** You have a platform team and existing K8s infrastructure.
 
@@ -269,10 +271,10 @@ Fabra **replaces or complements**:
 
 | | LangChain | Fabra |
 |:---|:---|:---|
-| Architecture | Orchestration framework | Storage + serving infrastructure |
+| Can you prove what happened? | No | Full Context Record |
+| Can you explain why it missed something? | No | Yes, dropped items logged |
+| Can you replay a decision? | Manual | Built-in |
 | Data ownership | Queries external stores | Owns the write path |
-| Audit trail | None | Full lineage + replay |
-| Token management | DIY | Built-in budgets |
 
 **Choose LangChain if:** You need agent chains and don't need compliance.
 
@@ -352,7 +354,7 @@ fabra context show ctx_018f3a2b-...
 - **High-QPS streaming inference** - Use Tecton
 - **No-code builders** - This is Python infrastructure
 
-Fabra focuses on one thing: **making inference context provable**.
+Fabra focuses on one thing: **turning "the AI was wrong" into a fixable ticket.**
 
 ---
 
@@ -366,5 +368,5 @@ Fabra focuses on one thing: **making inference context provable**.
 
 <div align="center">
   <p><strong>Fabra</strong> · Apache 2.0 · 2025</p>
-  <p><em>Once context is a ledger, everything else follows.</em></p>
+  <p><em>Stop bleeding time and credibility when AI misbehaves.</em></p>
 </div>

@@ -34,14 +34,14 @@ export default function Home() {
       {/* Hero Section */}
       <div className="text-center py-12 lg:py-20">
         <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-          Record What Your AI Saw{' '}
+          Stop Debugging AI Decisions{' '}
           <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            &mdash; Replay &amp; Debug It
+            You Can&apos;t Reproduce
           </span>
         </h1>
         <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-          Fabra creates a replayable Context Record for every AI call: what data was used,
-          where it came from, what got dropped, and why.
+          When your AI gives a bad answer, you need to know: What did it see? What got dropped?
+          Fabra turns &quot;the AI was wrong&quot; into a fixable ticket.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
@@ -71,39 +71,39 @@ export default function Home() {
       {/* Features Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
         <FeatureCard
-          icon="🎯"
-          title="Context Store"
-          description="Built-in pgvector for semantic search. Automatic chunking, embedding, and retrieval."
+          icon="🔄"
+          title="Replay Any Decision"
+          description="See exactly what your AI knew at any point in time. Reproduce incidents in seconds."
+          href="/docs/context-accountability"
+        />
+        <FeatureCard
+          icon="📋"
+          title="Shareable Tickets"
+          description="Turn 'it was wrong' into a Context Record you can share, diff, and fix."
           href="/docs/context-store"
         />
         <FeatureCard
-          icon="🔄"
-          title="Feature Store"
-          description="Python decorators instead of YAML. No Kubernetes required."
-          href="/docs/feature-store-without-kubernetes"
-        />
-        <FeatureCard
-          icon="📊"
-          title="Token Budgets"
-          description="Automatic context assembly that fits your LLM's window. Priority-based truncation."
+          icon="🚀"
+          title="Ship Confidently"
+          description="Debug regressions before they hit production. Know what changed between decisions."
           href="/docs/context-assembly"
         />
         <FeatureCard
           icon="🔍"
-          title="Full Lineage"
-          description="Track exactly what data informed each AI decision. Context replay for debugging."
-          href="/docs/context-accountability"
+          title="Explain Dropped Items"
+          description="Know exactly what got cut due to token limits — and why."
+          href="/docs/token-budget-management"
         />
         <FeatureCard
           icon="⚡"
-          title="Local to Production"
-          description="DuckDB locally, Postgres + Redis in production. Same code, zero changes."
+          title="30-Second Setup"
+          description="pip install, no Kubernetes. DuckDB locally, Postgres in production."
           href="/docs/local-to-production"
         />
         <FeatureCard
           icon="🛡️"
-          title="Freshness SLAs"
-          description="Guarantee data freshness with configurable thresholds and degraded mode."
+          title="Prove What Happened"
+          description="Cryptographic integrity. When compliance asks, you have the answer."
           href="/docs/freshness-sla"
         />
       </div>
@@ -127,30 +127,30 @@ export default function Home() {
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="text-left py-3 px-4 text-gray-400"></th>
-                <th className="text-left py-3 px-4 text-gray-400">Traditional Stack</th>
-                <th className="text-left py-3 px-4 text-cyan-400">Fabra</th>
+                <th className="text-left py-3 px-4 text-gray-400">Without Fabra</th>
+                <th className="text-left py-3 px-4 text-cyan-400">With Fabra</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               <tr>
-                <td className="py-3 px-4 text-gray-300 font-medium">Config</td>
-                <td className="py-3 px-4 text-gray-500">500 lines of YAML</td>
-                <td className="py-3 px-4 text-gray-300">Python decorators</td>
+                <td className="py-3 px-4 text-gray-300 font-medium">Can you prove what happened?</td>
+                <td className="py-3 px-4 text-gray-500">Logs, maybe</td>
+                <td className="py-3 px-4 text-gray-300">Full Context Record</td>
               </tr>
               <tr>
-                <td className="py-3 px-4 text-gray-300 font-medium">Infrastructure</td>
-                <td className="py-3 px-4 text-gray-500">Kubernetes + Spark + Pinecone</td>
-                <td className="py-3 px-4 text-gray-300">Your laptop (DuckDB)</td>
+                <td className="py-3 px-4 text-gray-300 font-medium">Can you replay a decision?</td>
+                <td className="py-3 px-4 text-gray-500">No</td>
+                <td className="py-3 px-4 text-gray-300">Yes, built-in</td>
               </tr>
               <tr>
-                <td className="py-3 px-4 text-gray-300 font-medium">RAG Pipeline</td>
-                <td className="py-3 px-4 text-gray-500">LangChain spaghetti</td>
-                <td className="py-3 px-4 text-gray-300">@retriever + @context</td>
+                <td className="py-3 px-4 text-gray-300 font-medium">Why did it miss something?</td>
+                <td className="py-3 px-4 text-gray-500">Unknown</td>
+                <td className="py-3 px-4 text-gray-300">Dropped items logged</td>
               </tr>
               <tr>
-                <td className="py-3 px-4 text-gray-300 font-medium">Time to Production</td>
-                <td className="py-3 px-4 text-gray-500">Weeks</td>
-                <td className="py-3 px-4 text-gray-300">30 seconds</td>
+                <td className="py-3 px-4 text-gray-300 font-medium">Incident resolution</td>
+                <td className="py-3 px-4 text-gray-500">Hours of guesswork</td>
+                <td className="py-3 px-4 text-gray-300">Minutes with replay</td>
               </tr>
             </tbody>
           </table>
@@ -159,8 +159,8 @@ export default function Home() {
 
       {/* CTA */}
       <div className="text-center py-12 border-t border-gray-800">
-        <h2 className="text-2xl font-bold text-white mb-4">Ready to get started?</h2>
-        <p className="text-gray-400 mb-6">From notebook to production in 30 seconds.</p>
+        <h2 className="text-2xl font-bold text-white mb-4">Ready to stop guessing?</h2>
+        <p className="text-gray-400 mb-6">From pip install to replayable AI decisions in 30 seconds.</p>
         <Link
           href="/docs/quickstart"
           className="inline-block px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-semibold rounded-lg transition-colors"
