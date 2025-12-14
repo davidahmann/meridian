@@ -40,6 +40,8 @@ venv.bak/
 # Fabra Local Data
 *.db
 *.duckdb
+*.duckdb.wal
+*.duckdb.shm
 fabra.toml
 
 # Planning Documents (Internal)

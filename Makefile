@@ -1,5 +1,5 @@
 .PHONY: help setup install test test-unit test-integration test-perf test-e2e test-ui test-all \
-        quickstart-smoke fixtures-verify incident-bundle-smoke clean-dev-store \
+        quickstart-smoke fixtures-verify incident-bundle-smoke ci-parity clean-dev-store \
         lint format clean ui serve docker-up docker-down pre-commit build \
         build-ui build-docs build-playground build-docker build-all
 
@@ -20,6 +20,7 @@ help:
 	@echo "  make test-all       - Run all tests including e2e/ui"
 	@echo "  make quickstart-smoke - Run incident-path smoke (demo/show/diff/verify)"
 	@echo "  make fixtures-verify - Verify golden record/diff fixtures"
+	@echo "  make ci-parity      - Run CI-parity checks locally"
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make lint           - Run linters (ruff, mypy, bandit)"
@@ -77,6 +78,9 @@ test-all:
 quickstart-smoke:
 	uv run python scripts/ci/quickstart_smoke.py
 
+ci-parity:
+	bash scripts/ci_parity.sh
+
 fixtures-verify:
 	uv run pytest tests/unit/test_golden_fixtures.py -q
 
@@ -84,7 +88,7 @@ incident-bundle-smoke:
 	uv run python scripts/ci/incident_bundle_smoke.py
 
 clean-dev-store:
-	rm -f ~/.fabra/fabra.duckdb
+	rm -f ~/.fabra/fabra.duckdb ~/.fabra/fabra.duckdb.wal ~/.fabra/fabra.duckdb.shm
 
 lint:
 	uv run ruff check .

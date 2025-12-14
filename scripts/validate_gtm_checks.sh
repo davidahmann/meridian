@@ -66,7 +66,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-python3 -m venv "$VENV_DIR"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+"$PYTHON_BIN" -m venv "$VENV_DIR"
 PY="${VENV_DIR}/bin/python"
 PIP="${VENV_DIR}/bin/pip"
 FABRA="${VENV_DIR}/bin/fabra"

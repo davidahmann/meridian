@@ -156,7 +156,7 @@ class OfflineStore(ABC):
 
 
 class DuckDBOfflineStore(OfflineStore):
-    def __init__(self, database: str | None = None) -> None:
+    def __init__(self, database: Optional[str] = None) -> None:
         if database is None:
             database = os.getenv("FABRA_DUCKDB_PATH")
             if not database:

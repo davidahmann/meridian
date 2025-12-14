@@ -36,12 +36,14 @@ TIMEOUT=30
 STARTUP_TIMEOUT=${FABRA_STARTUP_TIMEOUT:-20}
 MODE=${1:-all}  # all, features, or context
 INSTALL_MODE=${FABRA_INSTALL_MODE:-pypi} # pypi|source
+PYTHON_BIN=${PYTHON_BIN:-python3}
 
 echo -e "${BLUE}=== Fabra 30-Second Quickstart Validation ===${NC}"
 echo -e "Mode: ${MODE}"
 echo -e "Port (features): ${PORT_FEATURE}"
 echo -e "Port (context):  ${PORT_CONTEXT}"
 echo -e "Install: ${INSTALL_MODE}"
+echo -e "Python: ${PYTHON_BIN}"
 echo ""
 
 # Cleanup function
@@ -62,7 +64,7 @@ trap cleanup EXIT
 
 # Create a clean virtual environment (fresh machine simulation)
 TMPDIR=$(mktemp -d)
-python3 -m venv "$TMPDIR/venv"
+"$PYTHON_BIN" -m venv "$TMPDIR/venv"
 VENV_PY="$TMPDIR/venv/bin/python"
 VENV_PIP="$TMPDIR/venv/bin/pip"
 VENV_FABRA="$TMPDIR/venv/bin/fabra"

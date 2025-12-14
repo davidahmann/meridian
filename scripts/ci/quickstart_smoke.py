@@ -219,7 +219,10 @@ def main() -> int:
         if proc is not None:
             _terminate_demo(proc)
         try:
-            Path(duckdb_path).unlink(missing_ok=True)
+            db_path = Path(duckdb_path)
+            db_path.unlink(missing_ok=True)
+            Path(str(db_path) + ".wal").unlink(missing_ok=True)
+            Path(str(db_path) + ".shm").unlink(missing_ok=True)
         except Exception as e:
             print(f"Warning: failed to delete duckdb: {e}")
 
