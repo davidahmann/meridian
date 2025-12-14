@@ -34,11 +34,21 @@ That's it. Server starts, makes a test request, prints a `context_id` (your rece
 
 By default, Context Records are stored durably in DuckDB at `~/.fabra/fabra.duckdb` (override with `FABRA_DUCKDB_PATH`).
 
+### Requirements
+
+- Python `>= 3.9`
+- `pip` (or `uv`, optional)
+- `curl` (used in quickstart verification commands)
+- Optional:
+  - Node.js (only for `fabra ui`)
+  - Docker (only for Docker-based examples / local production stack)
+
 Need help or want to see everything Fabra can do?
 
 ```bash
 fabra --help
 fabra context --help
+fabra doctor
 ```
 
 Already using LangChain or calling OpenAI directly? Add receipts without a rewrite:
