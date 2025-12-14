@@ -198,7 +198,9 @@ Note: `fabra ui` requires Node.js. If you’re running from source, install UI d
 
 ## What Fabra Is / Isn’t
 
-Fabra is infrastructure for inference-time evidence (Context Records) and serving (features/context).
+Fabra is Python-first infrastructure for inference-time evidence (Context Records) and for serving features and context over HTTP.
+
+Define features and context in code (not YAML), run locally with DuckDB, and scale to Postgres/Redis in production. No Kubernetes or Kafka is required to adopt Fabra.
 
 Fabra is not:
 - an agent framework
