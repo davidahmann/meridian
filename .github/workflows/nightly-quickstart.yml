@@ -47,7 +47,29 @@ jobs:
         if: runner.os != 'Windows'
         run: ./.venv/bin/python scripts/ci/quickstart_smoke.py
 
+      - name: Quickstart smoke (evidence required, Unix)
+        if: runner.os != 'Windows'
+        env:
+          FABRA_EVIDENCE_MODE: required
+        run: ./.venv/bin/python scripts/ci/quickstart_smoke.py
+
+      - name: Record diff smoke (local receipts, Unix)
+        if: runner.os != 'Windows'
+        run: ./.venv/bin/python scripts/ci/record_diff_local_smoke.py
+
       - name: Quickstart smoke (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: .\.venv\Scripts\python.exe scripts\ci\quickstart_smoke.py
+
+      - name: Quickstart smoke (evidence required, Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          FABRA_EVIDENCE_MODE: required
+        run: .\.venv\Scripts\python.exe scripts\ci\quickstart_smoke.py
+
+      - name: Record diff smoke (local receipts, Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\.venv\Scripts\python.exe scripts\ci\record_diff_local_smoke.py

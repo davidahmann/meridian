@@ -11,6 +11,7 @@ export const navigation: NavItem[] = [
     children: [
       { title: 'Introduction', href: '/docs' },
       { title: 'Quickstart', href: '/docs/quickstart' },
+      { title: 'How It Works', href: '/docs/how-it-works' },
       { title: 'Incident Playbook', href: '/docs/incident-playbook' },
       { title: 'Replay Guarantees', href: '/docs/replay-guarantees' },
       { title: 'Philosophy', href: '/docs/philosophy' },
@@ -26,6 +27,7 @@ export const navigation: NavItem[] = [
       { title: 'Fabra vs Feast', href: '/docs/feast-alternative' },
       { title: 'Hybrid Features', href: '/docs/hybrid-features' },
       { title: 'Event-Driven Features', href: '/docs/event-driven-features' },
+      { title: 'Events & Workers', href: '/docs/events-and-workers' },
       { title: 'Hooks', href: '/docs/hooks' },
     ],
   },

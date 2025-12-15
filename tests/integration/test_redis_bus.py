@@ -29,3 +29,8 @@ async def test_redis_bus_publish(redis_client: Redis[str]) -> None:
     assert data["entity_id"] == "u1"
     assert data["payload"]["a"] == 1
     assert data["id"] == str(event.id)
+
+    # Also published to the shared all-events stream.
+    all_stream_key = "fabra:events:all"
+    result_all = await redis_client.xread({all_stream_key: "0-0"}, count=1)
+    assert result_all

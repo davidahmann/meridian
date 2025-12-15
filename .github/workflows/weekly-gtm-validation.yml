@@ -27,3 +27,6 @@ jobs:
         env:
           VALIDATE_INSTALL_MODE: source
         run: bash scripts/validate_gtm_checks.sh
+
+      - name: Record diff smoke (local receipts, no server)
+        run: uv run --isolated --extra dev python scripts/ci/record_diff_local_smoke.py

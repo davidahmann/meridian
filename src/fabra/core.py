@@ -134,6 +134,10 @@ class FeatureRegistry:
     def get_features_by_trigger(self, trigger: str) -> List[Feature]:
         return [f for f in self.features.values() if f.trigger == trigger]
 
+    def get_triggers(self) -> List[str]:
+        triggers = {f.trigger for f in self.features.values() if f.trigger}
+        return sorted(triggers)
+
     def register_context(self, name: str, func: Callable[..., Any]) -> None:
         """Register a context function for replay support."""
         self.contexts[name] = func

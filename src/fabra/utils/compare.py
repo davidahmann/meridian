@@ -5,7 +5,7 @@ Provides functionality to compare two context assemblies and identify
 what features, retrievers, and content changed between them.
 """
 
-from typing import List, Optional, Dict, TYPE_CHECKING
+from typing import List, Optional, Dict, TYPE_CHECKING, Literal
 from datetime import datetime, timezone
 import difflib
 
@@ -13,6 +13,7 @@ from fabra.models import (
     ContextLineage,
     ContextDiff,
     FeatureDiff,
+    InputDiff,
     RetrieverDiff,
     ContentDiff,
     FeatureLineage,
@@ -212,6 +213,124 @@ def compare_retrievers(
                         change_type="unchanged",
                     )
                 )
+
+    return diffs, added, removed, modified
+
+
+def compare_inputs(
+    base_inputs: Dict[str, object],
+    comparison_inputs: Dict[str, object],
+) -> tuple[List[InputDiff], int, int, int]:
+    """
+    Compare CRS-001 record inputs (ContextRecord.inputs) between two records.
+
+    Returns:
+        Tuple of (input_diffs, added_count, removed_count, modified_count)
+    """
+    diffs: List[InputDiff] = []
+    added = 0
+    removed = 0
+    modified = 0
+
+    all_keys = set(base_inputs.keys()) | set(comparison_inputs.keys())
+    for key in sorted(all_keys):
+        old = base_inputs.get(key)
+        new = comparison_inputs.get(key)
+        if key not in base_inputs and key in comparison_inputs:
+            diffs.append(
+                InputDiff(key=key, old_value=None, new_value=new, change_type="added")
+            )
+            added += 1
+        elif key in base_inputs and key not in comparison_inputs:
+            diffs.append(
+                InputDiff(key=key, old_value=old, new_value=None, change_type="removed")
+            )
+            removed += 1
+        elif old != new:
+            diffs.append(
+                InputDiff(key=key, old_value=old, new_value=new, change_type="modified")
+            )
+            modified += 1
+        else:
+            diffs.append(
+                InputDiff(
+                    key=key, old_value=old, new_value=new, change_type="unchanged"
+                )
+            )
+
+    return diffs, added, removed, modified
+
+
+def _compare_record_retrieved_items(
+    base: "ContextRecord",
+    comparison: "ContextRecord",
+) -> tuple[List[RetrieverDiff], int, int, int]:
+    """
+    Compare retrieved items stored in CRS-001 records.
+
+    We group by `retriever` and diff by `chunk_id`. CRS-001 records do not
+    store the original query string, so query drift is not represented here.
+    """
+    base_by_retriever: Dict[str, Dict[str, str]] = {}
+    comp_by_retriever: Dict[str, Dict[str, str]] = {}
+
+    for item in base.retrieved_items:
+        base_by_retriever.setdefault(item.retriever, {})[
+            item.chunk_id
+        ] = item.content_hash
+    for item in comparison.retrieved_items:
+        comp_by_retriever.setdefault(item.retriever, {})[
+            item.chunk_id
+        ] = item.content_hash
+
+    all_retrievers = set(base_by_retriever.keys()) | set(comp_by_retriever.keys())
+    diffs: List[RetrieverDiff] = []
+    added = 0
+    removed = 0
+    modified = 0
+
+    for retriever in sorted(all_retrievers):
+        base_chunks = base_by_retriever.get(retriever, {})
+        comp_chunks = comp_by_retriever.get(retriever, {})
+
+        base_ids = set(base_chunks.keys())
+        comp_ids = set(comp_chunks.keys())
+
+        chunks_added = sorted(comp_ids - base_ids)
+        chunks_removed = sorted(base_ids - comp_ids)
+
+        # Treat content_hash changes as remove+add (keeps schema stable)
+        common = base_ids & comp_ids
+        for cid in common:
+            if base_chunks.get(cid) != comp_chunks.get(cid):
+                chunks_removed.append(cid)
+                chunks_added.append(cid)
+
+        if not base_ids and comp_ids:
+            change_type: Literal["added", "removed", "modified", "unchanged"] = "added"
+            added += 1
+        elif base_ids and not comp_ids:
+            change_type = "removed"
+            removed += 1
+        elif chunks_added or chunks_removed:
+            change_type = "modified"
+            modified += 1
+        else:
+            change_type = "unchanged"
+
+        diffs.append(
+            RetrieverDiff(
+                retriever_name=retriever,
+                query_changed=False,
+                old_query=None,
+                new_query=None,
+                old_results_count=len(base_ids),
+                new_results_count=len(comp_ids),
+                chunks_added=sorted(set(chunks_added)),
+                chunks_removed=sorted(set(chunks_removed)),
+                change_type=change_type,
+            )
+        )
 
     return diffs, added, removed, modified
 
@@ -444,14 +563,21 @@ def compare_records(
         features_modified,
     ) = compare_features(base_features, comparison_features)
 
-    # Retrievers are empty for ContextRecord (not directly stored the same way)
-    retriever_diffs: List[RetrieverDiff] = []
-    retrievers_added = 0
-    retrievers_removed = 0
-    retrievers_modified = 0
+    # Compare retrieved items (CRS-001)
+    (
+        retriever_diffs,
+        retrievers_added,
+        retrievers_removed,
+        retrievers_modified,
+    ) = _compare_record_retrieved_items(base, comparison)
 
     # Compare content
     content_diff = compare_content(base.content, comparison.content)
+
+    # Compare record inputs (CRS-001)
+    input_diffs, inputs_added, inputs_removed, inputs_modified = compare_inputs(
+        base.inputs, comparison.inputs
+    )
 
     # Calculate token/cost deltas from assembly
     token_delta = comparison.assembly.tokens_used - base.assembly.tokens_used
@@ -469,12 +595,20 @@ def compare_records(
     items_dropped_delta = len(items_dropped_comparison) - len(items_dropped_base)
 
     # Determine if there are meaningful changes
+    context_function_changed = base.context_function != comparison.context_function
     has_changes = (
         features_added > 0
         or features_removed > 0
         or features_modified > 0
+        or retrievers_added > 0
+        or retrievers_removed > 0
+        or retrievers_modified > 0
+        or inputs_added > 0
+        or inputs_removed > 0
+        or inputs_modified > 0
         or content_diff.similarity_score < 1.0
         or items_dropped_delta != 0
+        or context_function_changed
     )
 
     # Generate change summary
@@ -493,6 +627,12 @@ def compare_records(
         summary_parts.append(
             f"dropped items: {'+' if items_dropped_delta > 0 else ''}{items_dropped_delta}"
         )
+    if (inputs_added + inputs_removed + inputs_modified) > 0:
+        summary_parts.append(
+            f"inputs: +{inputs_added} -{inputs_removed} ~{inputs_modified}"
+        )
+    if context_function_changed:
+        summary_parts.append("context_function changed")
 
     change_summary = (
         "; ".join(summary_parts) if summary_parts else "No changes detected"
@@ -512,6 +652,10 @@ def compare_records(
         retrievers_removed=retrievers_removed,
         retrievers_modified=retrievers_modified,
         content_diff=content_diff,
+        input_diffs=input_diffs,
+        inputs_added=inputs_added,
+        inputs_removed=inputs_removed,
+        inputs_modified=inputs_modified,
         token_delta=token_delta,
         cost_delta_usd=cost_delta,
         base_freshness_status=base.assembly.freshness_status,
@@ -630,6 +774,26 @@ def format_diff_report(diff: ContextDiff, verbose: bool = False) -> str:
         lines.append(f"  Similarity: {diff.content_diff.similarity_score:.2%}")
         lines.append(f"  {diff.content_diff.diff_summary}")
     lines.append("")
+
+    # Inputs (CRS-001)
+    if diff.inputs_added or diff.inputs_removed or diff.inputs_modified:
+        lines.append("Inputs (CRS-001):")
+        lines.append(f"  Added:    {diff.inputs_added}")
+        lines.append(f"  Removed:  {diff.inputs_removed}")
+        lines.append(f"  Modified: {diff.inputs_modified}")
+        if verbose and diff.input_diffs:
+            for d in diff.input_diffs:
+                if d.change_type == "unchanged":
+                    continue
+                lines.append(f"    [{d.change_type.upper()}] {d.key}")
+                if d.change_type == "modified":
+                    lines.append(f"      Old: {d.old_value}")
+                    lines.append(f"      New: {d.new_value}")
+                elif d.change_type == "added":
+                    lines.append(f"      Value: {d.new_value}")
+                elif d.change_type == "removed":
+                    lines.append(f"      Value: {d.old_value}")
+        lines.append("")
 
     # Content Hashes (CRS-001)
     if diff.base_content_hash or diff.comparison_content_hash:

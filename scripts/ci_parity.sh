@@ -53,6 +53,14 @@ echo "== Quickstart smoke (restart durability) =="
 FABRA_SMOKE_DUCKDB_PATH="$TMPDIR/quickstart_smoke.duckdb" uv run --isolated -p "$PY311" --extra dev python scripts/ci/quickstart_smoke.py
 echo
 
+echo "== Quickstart smoke (evidence required) =="
+FABRA_SMOKE_DUCKDB_PATH="$TMPDIR/quickstart_smoke_required.duckdb" FABRA_EVIDENCE_MODE=required uv run --isolated -p "$PY311" --extra dev python scripts/ci/quickstart_smoke.py
+echo
+
+echo "== Record diff (local receipts, no server) =="
+FABRA_SMOKE_DUCKDB_PATH="$TMPDIR/record_diff_local.duckdb" uv run --isolated -p "$PY311" --extra dev python scripts/ci/record_diff_local_smoke.py
+echo
+
 echo "== GTM validation (source install, Python 3.11 venv) =="
 PYTHON_BIN="$PY311" bash scripts/validate_gtm_checks.sh
 echo

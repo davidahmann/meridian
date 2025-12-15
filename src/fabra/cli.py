@@ -3,7 +3,7 @@ import uvicorn
 import os
 import sys
 import importlib.util
-from typing import Any
+from typing import Any, Optional, List
 from rich.console import Console
 from rich.panel import Panel
 from rich.layout import Layout
@@ -129,6 +129,21 @@ def worker_cmd(
     redis_url: str = typer.Option(
         None, envvar="FABRA_REDIS_URL", help="Redis URL Override"
     ),
+    event_type: Optional[str] = typer.Option(
+        None,
+        "--event-type",
+        help="Event type(s) to listen to (comma-separated). Maps to fabra:events:<type>.",
+    ),
+    streams: Optional[str] = typer.Option(
+        None,
+        "--streams",
+        help="Comma-separated Redis stream keys to listen to (advanced).",
+    ),
+    listen_all: bool = typer.Option(
+        False,
+        "--listen-all",
+        help="Listen to the shared stream fabra:events:all (requires publisher to emit it).",
+    ),
 ) -> None:
     """
     Start the background worker that processes events and updates triggered features.
@@ -173,7 +188,19 @@ def worker_cmd(
     console.print(Panel(f"Starting Axiom Worker for {file}...", style="bold green"))
 
     # Pass store to worker
-    worker = AxiomWorker(redis_url=redis_url, store=store)
+    configured_streams: Optional[List[str]] = None
+    if streams:
+        configured_streams = [s.strip() for s in streams.split(",") if s.strip()]
+    elif event_type:
+        types = [t.strip() for t in event_type.split(",") if t.strip()]
+        configured_streams = [f"fabra:events:{t}" for t in types]
+
+    worker = AxiomWorker(
+        redis_url=redis_url,
+        store=store,
+        streams=configured_streams,
+        listen_all=listen_all,
+    )
     try:
         asyncio.run(worker.run())
     except KeyboardInterrupt:
@@ -1620,27 +1647,60 @@ def context_diff_cmd(
         False, "--verbose", "-v", help="Show detailed per-item changes"
     ),
     json_output: bool = typer.Option(False, "--json", "-j", help="Output as JSON"),
+    local: bool = typer.Option(
+        False,
+        "--local",
+        help="Diff CRS-001 records from the local DuckDB store (no server required).",
+    ),
+    duckdb_path: Optional[str] = typer.Option(
+        None,
+        "--duckdb-path",
+        envvar="FABRA_DUCKDB_PATH",
+        help="DuckDB path for --local (defaults to ~/.fabra/fabra.duckdb).",
+    ),
 ) -> None:
     """
-    Compare two context assemblies and show what changed.
+    Compare two requests and show what changed.
 
-    This compares legacy context assemblies (`/v1/context/<id>`) and their lineage.
-    For CRS-001 records, use `fabra context show` to inspect the durable record.
+    CRS-001 record-first:
+    - tries `/v1/record/<ctx_...>` for both IDs and diffs the records
+    - falls back to legacy `/v1/context/<id>` diff if records are unavailable
+
+    Use `--local` to diff two CRS-001 records from the local DuckDB store
+    (useful for receipts emitted by adapters without running a server).
 
     Examples:
         fabra context diff ctx_abc123 ctx_def456
         fabra context diff ctx_abc123 ctx_def456 --verbose
         fabra context diff ctx_abc123 ctx_def456 --json
+        fabra context diff ctx_abc123 ctx_def456 --local
     """
     import urllib.request
     import urllib.error
     import json
 
-    # Fetch both contexts
     api_key = os.getenv("FABRA_API_KEY")
 
-    def fetch_context(ctx_id: str) -> dict[str, Any]:
-        url = f"http://{host}:{port}/v1/context/{ctx_id}"
+    def _normalize_record_id(value: str) -> str:
+        return value if value.startswith("ctx_") else f"ctx_{value}"
+
+    def _color_summary(diff: Any) -> None:
+        if not getattr(diff, "has_changes", False):
+            console.print("\n[dim]No meaningful changes detected[/dim]")
+            return
+        console.print()
+        if getattr(diff, "features_added", 0) > 0:
+            console.print(f"  [green]+{diff.features_added} features added[/green]")
+        if getattr(diff, "features_removed", 0) > 0:
+            console.print(f"  [red]-{diff.features_removed} features removed[/red]")
+        if getattr(diff, "features_modified", 0) > 0:
+            console.print(
+                f"  [yellow]~{diff.features_modified} features modified[/yellow]"
+            )
+        if getattr(diff, "freshness_improved", False):
+            console.print("  [green]Freshness improved[/green]")
+
+    def fetch(url: str) -> dict[str, Any]:
         if not url.lower().startswith(("http://", "https://")):
             raise ValueError(f"Invalid URL scheme: {url}")
         req = urllib.request.Request(url)
@@ -1649,19 +1709,92 @@ def context_diff_cmd(
         with urllib.request.urlopen(req) as response:  # nosec B310
             if response.status != 200:
                 raise Exception(f"Server returned {response.status}")
-            result: dict[str, Any] = json.loads(response.read().decode())
-            return result
+            payload: dict[str, Any] = json.loads(response.read().decode())
+            return payload
 
     try:
-        console.print(f"Fetching context [cyan]{base_id[:12]}...[/cyan]")
-        base_ctx = fetch_context(base_id)
+        from fabra.utils.compare import (
+            compare_contexts,
+            compare_records,
+            format_diff_report,
+        )
+        from fabra.models import ContextLineage, ContextRecord
 
-        console.print(f"Fetching context [cyan]{comparison_id[:12]}...[/cyan]")
-        comp_ctx = fetch_context(comparison_id)
+        # --- Local CRS-001 diff (DuckDB) ---
+        if local:
+            import asyncio
+            from fabra.config import get_duckdb_path
+            from fabra.store.offline import DuckDBOfflineStore
 
-        # Import comparison utilities
-        from fabra.utils.compare import compare_contexts, format_diff_report
-        from fabra.models import ContextLineage
+            path = duckdb_path or get_duckdb_path()
+            offline = DuckDBOfflineStore(database=path)
+            base_record_id = _normalize_record_id(base_id)
+            comp_record_id = _normalize_record_id(comparison_id)
+
+            async def _load() -> (
+                tuple[Optional[ContextRecord], Optional[ContextRecord]]
+            ):
+                a = await offline.get_record(base_record_id)
+                b = await offline.get_record(comp_record_id)
+                return a, b
+
+            base_local, comp_local = asyncio.run(_load())
+            if base_local is None or comp_local is None:
+                missing = []
+                if base_local is None:
+                    missing.append(base_record_id)
+                if comp_local is None:
+                    missing.append(comp_record_id)
+                console.print(
+                    f"[bold red]Not Found:[/bold red] Missing record(s) in local store: {', '.join(missing)}"
+                )
+                raise typer.Exit(1)
+
+            diff = compare_records(base_local, comp_local)
+            if json_output:
+                console.print(diff.model_dump_json(indent=2))
+            else:
+                console.print(format_diff_report(diff, verbose=verbose))
+                _color_summary(diff)
+            return
+
+        # --- Server CRS-001 record-first diff ---
+        base_record_id = _normalize_record_id(base_id)
+        comp_record_id = _normalize_record_id(comparison_id)
+        record_url_a = f"http://{host}:{port}/v1/record/{base_record_id}"
+        record_url_b = f"http://{host}:{port}/v1/record/{comp_record_id}"
+
+        use_records = True
+        try:
+            console.print(f"Fetching record [cyan]{base_record_id[:16]}...[/cyan]")
+            base_record_data = fetch(record_url_a)
+            console.print(f"Fetching record [cyan]{comp_record_id[:16]}...[/cyan]")
+            comp_record_data = fetch(record_url_b)
+            base_rec = ContextRecord.model_validate(base_record_data)
+            comp_rec = ContextRecord.model_validate(comp_record_data)
+        except urllib.error.HTTPError as e:
+            if e.code in (404, 501):
+                use_records = False
+            else:
+                raise
+        except Exception:
+            use_records = False
+
+        if use_records:
+            diff = compare_records(base_rec, comp_rec)
+            if json_output:
+                console.print(diff.model_dump_json(indent=2))
+            else:
+                console.print(format_diff_report(diff, verbose=verbose))
+                _color_summary(diff)
+            return
+
+        # --- Legacy fallback ---
+        console.print(
+            "[yellow]Note:[/yellow] CRS-001 records unavailable; falling back to legacy context diff."
+        )
+        base_ctx = fetch(f"http://{host}:{port}/v1/context/{base_id}")
+        comp_ctx = fetch(f"http://{host}:{port}/v1/context/{comparison_id}")
 
         # Extract lineage from contexts
         base_lineage_data = base_ctx.get("lineage")
@@ -1717,28 +1850,8 @@ def context_diff_cmd(
         if json_output:
             console.print(diff.model_dump_json(indent=2))
         else:
-            report = format_diff_report(diff, verbose=verbose)
-            console.print(report)
-
-            # Add color summary
-            if diff.has_changes:
-                console.print()
-                if diff.features_added > 0:
-                    console.print(
-                        f"  [green]+{diff.features_added} features added[/green]"
-                    )
-                if diff.features_removed > 0:
-                    console.print(
-                        f"  [red]-{diff.features_removed} features removed[/red]"
-                    )
-                if diff.features_modified > 0:
-                    console.print(
-                        f"  [yellow]~{diff.features_modified} features modified[/yellow]"
-                    )
-                if diff.freshness_improved:
-                    console.print("  [green]Freshness improved[/green]")
-            else:
-                console.print("\n[dim]No meaningful changes detected[/dim]")
+            console.print(format_diff_report(diff, verbose=verbose))
+            _color_summary(diff)
 
     except urllib.error.URLError as e:
         console.print(

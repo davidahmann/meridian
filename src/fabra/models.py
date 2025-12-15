@@ -192,6 +192,21 @@ class FeatureDiff(BaseModel):
     )
 
 
+class InputDiff(BaseModel):
+    """Represents a change in a CRS-001 record input between two records."""
+
+    key: str = Field(..., description="Input key that changed")
+    old_value: Optional[Any] = Field(
+        None, description="Value in the base record (None if added)"
+    )
+    new_value: Optional[Any] = Field(
+        None, description="Value in the comparison record (None if removed)"
+    )
+    change_type: Literal["added", "removed", "modified", "unchanged"] = Field(
+        ..., description="Type of change"
+    )
+
+
 class RetrieverDiff(BaseModel):
     """Represents a change in retriever results between two contexts."""
 
@@ -264,6 +279,14 @@ class ContextDiff(BaseModel):
     content_diff: Optional[ContentDiff] = Field(
         None, description="Diff of the final content"
     )
+
+    # CRS-001 input changes (record.inputs)
+    input_diffs: List[InputDiff] = Field(
+        default_factory=list, description="All CRS-001 input changes"
+    )
+    inputs_added: int = Field(0, description="Count of inputs added")
+    inputs_removed: int = Field(0, description="Count of inputs removed")
+    inputs_modified: int = Field(0, description="Count of inputs with changed values")
 
     # Token/cost changes
     token_delta: int = Field(0, description="Change in token usage (new - old)")

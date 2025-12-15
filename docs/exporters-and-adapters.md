@@ -101,6 +101,26 @@ Adopters should be able to add Fabra in a day:
 - no data migration day 1
 - immediate “receipt” + `show/diff/verify`
 
+## Diffing receipts (CRS-001)
+
+Receipts created by adapters (or `ReceiptRecorder`) are **CRS-001 Context Records**.
+
+You can diff them two ways:
+
+### Record-first diff (server)
+If your Fabra server exposes `/v1/record/<id>`, `fabra context diff` will diff CRS-001 records by default:
+
+```bash
+fabra context diff <context_id_A> <context_id_B>
+```
+
+### Local diff (no server required)
+If you’re emitting receipts directly to DuckDB (the default), diff locally:
+
+```bash
+fabra context diff <context_id_A> <context_id_B> --local
+```
+
 ## What these receipts are (and aren’t)
 
 - These adapters produce a durable, verifiable **CRS-001 Context Record** where `content` is the best-effort “what the model saw” (prompt/messages serialized).

@@ -10,7 +10,12 @@ logger = structlog.get_logger()
 
 class AxiomWorker:
     def __init__(
-        self, redis_url: Optional[str] = None, store: Optional[FeatureStore] = None
+        self,
+        redis_url: Optional[str] = None,
+        store: Optional[FeatureStore] = None,
+        *,
+        streams: Optional[list[str]] = None,
+        listen_all: bool = False,
     ):
         self.store: Optional[FeatureStore] = None
         if store:
@@ -46,21 +51,28 @@ class AxiomWorker:
 
         self.store = store
         self.group_name = "axiom_workers"
+        self._configured_streams = streams
+        self._listen_all = listen_all
         from uuid import uuid4
 
         self.consumer_name = f"worker_{uuid4().hex[:8]}"
 
     async def setup(self) -> None:
         """Ensure consumer group exists for all known event types."""
-        # For Phase 1, we only know about 'transaction' or generic events.
-        # We need to decide: do we listen to ALL streams? Redis Streams doesn't support wildcard XREAD nicely.
-        # We usually listen to specific streams.
-        # Let's assume a fixed list or discovery.
-        # For Story 1.1.1, we have `fabra:events:{event_type}`.
-        # We'll listen to `fabra:events:transaction` as a default for now, or just `fabra:events:all`?
-        # The RedisEventBus publishes to `fabra:events:{event_type}`.
-        # Let's listen to `fabra:events:transaction` for the demo scenario.
-        self.streams = ["fabra:events:transaction"]
+        if self._configured_streams:
+            self.streams = self._configured_streams
+        elif self._listen_all:
+            self.streams = ["fabra:events:all"]
+        elif self.store is not None:
+            triggers = self.store.registry.get_triggers()
+            self.streams = [f"fabra:events:{t}" for t in triggers]
+        else:
+            self.streams = ["fabra:events:all"]
+
+        if not self.streams:
+            raise RuntimeError(
+                "No event streams configured. Define triggered features or pass --streams/--listen-all."
+            )
 
         for stream in self.streams:
             try:

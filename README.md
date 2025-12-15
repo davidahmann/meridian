@@ -39,6 +39,17 @@ fabra demo
 
 By default, Context Records are stored durably in DuckDB at `~/.fabra/fabra.duckdb` (override with `FABRA_DUCKDB_PATH`).
 
+## How It Works (One Screen)
+
+- You define features and `@context` functions in a Python file.
+- `fabra serve <file.py>` loads that file, starts a FastAPI server, and serves:
+  - `GET /features/<name>` for feature values (with `freshness_ms`)
+  - `POST /v1/context/<name>` for assembled context + a `context_id`
+- Fabra persists a CRS-001 Context Record (receipt) and exposes it at `GET /v1/record/<context_id>`.
+- Under incident pressure you run `fabra context show/verify/diff` from the `context_id`.
+
+Details: `docs/how-it-works.md`
+
 ### Requirements
 
 - Python `>= 3.9`
@@ -56,9 +67,15 @@ fabra context --help
 fabra doctor
 ```
 
+### Production defaults (no fake receipts)
+
+In `FABRA_ENV=production`, Fabra defaults to `FABRA_EVIDENCE_MODE=required`: if CRS-001 record persistence fails, the request fails (no `context_id` returned).
+
 Already using LangChain or calling OpenAI directly? Add receipts without changing your app architecture:
 
 - `docs/exporters-and-adapters.md` (LangChain-style callbacks, OpenAI wrapper, logs/OTEL)
+
+Events/workers (optional): `docs/events-and-workers.md`
 
 ---
 
@@ -184,6 +201,7 @@ fabra demo                          # start demo + print a context_id
 fabra context show <id>             # inspect a record (or best-effort legacy view)
 fabra context verify <id>           # verify CRS-001 hashes (fails if unavailable)
 fabra context diff <a> <b>          # compare two contexts
+fabra context diff <a> <b> --local  # diff two CRS-001 receipts from DuckDB (no server required)
 fabra context export <id>           # export json/yaml
 fabra context export <id> --bundle  # zip bundle for incident/audit
 fabra doctor                        # local diagnostics

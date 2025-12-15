@@ -22,6 +22,11 @@ def _load_json(name: str) -> dict:
 def _normalize_diff(d: dict) -> dict:
     d = dict(d)
     d.pop("timestamp", None)
+    # CRS-001 input diffs are not part of the legacy golden fixture.
+    d.pop("input_diffs", None)
+    d.pop("inputs_added", None)
+    d.pop("inputs_removed", None)
+    d.pop("inputs_modified", None)
     if isinstance(d.get("feature_diffs"), list):
         d["feature_diffs"] = sorted(
             d["feature_diffs"],

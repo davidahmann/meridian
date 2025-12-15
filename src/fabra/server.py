@@ -17,6 +17,7 @@ import os
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from .core import FeatureStore
 from .models import ContextTrace
+from .context import EvidencePersistenceError
 import structlog
 from datetime import datetime, timezone
 import json
@@ -425,6 +426,14 @@ def create_app(store: FeatureStore) -> FastAPI:
                 status_code=400,
                 detail=f"Invalid arguments for context '{context_name}': {e}",
             )
+        except EvidencePersistenceError as e:
+            logger.error(
+                "assemble_context_evidence_persist_failed",
+                context_name=context_name,
+                context_id=e.context_id,
+                error=str(e),
+            )
+            raise HTTPException(status_code=503, detail=str(e))
         except Exception as e:
             logger.error(
                 "assemble_context_failed",
@@ -592,6 +601,13 @@ def create_app(store: FeatureStore) -> FastAPI:
             raise HTTPException(
                 status_code=400, detail=f"Invalid timestamp format: {e}"
             )
+        except EvidencePersistenceError as e:
+            logger.error(
+                "replay_context_evidence_persist_failed",
+                context_id=e.context_id,
+                error=str(e),
+            )
+            raise HTTPException(status_code=503, detail=str(e))
         except Exception as e:
             logger.error("replay_context_failed", context_id=context_id, error=str(e))
             raise HTTPException(status_code=500, detail=str(e))

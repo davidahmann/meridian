@@ -34,6 +34,7 @@ import os
 
 # Type for freshness status
 FreshnessStatus = Literal["guaranteed", "degraded", "unknown"]
+EvidenceMode = Literal["best_effort", "required"]
 
 
 def generate_context_id() -> str:
@@ -61,7 +62,50 @@ def get_environment() -> str:
     return os.environ.get("FABRA_ENV", "development")
 
 
+def get_evidence_mode() -> EvidenceMode:
+    """
+    Controls whether Fabra is allowed to return a `context_id` when persistence fails.
+
+    - `best_effort`: return a context even if evidence persistence fails (meta will indicate failure)
+    - `required`: fail the request if CRS-001 record persistence fails (no "fake receipts")
+    """
+    configured = os.environ.get("FABRA_EVIDENCE_MODE")
+    if configured:
+        v = configured.strip().lower().replace("-", "_")
+        if v in ("best_effort", "besteffort"):
+            return "best_effort"
+        if v in ("required",):
+            return "required"
+        logger.warning("invalid_evidence_mode", value=configured)
+
+    env = get_environment().strip().lower()
+    return "required" if env == "production" else "best_effort"
+
+
+class EvidencePersistenceError(RuntimeError):
+    def __init__(self, *, context_id: str, message: str) -> None:
+        super().__init__(message)
+        self.context_id = context_id
+
+
 logger = structlog.get_logger()
+
+try:
+    from prometheus_client import Counter
+
+    EVIDENCE_PERSIST_FAILURES = Counter(
+        "fabra_evidence_persist_failures_total",
+        "Total CRS-001 evidence persistence failures",
+        ["mode"],
+    )
+    EVIDENCE_PERSIST_SUCCESSES = Counter(
+        "fabra_evidence_persist_success_total",
+        "Total CRS-001 evidence persistence successes",
+        ["mode"],
+    )
+except Exception:  # pragma: no cover - prometheus is optional outside server usage
+    EVIDENCE_PERSIST_FAILURES = None  # type: ignore[assignment]
+    EVIDENCE_PERSIST_SUCCESSES = None  # type: ignore[assignment]
 
 
 # Assembly Tracking using contextvars
@@ -960,6 +1004,8 @@ def context(
                 ctx.meta["cost_usd"] = cost_usd
                 ctx.meta["token_usage"] = token_usage
                 ctx.meta["max_tokens"] = max_tokens
+                evidence_mode = get_evidence_mode()
+                ctx.meta["evidence_mode"] = evidence_mode
 
                 if backend:
                     try:
@@ -970,72 +1016,103 @@ def context(
                     except Exception as e:
                         logger.warning("context_trace_write_error", error=str(e))
 
-                # 7. Log context to offline store for replay/audit
+                # 7. Attach lineage + persist evidence
+                # Capture kwargs for replay (filter out non-serializable items)
+                replay_args: Dict[str, Any] = {}
+                for k, v in kwargs.items():
+                    try:
+                        json.dumps(v)  # Test if serializable
+                        replay_args[k] = v
+                    except (TypeError, ValueError):
+                        pass  # Skip non-serializable args
+
+                # Build full lineage using tracker data (always attach; persistence may be disabled/missing)
+                lineage_data = ContextLineage(
+                    context_id=ctx_id,
+                    timestamp=datetime.now(timezone.utc),
+                    # Context function info for replay
+                    context_name=context_name,
+                    context_args=replay_args if replay_args else None,
+                    # Include tracked features and retrievers
+                    features_used=tracker.features,
+                    retrievers_used=tracker.retrievers,
+                    # Assembly statistics
+                    items_provided=len(result) if isinstance(result, list) else 1,
+                    items_included=len(result) - dropped_items
+                    if isinstance(result, list)
+                    else 1,
+                    items_dropped=dropped_items,
+                    dropped_items_detail=tracker.dropped_items,
+                    # Freshness tracking
+                    freshness_status=freshness_status,
+                    stalest_feature_ms=tracker.get_stalest_feature_ms(),
+                    # Token economics
+                    token_usage=token_usage,
+                    max_tokens=max_tokens,
+                    estimated_cost_usd=cost_usd,
+                )
+                ctx.lineage = lineage_data
+
                 # Get offline store from the FeatureStore if available
                 offline_store = None
                 if store and hasattr(store, "offline_store"):
                     offline_store = store.offline_store
 
-                if offline_store and hasattr(offline_store, "log_context"):
+                record_persisted = False
+                context_log_persisted = False
+                evidence_error: Optional[str] = None
+
+                if offline_store:
+                    # CRS-001 record is the "receipt". In required mode, we never return a context_id without it.
                     try:
-                        # Capture kwargs for replay (filter out non-serializable items)
-                        replay_args: Dict[str, Any] = {}
-                        for k, v in kwargs.items():
-                            try:
-                                json.dumps(v)  # Test if serializable
-                                replay_args[k] = v
-                            except (TypeError, ValueError):
-                                pass  # Skip non-serializable args
-
-                        # Build full lineage using tracker data
-                        lineage_data = ContextLineage(
-                            context_id=ctx_id,
-                            timestamp=datetime.now(timezone.utc),
-                            # Context function info for replay
-                            context_name=context_name,
-                            context_args=replay_args if replay_args else None,
-                            # Include tracked features and retrievers
-                            features_used=tracker.features,
-                            retrievers_used=tracker.retrievers,
-                            # Assembly statistics
-                            items_provided=len(result)
-                            if isinstance(result, list)
-                            else 1,
-                            items_included=len(result) - dropped_items
-                            if isinstance(result, list)
-                            else 1,
-                            items_dropped=dropped_items,
-                            dropped_items_detail=tracker.dropped_items,
-                            # Freshness tracking
-                            freshness_status=freshness_status,
-                            stalest_feature_ms=tracker.get_stalest_feature_ms(),
-                            # Token economics
-                            token_usage=token_usage,
-                            max_tokens=max_tokens,
-                            estimated_cost_usd=cost_usd,
-                        )
-
-                        # Attach lineage to context
-                        ctx.lineage = lineage_data
-
-                        await offline_store.log_context(
-                            context_id=ctx_id,
-                            timestamp=datetime.fromisoformat(ctx.meta["timestamp"]),
-                            content=final_content,
-                            lineage=lineage_data.model_dump(),
-                            meta=ctx.meta,
-                            version=version,
-                        )
-
-                        # Persist a CRS-001 ContextRecord (immutable receipt) if supported.
-                        if hasattr(offline_store, "log_record"):
-                            record = ctx.to_record(include_content=True)
-                            await offline_store.log_record(record)
+                        if not hasattr(offline_store, "log_record"):
+                            raise RuntimeError(
+                                "Offline store does not support CRS-001 records (log_record missing)"
+                            )
+                        record = ctx.to_record(include_content=True)
+                        await offline_store.log_record(record)
+                        record_persisted = True
+                        if EVIDENCE_PERSIST_SUCCESSES is not None:
+                            EVIDENCE_PERSIST_SUCCESSES.labels(mode=evidence_mode).inc()
                     except Exception as e:
-                        # Log but don't fail assembly - graceful degradation
+                        evidence_error = str(e)
+                        if EVIDENCE_PERSIST_FAILURES is not None:
+                            EVIDENCE_PERSIST_FAILURES.labels(mode=evidence_mode).inc()
                         logger.warning(
-                            "context_log_failed", context_id=ctx_id, error=str(e)
+                            "record_persist_failed",
+                            context_id=ctx_id,
+                            mode=evidence_mode,
+                            error=evidence_error,
                         )
+                        if evidence_mode == "required":
+                            raise EvidencePersistenceError(
+                                context_id=ctx_id,
+                                message=f"Failed to persist CRS-001 record: {evidence_error}",
+                            ) from e
+
+                    # Legacy context log is best-effort; keep for backwards-compat paths and listing.
+                    if hasattr(offline_store, "log_context"):
+                        try:
+                            await offline_store.log_context(
+                                context_id=ctx_id,
+                                timestamp=datetime.fromisoformat(ctx.meta["timestamp"]),
+                                content=final_content,
+                                lineage=lineage_data.model_dump(),
+                                meta=ctx.meta,
+                                version=version,
+                            )
+                            context_log_persisted = True
+                        except Exception as e:
+                            logger.warning(
+                                "context_log_failed",
+                                context_id=ctx_id,
+                                error=str(e),
+                            )
+
+                ctx.meta["evidence_persisted"] = record_persisted
+                ctx.meta["context_log_persisted"] = context_log_persisted
+                if evidence_error:
+                    ctx.meta["evidence_error"] = evidence_error
 
                 logger.info(
                     "context_assembly_complete",

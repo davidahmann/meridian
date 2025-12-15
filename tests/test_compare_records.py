@@ -20,6 +20,7 @@ def _create_test_record(
     created_at: datetime = None,
     features: list = None,
     dropped_items: list = None,
+    inputs: dict = None,
     tokens_used: int = 100,
     freshness_status: str = "guaranteed",
 ) -> ContextRecord:
@@ -30,6 +31,8 @@ def _create_test_record(
         features = []
     if dropped_items is None:
         dropped_items = []
+    if inputs is None:
+        inputs = {"user_id": "u123"}
 
     content_hash = compute_content_hash(content)
 
@@ -38,7 +41,7 @@ def _create_test_record(
         created_at=created_at,
         environment="development",
         schema_version="1.0.0",
-        inputs={"user_id": "u123"},
+        inputs=inputs,
         context_function="test_context",
         content=content,
         token_count=len(content.split()),
@@ -108,6 +111,16 @@ class TestCompareRecordsBasic:
         diff = compare_records(record1, record2)
 
         assert diff.time_delta_ms == 5000
+
+    def test_inputs_modified_detected(self):
+        record1 = _create_test_record(inputs={"user_id": "u123", "answer": "a"})
+        record2 = _create_test_record(inputs={"user_id": "u123", "answer": "b"})
+
+        diff = compare_records(record1, record2)
+
+        assert diff.has_changes
+        assert diff.inputs_modified == 1
+        assert "inputs:" in diff.change_summary
 
 
 class TestCompareRecordsFeatures:

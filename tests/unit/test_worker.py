@@ -15,9 +15,9 @@ async def test_worker_setup() -> None:
 
     await worker.setup()
 
-    # Verify it tried to create group for 'transaction' stream
+    # Verify it tried to create a consumer group for the default stream
     # xgroup_create(stream, group, id, mkstream)
     mock_redis.xgroup_create.assert_called()
     call_args = mock_redis.xgroup_create.call_args
-    assert call_args[0][0] == "fabra:events:transaction"
+    assert call_args[0][0] == "fabra:events:all"
     assert call_args[0][1] == "axiom_workers"
