@@ -19,6 +19,15 @@ class RedisOnlineStore(OnlineStore):
         # (notably on Python 3.9), which raises when no loop is set yet.
         #
         # We lazily create the async client on first use inside an async method.
+        # Allow passing a redis URL as the first positional arg for convenience,
+        # e.g. RedisOnlineStore("redis://localhost:6379").
+        if (
+            redis_url is None
+            and isinstance(host, str)
+            and host.startswith(("redis://", "rediss://"))
+        ):
+            redis_url = host
+
         self.connection_kwargs: Dict[str, Any]
         self._client: Optional[Any] = None
         if redis_url:
@@ -56,6 +65,11 @@ class RedisOnlineStore(OnlineStore):
             self._client = redis.Redis(**self.connection_kwargs)
 
         return self._client
+
+    @property
+    def client(self) -> Any:
+        # Backwards-compatible accessor used in tests and in some internal call sites.
+        return self._get_client()
 
     def get_sync_client(self) -> Any:
         """Returns a synchronous Redis client for the scheduler."""
