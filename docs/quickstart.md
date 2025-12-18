@@ -85,7 +85,7 @@ def user_tier(user_id: str) -> str:
 fabra serve features.py
 # Server running on http://localhost:8000
 
-curl localhost:8000/features/purchase_count?entity_id=user123
+curl localhost:8000/v1/features/purchase_count?entity_id=user123
 # {"value": 47, "freshness_ms": 0, "served_from": "online"}
 ```
 

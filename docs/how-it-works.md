@@ -35,7 +35,7 @@ fabra serve <file.py>
 Fabra starts a FastAPI app that exposes:
 
 **Features**
-- `GET /features/{feature_name}?entity_id=...` → `{"value","freshness_ms","served_from"}`
+- `GET /v1/features/{feature_name}?entity_id=...` → `{"value","freshness_ms","served_from"}`
 - `POST /v1/features` and `POST /v1/features/batch` for batch reads
 
 **Context assembly**

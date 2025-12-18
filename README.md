@@ -43,7 +43,7 @@ By default, Context Records are stored durably in DuckDB at `~/.fabra/fabra.duck
 
 - You define features and `@context` functions in a Python file.
 - `fabra serve <file.py>` loads that file, starts a FastAPI server, and serves:
-  - `GET /features/<name>` for feature values (with `freshness_ms`)
+  - `GET /v1/features/<name>` for feature values (with `freshness_ms`)
   - `POST /v1/context/<name>` for assembled context + a `context_id`
 - Fabra persists a CRS-001 Context Record (receipt) and exposes it at `GET /v1/record/<context_id>`.
 - Under incident pressure you run `fabra context show/verify/diff` from the `context_id`.
@@ -156,7 +156,7 @@ def purchase_count(user_id: str) -> int:
 
 ```bash
 fabra serve features.py   # or: fabra serve examples/demo_features.py
-curl localhost:8000/features/purchase_count?entity_id=u123
+curl localhost:8000/v1/features/purchase_count?entity_id=u123
 # {"value": 47, "freshness_ms": 0, "served_from": "online"}
 ```
 

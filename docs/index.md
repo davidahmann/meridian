@@ -102,7 +102,7 @@ async def build_prompt(user_id: str, query: str):
 fabra serve features.py
 # Server running on http://localhost:8000
 
-curl localhost:8000/features/user_tier?entity_id=user123
+curl localhost:8000/v1/features/user_tier?entity_id=user123
 # {"value": "premium", "freshness_ms": 0, "served_from": "online"}
 ```
 
