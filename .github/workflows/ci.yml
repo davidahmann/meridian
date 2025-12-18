@@ -47,6 +47,12 @@ jobs:
         # Run unit tests
         pytest tests/unit tests/e2e
 
+    - name: Check Coverage Threshold
+      run: |
+        source .venv/bin/activate
+        coverage run -m pytest tests/unit tests/e2e tests/integration --ignore=tests/ui/
+        coverage report --fail-under=85
+
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
