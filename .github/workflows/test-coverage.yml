@@ -59,7 +59,7 @@ jobs:
           FABRA_REDIS_URL: redis://localhost:6379/0
           FABRA_ENV: test
         run: |
-          uv run --system pytest --cov=src/fabra --cov-report=xml --cov-report=term --ignore=tests/ui/ -v
+          python -m pytest --cov=src/fabra --cov-report=xml --cov-report=term --ignore=tests/ui/ -v
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
