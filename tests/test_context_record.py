@@ -1,6 +1,7 @@
 """Tests for Context Record (CRS-001) implementation."""
 
 from datetime import datetime, timezone
+from typing import Optional
 
 from fabra.models import (
     ContextRecord,
@@ -403,7 +404,7 @@ def _create_minimal_record(
     context_id: str = "ctx_test-123",
     content: str = "Test content",
     record_hash: str = "",
-    content_hash: str | None = None,
+    content_hash: Optional[str] = None,
 ) -> ContextRecord:
     """Create a minimal ContextRecord for testing."""
     now = datetime.now(timezone.utc)

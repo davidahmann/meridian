@@ -71,3 +71,9 @@ async def redis_client(
     client = AsyncRedis.from_url(infrastructure["redis_url"], decode_responses=True)
     yield client
     await client.close()
+
+
+@pytest.fixture(scope="session")
+def postgres_url(infrastructure: Dict[str, Any]) -> str:
+    """Provide postgres_url string to tests."""
+    return infrastructure["postgres_url"]

@@ -1,0 +1,73 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: fabra_test
+          POSTGRES_USER: fabra
+          POSTGRES_PASSWORD: fabra_test_password # pragma: allowlist secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e ".[dev]"
+          uv pip install pytest-cov
+
+      - name: Run tests with coverage
+        env:
+          FABRA_POSTGRES_URL: postgresql://fabra:fabra_test_password@localhost:5432/fabra_test # pragma: allowlist secret
+          FABRA_REDIS_URL: redis://localhost:6379/0
+          FABRA_ENV: test
+        run: |
+          uv run pytest --cov=src/fabra --cov-report=xml --cov-report=term --ignore=tests/ui/ -v
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Coverage threshold check
+        run: |
+          uv run coverage report --fail-under=85

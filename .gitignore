@@ -93,3 +93,4 @@ ui.md
 
 # Supabase CLI artifacts
 supabase/.temp/
+coverage.json

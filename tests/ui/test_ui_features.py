@@ -11,7 +11,11 @@ uses its own event loop which conflicts with async tests.
 """
 
 import pytest
-from playwright.sync_api import Page, expect
+
+try:
+    from playwright.sync_api import Page, expect
+except ImportError:
+    pytest.skip("playwright not installed", allow_module_level=True)
 
 # Mark all tests in this module as e2e tests
 pytestmark = pytest.mark.e2e
