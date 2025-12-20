@@ -469,12 +469,12 @@ def create_app(store: FeatureStore) -> FastAPI:
             logger.error("get_context_failed", context_id=context_id, error=str(e))
             raise HTTPException(status_code=500, detail=str(e))
 
-    @v1_router.get("/record/{context_id}")
-    async def get_record_by_id(
-        context_id: str, api_key: str = Depends(get_api_key)
+    @v1_router.get("/record/{record_ref}")
+    async def get_record_by_ref(
+        record_ref: str, api_key: str = Depends(get_api_key)
     ) -> Dict[str, Any]:
         """
-        Retrieve an immutable CRS-001 ContextRecord by ID for audit/verification.
+        Retrieve an immutable CRS-001 ContextRecord by context_id or record_hash.
         """
         if not hasattr(store.offline_store, "get_record"):
             raise HTTPException(
@@ -482,7 +482,18 @@ def create_app(store: FeatureStore) -> FastAPI:
                 detail="Offline store does not support Context Records",
             )
 
-        record_id = context_id if context_id.startswith("ctx_") else f"ctx_{context_id}"
+        if record_ref.startswith("sha256:"):
+            if not hasattr(store.offline_store, "get_record_by_hash"):
+                raise HTTPException(
+                    status_code=501,
+                    detail="Offline store does not support record_hash lookups",
+                )
+            record = await store.offline_store.get_record_by_hash(record_ref)
+            if not record:
+                raise HTTPException(status_code=404, detail="Record not found")
+            return record.model_dump(mode="json")
+
+        record_id = record_ref if record_ref.startswith("ctx_") else f"ctx_{record_ref}"
 
         try:
             record = await store.offline_store.get_record(record_id)

@@ -932,6 +932,11 @@ def context_show_cmd(
     import urllib.error
     import json
 
+    def _normalize_record_ref(value: str) -> str:
+        if value.startswith("sha256:"):
+            return value
+        return value if value.startswith("ctx_") else f"ctx_{value}"
+
     def fetch(url: str) -> dict[str, Any]:
         if not url.lower().startswith(("http://", "https://")):
             raise ValueError("Invalid URL scheme")
@@ -948,8 +953,13 @@ def context_show_cmd(
             return payload
 
     # Lineage view uses the legacy endpoint (it returns ContextLineage).
-    record_id = context_id if context_id.startswith("ctx_") else f"ctx_{context_id}"
+    record_id = _normalize_record_ref(context_id)
     if lineage:
+        if record_id.startswith("sha256:"):
+            console.print(
+                "[bold red]Error:[/bold red] --lineage requires a context_id (ctx_...), not a record_hash."
+            )
+            raise typer.Exit(1)
         url = f"http://{host}:{port}/v1/context/{context_id}/lineage"
         console.print(
             f"Fetching lineage [bold cyan]{context_id}[/bold cyan] from {url}..."
@@ -1120,6 +1130,11 @@ def context_export_cmd(
     import urllib.error
     import json
 
+    def _normalize_record_ref(value: str) -> str:
+        if value.startswith("sha256:"):
+            return value
+        return value if value.startswith("ctx_") else f"ctx_{value}"
+
     def fetch(url: str) -> dict[str, Any]:
         if not url.lower().startswith(("http://", "https://")):
             raise ValueError("Invalid URL scheme")
@@ -1135,7 +1150,7 @@ def context_export_cmd(
                 raise Exception("Invalid JSON response (expected object)")
             return payload
 
-    record_id = context_id if context_id.startswith("ctx_") else f"ctx_{context_id}"
+    record_id = _normalize_record_ref(context_id)
     record_url = f"http://{host}:{port}/v1/record/{record_id}"
     legacy_url = f"http://{host}:{port}/v1/context/{context_id}"
 
@@ -1472,7 +1487,12 @@ def context_verify_cmd(
     import urllib.error
     import json
 
-    record_id = context_id if context_id.startswith("ctx_") else f"ctx_{context_id}"
+    def _normalize_record_ref(value: str) -> str:
+        if value.startswith("sha256:"):
+            return value
+        return value if value.startswith("ctx_") else f"ctx_{value}"
+
+    record_id = _normalize_record_ref(context_id)
     url = f"http://{host}:{port}/v1/record/{record_id}"
     console.print(f"Verifying record [bold cyan]{record_id}[/bold cyan]...")
 
@@ -1537,9 +1557,79 @@ def context_verify_cmd(
             else:
                 console.print(f"  [red]{_fail_icon()}[/red] Record hash mismatch!")
 
+            # Signature (optional/required)
+            try:
+                from fabra.utils.signing import get_signature_mode, get_signing_key
+
+                mode = get_signature_mode()
+                if record.integrity.signature:
+                    key_id = record.integrity.signing_key_id or "unknown"
+                    console.print(
+                        f"  [dim]{_ok_icon()} Signature present[/dim] [dim](key_id={key_id})[/dim]"
+                    )
+                    key = get_signing_key()
+                    if key is None:
+                        console.print(
+                            f"    [yellow]{_warn_icon()}[/yellow] FABRA_SIGNING_KEY not set; cannot verify signature"
+                        )
+                    else:
+                        from fabra.utils.signing import verify_record_hash_signature
+
+                        if verify_record_hash_signature(
+                            record.integrity.record_hash,
+                            signature=record.integrity.signature,
+                            key=key,
+                        ):
+                            console.print(
+                                f"    [green]{_ok_icon()}[/green] Signature valid"
+                            )
+                        else:
+                            console.print(
+                                f"    [red]{_fail_icon()}[/red] Signature invalid"
+                            )
+                else:
+                    if mode == "required":
+                        console.print(
+                            f"  [red]{_fail_icon()}[/red] Signature required but missing"
+                        )
+                    else:
+                        console.print(f"  [dim]{_ok_icon()} No signature[/dim]")
+            except Exception:
+                console.print(
+                    f"  [dim]{_warn_icon()} Signature check unavailable[/dim]"
+                )
+
             console.print()
 
-            if content_valid and record_valid:
+            signature_valid: Optional[bool] = None
+            try:
+                from fabra.utils.signing import (
+                    get_signature_mode,
+                    get_signing_key,
+                    verify_record_hash_signature,
+                )
+
+                mode = get_signature_mode()
+                if record.integrity.signature:
+                    key = get_signing_key()
+                    if key is None:
+                        signature_valid = False if mode == "required" else None
+                    else:
+                        signature_valid = verify_record_hash_signature(
+                            record.integrity.record_hash,
+                            signature=record.integrity.signature,
+                            key=key,
+                        )
+                else:
+                    signature_valid = False if mode == "required" else None
+            except Exception:
+                signature_valid = None
+
+            overall_ok = content_valid and record_valid
+            if signature_valid is False:
+                overall_ok = False
+
+            if overall_ok:
                 console.print(
                     Panel(
                         f"[bold green]{_ok_icon()} Integrity verified[/bold green]\n"
@@ -1689,6 +1779,8 @@ def context_pack_cmd(
     api_key = os.getenv("FABRA_API_KEY")
 
     def _normalize_record_id(value: str) -> str:
+        if value.startswith("sha256:"):
+            return value
         return value if value.startswith("ctx_") else f"ctx_{value}"
 
     def _fetch(url: str) -> dict[str, Any]:
@@ -1742,7 +1834,10 @@ def context_pack_cmd(
             offline = DuckDBOfflineStore(database=path)
 
             async def _load_one(cid: str) -> Optional[ContextRecord]:
-                return await offline.get_record(_normalize_record_id(cid))
+                ref = _normalize_record_id(cid)
+                if ref.startswith("sha256:"):
+                    return await offline.get_record_by_hash(ref)
+                return await offline.get_record(ref)
 
             record_obj = asyncio.run(_load_one(context_id))
             if record_obj is None:
@@ -1990,6 +2085,8 @@ def context_diff_cmd(
     api_key = os.getenv("FABRA_API_KEY")
 
     def _normalize_record_id(value: str) -> str:
+        if value.startswith("sha256:"):
+            return value
         return value if value.startswith("ctx_") else f"ctx_{value}"
 
     def _color_summary(diff: Any) -> None:
@@ -2042,8 +2139,16 @@ def context_diff_cmd(
             async def _load() -> (
                 tuple[Optional[ContextRecord], Optional[ContextRecord]]
             ):
-                a = await offline.get_record(base_record_id)
-                b = await offline.get_record(comp_record_id)
+                a = (
+                    await offline.get_record_by_hash(base_record_id)
+                    if base_record_id.startswith("sha256:")
+                    else await offline.get_record(base_record_id)
+                )
+                b = (
+                    await offline.get_record_by_hash(comp_record_id)
+                    if comp_record_id.startswith("sha256:")
+                    else await offline.get_record(comp_record_id)
+                )
                 return a, b
 
             base_local, comp_local = asyncio.run(_load())

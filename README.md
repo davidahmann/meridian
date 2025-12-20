@@ -26,6 +26,13 @@ fabra context verify <context_id>
 fabra context diff <context_id_A> <context_id_B>
 ```
 
+You can also reference a CRS-001 record by its `record_hash` (e.g. `sha256:...`) for content-addressed lookups:
+
+```bash
+fabra context show sha256:<record_hash>
+fabra context verify sha256:<record_hash>
+```
+
 ---
 
 ## Quickstart (No Keys, No Docker)

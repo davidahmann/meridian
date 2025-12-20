@@ -632,10 +632,11 @@ class Context(BaseModel):
             content_hash=content_hash,
             previous_context_id=None,
             signed_at=None,
+            signing_key_id=None,
             signature=None,
         )
 
-        return ContextRecord(
+        record = ContextRecord(
             context_id=context_id,
             created_at=created_at,
             environment=get_environment(),
@@ -654,6 +655,28 @@ class Context(BaseModel):
             lineage=lineage_meta,
             integrity=final_integrity,
         )
+
+        # Optional signing (attestation over record_hash)
+        try:
+            from fabra.utils.signing import (
+                get_signature_mode,
+                get_signing_key,
+                get_signing_key_id,
+                sign_record_hash,
+            )
+
+            if get_signature_mode() != "off":
+                key = get_signing_key()
+                if key is not None:
+                    key_id = get_signing_key_id()
+                    sig = sign_record_hash(record_hash, key=key, key_id=key_id)
+                    record.integrity.signed_at = sig.signed_at
+                    record.integrity.signing_key_id = sig.signing_key_id
+                    record.integrity.signature = sig.signature
+        except Exception as e:  # pragma: no cover - signing is optional/best-effort
+            logger.debug("record_signing_failed", error=str(e))
+
+        return record
 
 
 def context(

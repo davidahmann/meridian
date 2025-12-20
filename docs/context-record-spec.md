@@ -213,16 +213,18 @@ Cryptographic guarantees:
   "content_hash": "sha256:def456...",
   "previous_context_id": null,
   "signed_at": null,
+  "signing_key_id": null,
   "signature": null
 }
 ```
 
 | Field | Type | Description |
 |:------|:-----|:------------|
-| `record_hash` | string | SHA256 of canonical JSON (excl. this field) |
+| `record_hash` | string | SHA256 of canonical JSON (excludes `integrity.record_hash` and signing fields) |
 | `content_hash` | string | SHA256 of `content` field only |
 | `previous_context_id` | string? | Chain linking (optional) |
 | `signed_at` | datetime? | When signed |
+| `signing_key_id` | string? | Signing key identifier (optional) |
 | `signature` | string? | Cryptographic signature |
 
 ---

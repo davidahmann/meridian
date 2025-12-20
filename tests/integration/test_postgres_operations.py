@@ -159,3 +159,17 @@ class TestRecordStorage:
         assert retrieved is not None
         assert retrieved.context_id == "ctx_test_1"
         assert retrieved.content == "Test content"
+
+        # Lookup by record_hash should work
+        by_hash = await postgres_store.get_record_by_hash("sha256:abc")
+        assert by_hash is not None
+        assert by_hash.context_id == "ctx_test_1"
+
+        # Immutability: re-log same record is idempotent, different hash is rejected
+        await postgres_store.log_record(record)
+        from fabra.exceptions import ImmutableRecordError
+
+        bad = record.model_copy(deep=True)
+        bad.integrity.record_hash = "sha256:zzz"
+        with pytest.raises(ImmutableRecordError):
+            await postgres_store.log_record(bad)

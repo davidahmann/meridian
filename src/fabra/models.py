@@ -519,6 +519,9 @@ class IntegrityMetadata(BaseModel):
     signed_at: Optional[datetime] = Field(
         None, description="When the record was signed"
     )
+    signing_key_id: Optional[str] = Field(
+        None, description="Optional signing key identifier"
+    )
     signature: Optional[str] = Field(
         None, description="Optional cryptographic signature"
     )

@@ -120,6 +120,30 @@ def test_get_record_not_found(auth_client, mock_store):
     assert response.status_code == 404
 
 
+def test_get_record_by_hash_success(auth_client, mock_store):
+    """Test retrieving a ContextRecord by record_hash via the same endpoint."""
+    record = ContextRecord(
+        context_id="ctx_123",
+        context_function="chat",
+        content="Test content",
+        integrity=IntegrityMetadata(
+            record_hash="sha256:abc", content_hash="sha256:def"
+        ),
+        lineage=LineageMetadata(fabra_version="1.0.0"),
+    )
+
+    mock_store.offline_store.get_record_by_hash = AsyncMock(return_value=record)
+
+    response = auth_client.get(
+        "/v1/record/sha256:abc", headers={"X-API-Key": "test-secret-key"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["context_id"] == "ctx_123"
+    assert data["integrity"]["record_hash"] == "sha256:abc"
+
+
 # -----------------------------------------------------------------------------
 # Context Listing & Pagination
 # -----------------------------------------------------------------------------

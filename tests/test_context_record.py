@@ -26,6 +26,8 @@ from fabra.utils.integrity import (
     verify_record_integrity,
     verify_content_integrity,
 )
+import os
+from unittest.mock import patch
 
 
 class TestContextIdGeneration:
@@ -103,6 +105,15 @@ class TestRecordHash:
         hash_result = compute_record_hash(record)
         assert hash_result.startswith("sha256:")
 
+    def test_record_hash_ignores_signature_fields(self):
+        record = _create_minimal_record()
+        base_hash = compute_record_hash(record)
+
+        record.integrity.signature = "hmac-sha256:" + ("b" * 64)
+        record.integrity.signed_at = datetime.now(timezone.utc)
+        record.integrity.signing_key_id = "k1"
+        assert compute_record_hash(record) == base_hash
+
 
 class TestIntegrityVerification:
     """Tests for integrity verification."""
@@ -177,6 +188,29 @@ class TestContextToRecord:
         assert record.content == "Test context content"
         assert record.context_function == "test_context"
         assert record.schema_version == "1.0.0"
+
+    def test_to_record_includes_signature_when_configured(self):
+        ctx = Context(
+            id="test-uuid-1234",
+            content="Test context content",
+            meta={
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "name": "test_context",
+                "freshness_status": "guaranteed",
+                "token_usage": 100,
+            },
+            lineage=None,
+        )
+
+        # fmt: off
+        with patch.dict(os.environ, {"FABRA_SIGNING_KEY": "hex:" + ("01" * 32)}):  # pragma: allowlist secret
+            record = ctx.to_record()
+        # fmt: on
+
+        assert record.integrity.signature is not None
+        assert record.integrity.signed_at is not None
+        assert record.integrity.signing_key_id is not None
+        assert verify_record_integrity(record)
 
     def test_conversion_adds_ctx_prefix(self):
         """Conversion should add ctx_ prefix if not present."""

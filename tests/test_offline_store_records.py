@@ -262,7 +262,7 @@ class TestDuckDBRecordStorage:
 
     @pytest.mark.asyncio
     async def test_record_upsert(self, store):
-        """Should update existing record on conflict."""
+        """Should reject overwriting existing records (immutability)."""
         record1 = _create_test_record(
             context_id="ctx_test-001", content="Original content"
         )
@@ -271,11 +271,14 @@ class TestDuckDBRecordStorage:
         record2 = _create_test_record(
             context_id="ctx_test-001", content="Updated content"
         )
-        await store.log_record(record2)
+        from fabra.exceptions import ImmutableRecordError
+
+        with pytest.raises(ImmutableRecordError):
+            await store.log_record(record2)
 
         retrieved = await store.get_record("ctx_test-001")
         assert retrieved is not None
-        assert retrieved.content == "Updated content"
+        assert retrieved.content == "Original content"
 
         # Should still only have one record
         records = await store.list_records()

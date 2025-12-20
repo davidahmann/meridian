@@ -597,6 +597,7 @@ class PostgresOfflineStore(OfflineStore):
     async def log_record(self, record: "ContextRecord") -> str:
         """Persist a ContextRecord to Postgres."""
         await self._ensure_records_table()
+        from fabra.exceptions import ImmutableRecordError
 
         def json_serializer(obj: Any) -> str:
             """Handle datetime and other non-serializable types."""
@@ -627,7 +628,24 @@ class PostgresOfflineStore(OfflineStore):
         )
 
         async with self.engine.begin() as conn:  # type: ignore[no-untyped-call]
-            await conn.execute(
+            params = {
+                "context_id": record.context_id,
+                "created_at": record.created_at,
+                "environment": record.environment,
+                "schema_version": record.schema_version,
+                "context_function": record.context_function,
+                "inputs": inputs_json,
+                "content": record.content,
+                "token_count": record.token_count,
+                "features": features_json,
+                "retrieved_items": retrieved_items_json,
+                "assembly": assembly_json,
+                "lineage": lineage_json,
+                "integrity": integrity_json,
+                "record_hash": record.integrity.record_hash,
+            }
+
+            result = await conn.execute(
                 text(
                     """
                     INSERT INTO context_records
@@ -637,39 +655,32 @@ class PostgresOfflineStore(OfflineStore):
                     VALUES (:context_id, :created_at, :environment, :schema_version,
                             :context_function, :inputs, :content, :token_count,
                             :features, :retrieved_items, :assembly, :lineage, :integrity, :record_hash)
-                    ON CONFLICT (context_id) DO UPDATE SET
-                        created_at = EXCLUDED.created_at,
-                        environment = EXCLUDED.environment,
-                        schema_version = EXCLUDED.schema_version,
-                        context_function = EXCLUDED.context_function,
-                        inputs = EXCLUDED.inputs,
-                        content = EXCLUDED.content,
-                        token_count = EXCLUDED.token_count,
-                        features = EXCLUDED.features,
-                        retrieved_items = EXCLUDED.retrieved_items,
-                        assembly = EXCLUDED.assembly,
-                        lineage = EXCLUDED.lineage,
-                        integrity = EXCLUDED.integrity,
-                        record_hash = EXCLUDED.record_hash
+                    ON CONFLICT (context_id) DO NOTHING
                     """
                 ),
-                {
-                    "context_id": record.context_id,
-                    "created_at": record.created_at,
-                    "environment": record.environment,
-                    "schema_version": record.schema_version,
-                    "context_function": record.context_function,
-                    "inputs": inputs_json,
-                    "content": record.content,
-                    "token_count": record.token_count,
-                    "features": features_json,
-                    "retrieved_items": retrieved_items_json,
-                    "assembly": assembly_json,
-                    "lineage": lineage_json,
-                    "integrity": integrity_json,
-                    "record_hash": record.integrity.record_hash,
-                },
+                params,
             )
+
+            if getattr(result, "rowcount", 0) == 0:
+                existing = await conn.execute(
+                    text(
+                        "SELECT record_hash FROM context_records WHERE context_id = :context_id"
+                    ),
+                    {"context_id": record.context_id},
+                )
+                row = existing.fetchone()
+                if row is None:
+                    raise RuntimeError(
+                        "Record insert conflict but no existing record found"
+                    )
+                existing_hash = row.record_hash
+                attempted_hash = record.integrity.record_hash
+                if existing_hash != attempted_hash:
+                    raise ImmutableRecordError(
+                        context_id=record.context_id,
+                        existing_record_hash=existing_hash,
+                        attempted_record_hash=attempted_hash,
+                    )
             logger.info("record_logged", context_id=record.context_id)
             return record.context_id
 
@@ -696,6 +707,78 @@ class PostgresOfflineStore(OfflineStore):
                 return None
 
             # Parse JSON fields - Postgres JSONB returns dict directly
+            inputs = (
+                row.inputs
+                if isinstance(row.inputs, dict)
+                else json.loads(row.inputs or "{}")
+            )
+            features_data = (
+                row.features
+                if isinstance(row.features, list)
+                else json.loads(row.features or "[]")
+            )
+            retrieved_items_data = (
+                row.retrieved_items
+                if isinstance(row.retrieved_items, list)
+                else json.loads(row.retrieved_items or "[]")
+            )
+            assembly_data = (
+                row.assembly
+                if isinstance(row.assembly, dict)
+                else json.loads(row.assembly or "{}")
+            )
+            lineage_data = (
+                row.lineage
+                if isinstance(row.lineage, dict)
+                else json.loads(row.lineage or "{}")
+            )
+            integrity_data = (
+                row.integrity
+                if isinstance(row.integrity, dict)
+                else json.loads(row.integrity or "{}")
+            )
+
+            return ContextRecord(
+                context_id=row.context_id,
+                created_at=row.created_at,
+                environment=row.environment,
+                schema_version=row.schema_version,
+                context_function=row.context_function,
+                inputs=inputs or {},
+                content=row.content,
+                token_count=row.token_count,
+                features=[FeatureRecord.model_validate(f) for f in features_data or []],
+                retrieved_items=[
+                    RetrievedItemRecord.model_validate(r)
+                    for r in retrieved_items_data or []
+                ],
+                assembly=AssemblyDecisions.model_validate(assembly_data or {}),
+                lineage=LineageMetadata.model_validate(lineage_data or {}),
+                integrity=IntegrityMetadata.model_validate(integrity_data or {}),
+            )
+
+    async def get_record_by_hash(self, record_hash: str) -> Optional["ContextRecord"]:
+        """Retrieve a ContextRecord by its record_hash."""
+        from fabra.models import (
+            ContextRecord,
+            FeatureRecord,
+            RetrievedItemRecord,
+            AssemblyDecisions,
+            LineageMetadata,
+            IntegrityMetadata,
+        )
+
+        await self._ensure_records_table()
+
+        async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
+            result = await conn.execute(
+                text("SELECT * FROM context_records WHERE record_hash = :record_hash"),
+                {"record_hash": record_hash},
+            )
+            row = result.fetchone()
+            if row is None:
+                return None
+
             inputs = (
                 row.inputs
                 if isinstance(row.inputs, dict)

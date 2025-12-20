@@ -54,3 +54,21 @@ class FeatureNotFoundError(FabraError):
     """Raised when a requested feature does not exist."""
 
     pass
+
+
+class ImmutableRecordError(FabraError):
+    """Raised when attempting to overwrite an existing Context Record."""
+
+    def __init__(
+        self,
+        *,
+        context_id: str,
+        existing_record_hash: str,
+        attempted_record_hash: str,
+    ) -> None:
+        super().__init__(
+            "Context Record immutability violation: record already exists with a different hash"
+        )
+        self.context_id = context_id
+        self.existing_record_hash = existing_record_hash
+        self.attempted_record_hash = attempted_record_hash

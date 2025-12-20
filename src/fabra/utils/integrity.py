@@ -47,6 +47,11 @@ def compute_record_hash(record: "ContextRecord") -> str:
     # Remove the record_hash from integrity (we're computing it)
     if "integrity" in record_dict and "record_hash" in record_dict["integrity"]:
         record_dict["integrity"]["record_hash"] = ""
+        # Signatures should not affect record_hash; they are an attestation over it.
+        # Keep legacy shape stable by forcing these fields to their null/absent values.
+        record_dict["integrity"]["signed_at"] = None
+        record_dict["integrity"]["signature"] = None
+        record_dict["integrity"].pop("signing_key_id", None)
 
     # Create canonical JSON (sorted keys, no extra whitespace)
     canonical_json = json.dumps(record_dict, sort_keys=True, separators=(",", ":"))
@@ -103,6 +108,9 @@ def compute_hashes_for_record(record_dict: Dict[str, Any]) -> Dict[str, str]:
     if "integrity" in record_dict:
         record_dict["integrity"]["record_hash"] = ""
         record_dict["integrity"]["content_hash"] = content_hash
+        record_dict["integrity"]["signed_at"] = None
+        record_dict["integrity"]["signature"] = None
+        record_dict["integrity"].pop("signing_key_id", None)
 
     canonical_json = json.dumps(record_dict, sort_keys=True, separators=(",", ":"))
     record_hash = f"sha256:{hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()}"

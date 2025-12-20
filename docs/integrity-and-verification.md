@@ -14,7 +14,11 @@ Fabra Context Records are designed to be **tamper-evident**.
 SHA256 of the `content` field (the assembled context string).
 
 ### `record_hash`
-SHA256 of the canonical JSON of the full CRS-001 Context Record (excluding `record_hash` itself).
+SHA256 of the canonical JSON of the full CRS-001 Context Record.
+
+For stability, the `record_hash` computation ignores:
+- `integrity.record_hash` (self-reference)
+- signing fields (`integrity.signature`, `integrity.signed_at`, `integrity.signing_key_id`)
 
 This lets you detect changes to:
 - lineage fields
@@ -40,6 +44,17 @@ Fabra can enforce that it never returns a `context_id` unless the CRS-001 record
 
 - `FABRA_EVIDENCE_MODE=best_effort` (development default): the request succeeds, but the response metadata indicates whether evidence was persisted.
 - `FABRA_EVIDENCE_MODE=required` (production default): if CRS-001 persistence fails, the request fails (no `context_id` returned).
+
+## Optional signing (attestation)
+
+Fabra can optionally sign `record_hash` at write-time, to support offline verification.
+
+- Enable signing by setting `FABRA_SIGNING_KEY`.
+  - Supported formats: `hex:<hex>` or `base64:<b64>` (or raw string bytes).
+- Control enforcement with `FABRA_SIGNATURE_MODE`:
+  - `optional` (default): if a signature is present and a key is available, verify it; otherwise continue
+  - `required`: fail verification if signature is missing/invalid or if the key is unavailable
+  - `off`: do not sign and do not require signatures
 
 ## Incident workflow
 

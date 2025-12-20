@@ -156,6 +156,67 @@ async def test_log_and_get_record(offline_store):
 
 
 @pytest.mark.asyncio
+async def test_log_record_immutable_idempotent_and_violation(offline_store):
+    ts = datetime.now(timezone.utc)
+    record = ContextRecord(
+        context_id="rec_immut",
+        created_at=ts,
+        environment="test",
+        schema_version="1.0",
+        context_function="fn_test",
+        inputs={"arg": 1},
+        content="rec content",
+        token_count=10,
+        features=[],
+        retrieved_items=[],
+        assembly=AssemblyDecisions(
+            tokens_used=10, dropped_items=[], freshness_status="guaranteed"
+        ),
+        lineage=LineageMetadata(features_used=[], fabra_version="1.0.0"),
+        integrity=IntegrityMetadata(record_hash="hash_ok", content_hash="h1"),
+    )
+
+    await offline_store.log_record(record)
+    # Idempotent re-log with same hash should succeed
+    await offline_store.log_record(record)
+
+    # Attempt to overwrite with a different hash should fail
+    from fabra.exceptions import ImmutableRecordError
+
+    bad = record.model_copy(deep=True)
+    bad.integrity.record_hash = "hash_bad"
+    with pytest.raises(ImmutableRecordError):
+        await offline_store.log_record(bad)
+
+
+@pytest.mark.asyncio
+async def test_get_record_by_hash(offline_store):
+    ts = datetime.now(timezone.utc)
+    record = ContextRecord(
+        context_id="rec_hash_lookup",
+        created_at=ts,
+        environment="test",
+        schema_version="1.0",
+        context_function="fn_test",
+        inputs={},
+        content="rec content",
+        token_count=10,
+        features=[],
+        retrieved_items=[],
+        assembly=AssemblyDecisions(
+            tokens_used=10, dropped_items=[], freshness_status="guaranteed"
+        ),
+        lineage=LineageMetadata(features_used=[], fabra_version="1.0.0"),
+        integrity=IntegrityMetadata(record_hash="hash_lookup", content_hash="h1"),
+    )
+
+    await offline_store.log_record(record)
+    fetched = await offline_store.get_record_by_hash("hash_lookup")
+    assert fetched is not None
+    assert fetched.context_id == "rec_hash_lookup"
+
+
+@pytest.mark.asyncio
 async def test_list_records(offline_store):
     ts = datetime.now(timezone.utc)
 

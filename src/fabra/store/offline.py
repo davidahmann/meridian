@@ -135,6 +135,19 @@ class OfflineStore(ABC):
         pass
 
     @abstractmethod
+    async def get_record_by_hash(self, record_hash: str) -> Optional["ContextRecord"]:
+        """
+        Retrieves a ContextRecord by its record_hash.
+
+        Args:
+            record_hash: The CRS-001 record_hash (sha256:...).
+
+        Returns:
+            The ContextRecord if found, None otherwise.
+        """
+        pass
+
+    @abstractmethod
     async def list_records(
         self,
         start: Optional[datetime] = None,
@@ -542,6 +555,7 @@ class DuckDBOfflineStore(OfflineStore):
     async def log_record(self, record: "ContextRecord") -> str:
         """Persist a ContextRecord to DuckDB."""
         import json
+        from fabra.exceptions import ImmutableRecordError
 
         def json_serializer(obj: Any) -> str:
             """Handle datetime and other non-serializable types."""
@@ -575,6 +589,25 @@ class DuckDBOfflineStore(OfflineStore):
 
             def _run() -> None:
                 self._ensure_records_table_sync()
+                existing = (
+                    self._get_conn()
+                    .execute(
+                        "SELECT record_hash FROM context_records WHERE context_id = ?",
+                        [record.context_id],
+                    )
+                    .fetchone()
+                )
+                if existing is not None:
+                    existing_hash = existing[0]
+                    attempted_hash = record.integrity.record_hash
+                    if existing_hash == attempted_hash:
+                        return
+                    raise ImmutableRecordError(
+                        context_id=record.context_id,
+                        existing_record_hash=existing_hash,
+                        attempted_record_hash=attempted_hash,
+                    )
+
                 self._get_conn().execute(
                     """
                     INSERT INTO context_records
@@ -582,20 +615,6 @@ class DuckDBOfflineStore(OfflineStore):
                      context_function, inputs, content, token_count,
                      features, retrieved_items, assembly, lineage, integrity, record_hash)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT (context_id) DO UPDATE SET
-                        created_at = EXCLUDED.created_at,
-                        environment = EXCLUDED.environment,
-                        schema_version = EXCLUDED.schema_version,
-                        context_function = EXCLUDED.context_function,
-                        inputs = EXCLUDED.inputs,
-                        content = EXCLUDED.content,
-                        token_count = EXCLUDED.token_count,
-                        features = EXCLUDED.features,
-                        retrieved_items = EXCLUDED.retrieved_items,
-                        assembly = EXCLUDED.assembly,
-                        lineage = EXCLUDED.lineage,
-                        integrity = EXCLUDED.integrity,
-                        record_hash = EXCLUDED.record_hash
                     """,
                     [
                         record.context_id,
@@ -715,6 +734,98 @@ class DuckDBOfflineStore(OfflineStore):
             )
         except Exception as e:
             logger.error("record_retrieval_failed", context_id=context_id, error=str(e))
+            return None
+
+    async def get_record_by_hash(self, record_hash: str) -> Optional["ContextRecord"]:
+        """Retrieve a ContextRecord by its record_hash."""
+        import json
+        from fabra.models import (
+            ContextRecord,
+            FeatureRecord,
+            RetrievedItemRecord,
+            AssemblyDecisions,
+            LineageMetadata,
+            IntegrityMetadata,
+        )
+
+        try:
+
+            def _run() -> pd.DataFrame:
+                self._ensure_records_table_sync()
+                return (
+                    self._get_conn()
+                    .execute(
+                        "SELECT * FROM context_records WHERE record_hash = ?",
+                        [record_hash],
+                    )
+                    .df()
+                )
+
+            df = await self._run_db(_run)
+            if df.empty:
+                return None
+
+            row = df.iloc[0]
+
+            inputs = (
+                json.loads(row["inputs"])
+                if isinstance(row["inputs"], str)
+                else row["inputs"]
+            )
+            features_data = (
+                json.loads(row["features"])
+                if isinstance(row["features"], str)
+                else row["features"]
+            )
+            retrieved_items_data = (
+                json.loads(row["retrieved_items"])
+                if isinstance(row["retrieved_items"], str)
+                else row["retrieved_items"]
+            )
+            assembly_data = (
+                json.loads(row["assembly"])
+                if isinstance(row["assembly"], str)
+                else row["assembly"]
+            )
+            lineage_data = (
+                json.loads(row["lineage"])
+                if isinstance(row["lineage"], str)
+                else row["lineage"]
+            )
+            integrity_data = (
+                json.loads(row["integrity"])
+                if isinstance(row["integrity"], str)
+                else row["integrity"]
+            )
+
+            created_at = row["created_at"]
+            if isinstance(created_at, str):
+                created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            elif isinstance(created_at, datetime) and created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+
+            return ContextRecord(
+                context_id=row["context_id"],
+                created_at=created_at,
+                environment=row["environment"],
+                schema_version=row["schema_version"],
+                context_function=row["context_function"],
+                inputs=inputs or {},
+                content=row["content"],
+                token_count=row["token_count"],
+                features=[FeatureRecord.model_validate(f) for f in features_data or []],
+                retrieved_items=[
+                    RetrievedItemRecord.model_validate(r)
+                    for r in retrieved_items_data or []
+                ],
+                assembly=AssemblyDecisions.model_validate(assembly_data or {}),
+                lineage=LineageMetadata.model_validate(lineage_data or {}),
+                integrity=IntegrityMetadata.model_validate(integrity_data or {}),
+            )
+        except Exception as e:
+            logger.error(
+                "record_retrieval_failed", record_hash=record_hash, error=str(e)
+            )
             return None
 
     async def list_records(

@@ -164,6 +164,30 @@ def _build_record(
     )
 
     record.integrity.record_hash = compute_record_hash(record)
+
+    # Optional signing (attestation over record_hash)
+    try:
+        from fabra.utils.signing import (
+            get_signature_mode,
+            get_signing_key,
+            get_signing_key_id,
+            sign_record_hash,
+        )
+
+        if get_signature_mode() != "off":
+            key = get_signing_key()
+            if key is not None:
+                key_id = get_signing_key_id()
+                sig = sign_record_hash(
+                    record.integrity.record_hash, key=key, key_id=key_id
+                )
+                record.integrity.signed_at = sig.signed_at
+                record.integrity.signing_key_id = sig.signing_key_id
+                record.integrity.signature = sig.signature
+    except Exception:
+        record.integrity.signed_at = None
+        record.integrity.signing_key_id = None
+        record.integrity.signature = None
     return record
 
 
