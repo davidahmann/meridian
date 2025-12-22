@@ -1,12 +1,23 @@
 ---
 title: "Fabra Changelog: Release Notes and History"
-description: "Stay up to date with Fabra releases. See what's new in v1.2.0 with Context Store for LLMs, and v1.1.0 with Hybrid Features and Point-in-Time Correctness."
+description: "Stay up to date with Fabra releases. See what's new across v2.x and earlier milestones like Hybrid Features, Context Replay, and the UI."
 keywords: fabra changelog, release notes, feature store updates, context store, rag updates, software version history
 ---
 
 # Changelog
 
 All notable changes to this project will be documented in this file.
+
+## [v2.2.9] - 2025-12-20
+
+### ✅ MVP Hardening: Immutable, Verifiable Context Records
+
+*   **CRS-001 immutability enforcement:** Stores reject attempts to overwrite an existing `context_id` with different content.
+*   **Content-addressed lookups:** Fetch CRS-001 records by `record_hash` (`sha256:...`) via CLI and `GET /v1/record/{record_ref}`.
+*   **Optional signing:** HMAC signatures over `record_hash` for offline verification (configurable via `FABRA_SIGNING_KEY` / `FABRA_SIGNATURE_MODE`).
+*   **Security CI:** Added dependency scanning in CI (pip-audit + OSV Scanner).
+
+---
 
 ## [v2.0.0] - 2025-12-09
 

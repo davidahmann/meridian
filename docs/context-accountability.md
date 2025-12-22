@@ -6,7 +6,7 @@ keywords: ai decision audit, ai audit trail, llm explainability, context replay,
 
 # Context Accountability
 
-**v1.4+** - Full audit trail for AI decisions. Know exactly what your AI knew when it decided.
+**Introduced in v1.4+** - Full audit trail for AI decisions. Know exactly what your AI knew when it decided.
 
 ## At a Glance
 

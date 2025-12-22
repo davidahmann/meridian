@@ -27,7 +27,7 @@ Traditional observability doesn't help. You can see latency, error rates, token 
 
 ## Introducing Freshness SLAs
 
-Fabra v1.5 brings explicit freshness guarantees to your AI contexts. You declare how fresh your data needs to be, and Fabra enforces it.
+Introduced in Fabra v1.5+, freshness SLAs let you declare how fresh your data needs to be, and Fabra enforces it.
 
 ```python
 from fabra.context import context, ContextItem

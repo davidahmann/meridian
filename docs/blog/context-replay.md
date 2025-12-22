@@ -7,7 +7,7 @@ date: 2025-01-15
 
 # What Did Your AI Know? Introducing Context Replay
 
-**TL;DR:** Fabra v1.4 introduces Context Replay — the ability to see exactly what data your AI had when it made a decision. Think `git log` for your LLM's context window.
+**TL;DR:** Fabra (introduced in v1.4+) provides Context Replay — the ability to see exactly what data your AI had when it made a decision. Think `git log` for your LLM's context window.
 
 ---
 
@@ -25,7 +25,7 @@ If you're like most teams, you're guessing. Maybe you can reconstruct it from ap
 
 ## Enter Context Replay
 
-Fabra v1.4 introduces automatic context logging. Every time you assemble context, Fabra captures:
+Fabra automatically logs context. Every time you assemble context, Fabra captures:
 
 - **The full context string** — Exactly what went into the prompt
 - **Feature lineage** — Which features were used and their values
@@ -165,10 +165,10 @@ Set retention policies per environment. Keep 7 days in dev, 90 days in productio
 
 ## Getting Started
 
-Upgrade to Fabra v1.4:
+Install Fabra:
 
 ```bash
-pip install --upgrade "fabra-ai[ui]"
+pip install "fabra-ai[ui]"
 ```
 
 Context replay is enabled by default. No configuration required.
@@ -177,15 +177,13 @@ Context replay is enabled by default. No configuration required.
 
 ## What's Next
 
-Context Replay is just the foundation. Coming in v1.5:
+Once you're logging context IDs, the incident workflow is mostly CLI muscle memory:
 
-- **Context Diff:** Compare two contexts side-by-side
-- **Replay Simulation:** Re-run a context through updated prompts
-- **Drift Detection:** Alert when context patterns change unexpectedly
+- `fabra context verify <context_id>` for tamper-evidence checks
+- `fabra context diff <context_id_A> <context_id_B>` to spot what changed
+- `fabra context export <context_id> --bundle` to attach verifiable evidence outside the running service
 
----
-
-*Fabra v1.4 is available now. [Full documentation →](../context-accountability.md)*
+Full documentation: [Context Accountability →](../context-accountability.md)
 
 <script type="application/ld+json">
 {
