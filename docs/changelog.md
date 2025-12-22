@@ -19,6 +19,15 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [v2.3.0] - 2025-12-22
+
+### ✅ Privacy Mode: Omit Raw Content
+
+*   **Configurable content persistence:** `FABRA_RECORD_INCLUDE_CONTENT=0` omits raw `content` from persisted CRS-001 records and `context_log`.
+*   **Doc clarity:** Added privacy guidance and clarified HMAC signing threat model.
+
+---
+
 ## [v2.0.0] - 2025-12-09
 
 ### 🎉 Major Release: Rebrand to Fabra
