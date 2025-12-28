@@ -377,3 +377,36 @@ def test_visualize_context(auth_client, mock_store):
     assert "feature_1" in content
     assert "Mermaid diagram" in content or "mermaid" in content.lower()
     assert "Context Assembly" in content
+
+
+def test_assemble_context_includes_record_hash_and_content_hash(monkeypatch):
+    """
+    POST /v1/context/{context_name} should include record_hash/content_hash when
+    CRS-001 records are enabled (offline_store present).
+    """
+
+    from fabra.context import context
+    from fabra.core import FeatureStore
+    from fabra.store.offline import DuckDBOfflineStore
+
+    # Ensure dev-mode auth (no API key requirement for this test client)
+    monkeypatch.delenv("FABRA_API_KEY", raising=False)
+
+    store = FeatureStore()
+    store.offline_store = DuckDBOfflineStore(":memory:")
+
+    @context(store=store, name="hash_ctx")
+    async def hash_ctx(user_id: str) -> str:
+        return f"hello {user_id}"
+
+    app = create_app(store)
+    client = TestClient(app)
+
+    resp = client.post("/v1/context/hash_ctx", json={"user_id": "u1"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"].startswith("ctx_")
+    assert data["record_hash"].startswith("sha256:")
+    assert data["content_hash"].startswith("sha256:")
+    assert data["meta"]["record_hash"] == data["record_hash"]
+    assert data["meta"]["content_hash"] == data["content_hash"]

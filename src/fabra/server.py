@@ -410,6 +410,17 @@ def create_app(store: FeatureStore) -> FastAPI:
                 "meta": ctx.meta,
             }
 
+            record_hash = None
+            content_hash = None
+            if isinstance(ctx.meta, dict):
+                record_hash = ctx.meta.get("record_hash")
+                content_hash = ctx.meta.get("content_hash")
+
+            if record_hash:
+                result["record_hash"] = record_hash
+            if content_hash:
+                result["content_hash"] = content_hash
+
             if ctx.lineage:
                 result["lineage"] = ctx.lineage.model_dump()
 

@@ -1154,6 +1154,10 @@ def context(
                                 "Offline store does not support CRS-001 records (log_record missing)"
                             )
                         record = ctx.to_record(include_content=include_content)
+                        # Expose durable content-addresses to callers so tickets/audit logs can
+                        # reference the immutable artifact (sha256:...).
+                        ctx.meta["record_hash"] = record.integrity.record_hash
+                        ctx.meta["content_hash"] = record.integrity.content_hash
                         await offline_store.log_record(record)
                         record_persisted = True
                         if EVIDENCE_PERSIST_SUCCESSES is not None:

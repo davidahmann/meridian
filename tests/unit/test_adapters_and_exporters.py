@@ -9,7 +9,11 @@ import pytest
 
 from fabra.adapters.langchain import FabraLangChainCallbackHandler
 from fabra.adapters.openai import wrap_openai_call
-from fabra.exporters.logging import emit_context_id_json, emit_structured
+from fabra.exporters.logging import (
+    emit_context_id_json,
+    emit_context_ref_json,
+    emit_structured,
+)
 from fabra.receipts import ReceiptRecorder
 from fabra.store.offline import DuckDBOfflineStore
 from fabra.utils.integrity import verify_content_integrity, verify_record_integrity
@@ -107,6 +111,19 @@ def test_logging_exporters_emit_json_and_structured(
     payload = json.loads(text)
     assert payload["context_id"] == "ctx_test"
     assert payload["source"] == "unit"
+
+    with caplog.at_level(logging.INFO, logger="fabra"):
+        text_ref = emit_context_ref_json(
+            "ctx_test",
+            record_hash="sha256:" + ("a" * 64),
+            content_hash="sha256:" + ("b" * 64),
+            source="unit",
+        )
+    payload_ref = json.loads(text_ref)
+    assert payload_ref["event"] == "fabra.context_ref"
+    assert payload_ref["context_id"] == "ctx_test"
+    assert payload_ref["record_hash"].startswith("sha256:")
+    assert payload_ref["content_hash"].startswith("sha256:")
 
     logger = logging.getLogger("fabra.test")
     out = emit_structured(logger, "ctx_test2", source="unit")

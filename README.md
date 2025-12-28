@@ -18,7 +18,7 @@
 - Engineering tries to reconstruct prompts, retrieval, features, and runtime state.
 - Nobody can answer, precisely and repeatably: what did it see, what changed, why did it answer that way?
 
-Fabra's unit of evidence is a `context_id` (UUID or `ctx_<UUID>`). Paste it into the ticket, then:
+Fabra's unit of evidence is a `context_id` (UUID or `ctx_<UUID>`). For long-lived tickets and audits, also log the CRS-001 `record_hash` (`sha256:...`) as the durable content address. Paste either into the ticket, then:
 
 ```bash
 fabra context show <context_id>
@@ -51,8 +51,8 @@ By default, Context Records are stored durably in DuckDB at `~/.fabra/fabra.duck
 - You define features and `@context` functions in a Python file.
 - `fabra serve <file.py>` loads that file, starts a FastAPI server, and serves:
   - `GET /v1/features/<name>` for feature values (with `freshness_ms`)
-  - `POST /v1/context/<name>` for assembled context + a `context_id`
-- Fabra persists a CRS-001 Context Record (receipt) and exposes it at `GET /v1/record/<context_id>`.
+  - `POST /v1/context/<name>` for assembled context + `context_id` (and `record_hash` / `content_hash` when CRS-001 storage is enabled)
+- Fabra persists a CRS-001 Context Record (receipt) and exposes it at `GET /v1/record/<record_ref>` where `<record_ref>` is `ctx_...` or `sha256:...`.
 - Under incident pressure you run `fabra context show/verify/diff` from the `context_id`.
 
 Details: `docs/how-it-works.md`
@@ -133,7 +133,7 @@ If you already build prompts but don’t use `@context` yet, emit a verifiable r
 
 ```python
 from fabra.receipts import ReceiptRecorder
-from fabra.exporters.logging import emit_context_id_json
+from fabra.exporters.logging import emit_context_ref_json
 
 prompt = "system: ...\nuser: ..."
 recorder = ReceiptRecorder()
@@ -142,7 +142,13 @@ receipt = recorder.record_sync(
     content=prompt,
     inputs={"model": "gpt-4.1-mini"},
 )
-emit_context_id_json(receipt.context_id, source="my-service", ticket="INC-1234")
+emit_context_ref_json(
+    receipt.context_id,
+    record_hash=receipt.integrity.record_hash,
+    content_hash=receipt.integrity.content_hash,
+    source="my-service",
+    ticket="INC-1234",
+)
 ```
 
 ---
