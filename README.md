@@ -57,6 +57,8 @@ By default, Context Records are stored durably in DuckDB at `~/.fabra/fabra.duck
 
 Details: `docs/how-it-works.md`
 
+For voice/real-time agents, you can also pass call/turn identifiers as `interaction_ref` (stored in `inputs` and returned in API responses) without changing the CRS-001 schema.
+
 ### Requirements
 
 - Python `>= 3.9`

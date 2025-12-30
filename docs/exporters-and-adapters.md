@@ -18,6 +18,7 @@ Fabra now ships thin, dependency-light building blocks for this:
 - `fabra.adapters.langchain.FabraLangChainCallbackHandler` (LangChain-style callbacks)
 - `fabra.adapters.openai.wrap_openai_call` (wrap OpenAI call sites)
 - `fabra.exporters.logging.emit_context_id_json` (single-line JSON logs)
+- `fabra.exporters.logging.emit_context_ref_json` (`context_id` + `record_hash` for durable ticket references)
 - `fabra.exporters.otel.attach_context_id_to_current_span` (OTEL span attributes, optional)
 
 ## Exporters (evidence to where incidents live)
@@ -33,9 +34,14 @@ fabra context export <context_id> --bundle
 Emit JSON exports to your logging pipeline (S3/GCS/Loki/ELK) so support can retrieve evidence by `context_id`.
 
 ```python
-from fabra.exporters.logging import emit_context_id_json
+from fabra.exporters.logging import emit_context_ref_json
 
-emit_context_id_json("ctx_...", source="my-service", ticket="INC-1234")
+emit_context_ref_json(
+    "ctx_...",
+    record_hash="sha256:...",  # durable content address for the CRS-001 record
+    source="my-service",
+    ticket="INC-1234",
+)
 ```
 
 ### OpenTelemetry (OTEL)
