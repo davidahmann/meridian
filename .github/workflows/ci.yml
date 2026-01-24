@@ -34,7 +34,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv venv
-        uv pip install -e ".[dev,ui]"
+        uv sync --frozen --extra dev --extra ui
 
     - name: Run Linting
       run: |
@@ -80,7 +80,7 @@ jobs:
     - name: Install dependencies
       run: |
         uv venv
-        uv pip install -e ".[dev,ui]"
+        uv sync --frozen --extra dev --extra ui
         # Install asyncpg/redis explicitly if needed, but dev requirements should cover it
 
     - name: Run Integration Tests
