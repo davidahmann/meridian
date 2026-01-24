@@ -50,21 +50,22 @@ class PostgresOfflineStore(OfflineStore):
         # MVP: Similar to DuckDB, we assume features are accessible via SQL.
         # We upload the entity_df to a temporary table and join.
 
-        # Normalize timestamps to UTC-Aware
-        # If naive, assume UTC.
-        # This ensures consistent behavior with asyncpg/Postgres which prefer Aware datetimes.
+        # Normalize timestamps.
+        #
+        # Internally, this method treats timestamps as UTC but stores them as
+        # tz-naive `TIMESTAMP` values in Postgres for simpler comparisons against
+        # feature tables created in tests (which typically use `TIMESTAMP`).
+        #
+        # `pd.to_datetime(..., utc=True)` safely handles:
+        # - tz-naive datetime64[ns] (localizes to UTC)
+        # - tz-aware timestamps (converts to UTC)
+        # - object dtype with python datetimes/strings (parses)
         entity_df_norm = entity_df.copy()
         if timestamp_col in entity_df_norm.columns:
-            ts_series = entity_df_norm[timestamp_col]
-            if (
-                pd.api.types.is_datetime64_ns_dtype(ts_series)
-                and getattr(ts_series.dtype, "tz", None) is None
-            ):
-                entity_df_norm[timestamp_col] = ts_series.dt.tz_localize("UTC")
-            elif pd.api.types.is_datetime64_dtype(ts_series):
-                # Already aware, enable conversion to UTC if mixed?
-                # ideally convert to UTC for consistency
-                entity_df_norm[timestamp_col] = ts_series.dt.tz_convert("UTC")
+            ts_utc = pd.to_datetime(entity_df_norm[timestamp_col], utc=True)
+            entity_df_norm[timestamp_col] = ts_utc.dt.tz_convert("UTC").dt.tz_localize(
+                None
+            )
 
         async with self.engine.connect() as conn:  # type: ignore[no-untyped-call]
             # 1. Upload entity_df to temp table
@@ -76,7 +77,7 @@ class PostgresOfflineStore(OfflineStore):
             # Create temp table
             await conn.execute(
                 text(
-                    "CREATE TEMP TABLE IF NOT EXISTS temp_entity_lookup (entity_id VARCHAR, timestamp TIMESTAMPTZ)"
+                    "CREATE TEMP TABLE IF NOT EXISTS temp_entity_lookup (entity_id VARCHAR, timestamp TIMESTAMP)"
                 )
             )
             await conn.execute(text("DELETE FROM temp_entity_lookup"))

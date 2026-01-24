@@ -272,36 +272,23 @@ class DuckDBOfflineStore(OfflineStore):
         entity_id_col: str,
         timestamp_col: str = "timestamp",
     ) -> pd.DataFrame:
-        # Construct query using ASOF JOIN for Point-in-Time Correctness
-        # SELECT e.*, f1.value as f1
-        # FROM entity_df e
-        # ASOF LEFT JOIN feature_table f1
-        # ON e.entity_id = f1.entity_id AND e.timestamp >= f1.timestamp
-
+        # Point-in-time training data join.
+        #
+        # Avoid DuckDB ASOF JOIN syntax differences across versions by using
+        # a stable `LEFT JOIN LATERAL (...) ORDER BY timestamp DESC LIMIT 1`.
         query = "SELECT entity_df.*"
         joins = ""
 
-        # ... (rest of the query construction logic is fine, preserving context)
         import re
 
         for feature in features:
             if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", feature):
                 raise ValueError(f"Invalid feature name: {feature}")
 
-            # MVP Assumption: Feature table has columns [entity_id, timestamp, feature_name]
-            # We alias the feature table to its name for clarity
+            join_sql = f"LEFT JOIN LATERAL ( SELECT {feature} FROM {feature} f WHERE f.entity_id = entity_df.{entity_id_col} AND f.timestamp <= entity_df.{timestamp_col} ORDER BY f.timestamp DESC LIMIT 1 ) {feature}_lat ON TRUE"  # nosec B608
+            joins += "\n" + join_sql
 
-            # Note: DuckDB ASOF JOIN syntax:
-            # FROM A ASOF LEFT JOIN B ON A.id = B.id AND A.ts >= B.ts
-            # The inequality MUST be >= for ASOF behavior (find latest B where B.ts <= A.ts)
-
-            joins += f"""
-            ASOF LEFT JOIN {feature}
-            ON entity_df.{entity_id_col} = {feature}.entity_id
-            AND entity_df.{timestamp_col} >= {feature}.timestamp
-            """
-
-            query += f", {feature}.{feature} AS {feature}"
+            query += f", {feature}_lat.{feature} AS {feature}"
 
         query += f" FROM entity_df {joins}"
 
@@ -333,7 +320,7 @@ class DuckDBOfflineStore(OfflineStore):
         self, entity_name: str, entity_id: str, features: List[str], timestamp: datetime
     ) -> Dict[str, Any]:
         """
-        Retrieves historical features using DuckDB ASOF JOIN.
+        Retrieves historical features using a point-in-time lookup.
         """
         # 1. Create temporary context for the lookup
         ts_str = timestamp.isoformat()
@@ -351,7 +338,7 @@ class DuckDBOfflineStore(OfflineStore):
         if not features:
             return {}
 
-        selects = ", ".join([f"{f}.{f} as {f}" for f in features])
+        selects = ", ".join([f"{f}_lat.{f} as {f}" for f in features])
         query = f"SELECT {selects} FROM request_ctx"  # nosec
 
         joins = ""
@@ -362,13 +349,8 @@ class DuckDBOfflineStore(OfflineStore):
                 logger.warning("invalid_feature_name", feature=feature)
                 continue
 
-            # ASOF JOIN assumes tables named after features exist and have (entity_id, timestamp, {feature_name})
-            # This is a strong assumption of the default schema.
-            joins += f"""
-            ASOF LEFT JOIN {feature}
-            ON request_ctx.entity_id = {feature}.entity_id
-            AND request_ctx.timestamp >= {feature}.timestamp
-            """
+            join_sql = f"LEFT JOIN LATERAL ( SELECT {feature} FROM {feature} f WHERE f.entity_id = request_ctx.entity_id AND f.timestamp <= request_ctx.timestamp ORDER BY f.timestamp DESC LIMIT 1 ) {feature}_lat ON TRUE"  # nosec B608
+            joins += "\n" + join_sql
 
         query += joins
 
