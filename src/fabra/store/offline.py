@@ -281,11 +281,17 @@ class DuckDBOfflineStore(OfflineStore):
 
         import re
 
+        ident_re = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+        if not ident_re.match(entity_id_col):
+            raise ValueError(f"Invalid entity_id_col: {entity_id_col!r}")
+        if not ident_re.match(timestamp_col):
+            raise ValueError(f"Invalid timestamp_col: {timestamp_col!r}")
+
         for feature in features:
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", feature):
+            if not ident_re.match(feature):
                 raise ValueError(f"Invalid feature name: {feature}")
 
-            join_sql = f"LEFT JOIN LATERAL ( SELECT {feature} FROM {feature} f WHERE f.entity_id = entity_df.{entity_id_col} AND f.timestamp <= entity_df.{timestamp_col} ORDER BY f.timestamp DESC LIMIT 1 ) {feature}_lat ON TRUE"  # nosec B608
+            join_sql = f'LEFT JOIN LATERAL ( SELECT f."{feature}" AS "{feature}" FROM "{feature}" f WHERE f."entity_id" = entity_df."{entity_id_col}" AND f."timestamp" <= entity_df."{timestamp_col}" ORDER BY f."timestamp" DESC LIMIT 1 ) AS "{feature}_lat" ON TRUE'  # nosec B608
             joins += "\n" + join_sql
 
             query += f", {feature}_lat.{feature} AS {feature}"
@@ -344,12 +350,14 @@ class DuckDBOfflineStore(OfflineStore):
         joins = ""
         import re
 
+        ident_re = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
         for feature in features:
-            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", feature):
+            if not ident_re.match(feature):
                 logger.warning("invalid_feature_name", feature=feature)
                 continue
 
-            join_sql = f"LEFT JOIN LATERAL ( SELECT {feature} FROM {feature} f WHERE f.entity_id = request_ctx.entity_id AND f.timestamp <= request_ctx.timestamp ORDER BY f.timestamp DESC LIMIT 1 ) {feature}_lat ON TRUE"  # nosec B608
+            join_sql = f'LEFT JOIN LATERAL ( SELECT f."{feature}" AS "{feature}" FROM "{feature}" f WHERE f."entity_id" = request_ctx."entity_id" AND f."timestamp" <= request_ctx."timestamp" ORDER BY f."timestamp" DESC LIMIT 1 ) AS "{feature}_lat" ON TRUE'  # nosec B608
             joins += "\n" + join_sql
 
         query += joins
