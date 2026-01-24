@@ -2,6 +2,19 @@
 title: "Context Record Specification (CRS-001)"
 description: "Technical specification for the Context Record format - the atomic unit of the Inference Context Ledger."
 keywords: context record, crs-001, inference context ledger, ai audit trail, context replay, cryptographic integrity
+faq:
+  - q: "What is record_hash in CRS-001?"
+    a: "record_hash is a sha256 hash of the canonical JSON representation of the record (excluding integrity.record_hash and signing fields), used as a durable content address like sha256:...."
+  - q: "What is content_hash in CRS-001?"
+    a: "content_hash is a sha256 hash of the content field only. It’s used to detect changes to the raw assembled context text."
+  - q: "Can I look up a record by record_hash instead of context_id?"
+    a: "Yes. The server supports GET /v1/record/sha256:<record_hash>, and the CLI accepts sha256:<record_hash> for show/verify when supported by the store/server."
+  - q: "Does CRS-001 always store the raw prompt/context text?"
+    a: "By default content is stored. If FABRA_RECORD_INCLUDE_CONTENT=0, persisted records store an empty content string while still capturing lineage and integrity for the remaining fields."
+  - q: "How do I verify a CRS-001 record?"
+    a: "Use fabra context verify <id> to recompute hashes and compare them to integrity.content_hash and integrity.record_hash (verification fails if the record is missing)."
+  - q: "What are the signing fields used for?"
+    a: "signed_at, signing_key_id, and signature are optional attestations over record_hash. They’re intended to prove who signed a record, without changing the record’s content."
 ---
 
 # Context Record Specification (CRS-001)

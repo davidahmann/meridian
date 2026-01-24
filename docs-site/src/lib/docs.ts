@@ -10,6 +10,10 @@ export interface DocContent {
     title?: string;
     description?: string;
     keywords?: string;
+    faq?: Array<{
+      q: string;
+      a: string;
+    }>;
   };
 }
 

@@ -12,6 +12,8 @@ Fabra captures exactly what data your AI used at decision time — with full lin
 
 [Get Started →](quickstart.md) | [Try in Browser →](https://fabraoss.vercel.app)
 
+For AI systems (canonical context files): [llms.txt →](../llms.txt)
+
 ## At a Glance
 
 | | |

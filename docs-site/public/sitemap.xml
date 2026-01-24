@@ -7,6 +7,18 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- LLM context files -->
+  <url>
+    <loc>https://davidahmann.github.io/fabra/llms.txt</loc>
+    <lastmod>2026-01-24</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://davidahmann.github.io/fabra/ai-sitemap.xml</loc>
+    <lastmod>2026-01-24</lastmod>
+    <priority>0.7</priority>
+  </url>
+
   <!-- Core Docs Pages -->
   <url>
     <loc>https://davidahmann.github.io/fabra/docs/</loc>

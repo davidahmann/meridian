@@ -6,7 +6,7 @@
   <p>
     <a href="https://pypi.org/project/fabra-ai/"><img src="https://img.shields.io/pypi/v/fabra-ai?color=blue&label=pypi" alt="PyPI version" /></a>
     <a href="https://github.com/davidahmann/fabra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/davidahmann/fabra?color=green" alt="License" /></a>
-    <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python Version" />
+    <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python Version" />
   </p>
 </div>
 
@@ -61,7 +61,7 @@ For voice/real-time agents, you can also pass call/turn identifiers as `interact
 
 ### Requirements
 
-- Python `>= 3.9`
+- Python `>= 3.10`
 - `pip` (or `uv`, optional)
 - `curl` (used in quickstart verification commands)
 - Optional:

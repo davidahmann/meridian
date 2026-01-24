@@ -16,6 +16,7 @@
     "@tailwindcss/typography": "^0.5.0",
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
+    "lodash-es": "4.17.23",
     "marked": "^17.0.1",
     "mermaid": "^11.12.2",
     "next": "^14.2.0",
@@ -39,6 +40,7 @@
     "typescript": "^5.0.0"
   },
   "overrides": {
-    "glob": "^10.5.0"
+    "glob": "^10.5.0",
+    "lodash-es": "4.17.23"
   }
 }

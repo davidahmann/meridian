@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { SITE_ORIGIN, SITE_BASE_PATH } from '@/lib/site';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(`${SITE_ORIGIN}${SITE_BASE_PATH}`),
   title: 'Fabra - Record → Replay → Diff',
   description:
     "Fabra makes AI context durable. Every request becomes a replayable Context Record, so you can answer: what did it see, and what changed? Record → replay → diff. Turn 'the AI was wrong' into a fixable ticket.",
@@ -16,12 +18,21 @@ export const metadata: Metadata = {
     url: 'https://davidahmann.github.io/fabra',
     siteName: 'Fabra',
     type: 'website',
+    images: [
+      {
+        url: '/og.svg',
+        width: 1200,
+        height: 630,
+        alt: 'Fabra - Record → Replay → Diff',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Fabra - Record → Replay → Diff',
     description:
       "Fabra makes AI context durable. Every request becomes a replayable Context Record. Record → replay → diff.",
+    images: ['/og.svg'],
   },
 };
 

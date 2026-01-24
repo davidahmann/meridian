@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ai-sitemap>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/</loc>
+    <summary>Context Records (CRS-001) for LLM incidents: record → replay → diff → verify.</summary>
+    <keywords>context record, crs-001, incident response, llm, replay, diff, verify</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/docs/quickstart/</loc>
+    <summary>Install Fabra and generate a verifiable Context Record (context_id) in minutes.</summary>
+    <keywords>quickstart, context_id, receipt, duckdb, cli</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/docs/how-it-works/</loc>
+    <summary>End-to-end architecture: server, offline store, online store, receipts, replay, workers.</summary>
+    <keywords>architecture, fastapi, offline store, online store, replay, worker</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/docs/context-record-spec/</loc>
+    <summary>CRS-001 schema: Context Record fields, integrity hashes, and verification behavior.</summary>
+    <keywords>crs-001, schema, record_hash, content_hash, integrity</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/docs/integrity-and-verification/</loc>
+    <summary>How Fabra computes and verifies content_hash and record_hash for tamper-evident receipts.</summary>
+    <keywords>integrity, verification, sha256, record_hash, content_hash</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/docs/exporters-and-adapters/</loc>
+    <summary>Drop-in receipts: wrap OpenAI/LangChain call sites and export context_id to logs/OTEL.</summary>
+    <keywords>adapters, exporters, openai, langchain, otel, receipts</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+  <page>
+    <loc>https://davidahmann.github.io/fabra/docs/comparisons/</loc>
+    <summary>Comparisons and alternatives for feature/context infrastructure and audit trails.</summary>
+    <keywords>comparisons, alternatives, feature store, feast</keywords>
+    <lastmod>2026-01-24</lastmod>
+  </page>
+</ai-sitemap>

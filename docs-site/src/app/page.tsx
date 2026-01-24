@@ -1,5 +1,16 @@
 import Link from 'next/link';
 import CodeBlock from '@/components/CodeBlock';
+import { Metadata } from 'next';
+import { canonicalUrl } from '@/lib/site';
+
+export const metadata: Metadata = {
+  title: 'Fabra - Record → Replay → Diff',
+  description:
+    "Fabra makes AI context durable. Every request becomes a replayable Context Record, so you can answer: what did it see, and what changed? Record → replay → diff. Turn 'the AI was wrong' into a fixable ticket.",
+  alternates: {
+    canonical: canonicalUrl('/'),
+  },
+};
 
 const QUICKSTART_CODE = `pip install fabra-ai
 fabra demo
@@ -32,6 +43,12 @@ export default function Home() {
             className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-semibold rounded-lg transition-colors"
           >
             Get Started
+          </Link>
+          <Link
+            href="/llms.txt"
+            className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-100 font-semibold rounded-lg border border-gray-700 transition-colors"
+          >
+            LLM Context
           </Link>
           <a
             href="https://fabraoss.vercel.app"

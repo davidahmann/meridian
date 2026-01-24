@@ -2,6 +2,19 @@
 title: "How It Works"
 description: "End-to-end architecture: how Fabra turns requests into durable, verifiable Context Records (CRS-001), and how features/events/workers fit together."
 keywords: architecture, how it works, context records, crs-001, receipts, replay, diff, verify, events, worker
+faq:
+  - q: "What’s the difference between the offline store and the online store?"
+    a: "The offline store is durable evidence and replay history (DuckDB in dev, Postgres in prod). The online store is a serving cache for fast feature reads (in-memory in dev, Redis optional)."
+  - q: "How does Fabra compute freshness_ms for features?"
+    a: "Online stores wrap feature values with an as_of timestamp; Fabra computes freshness_ms at serve/assembly time as now (or replay timestamp) minus as_of."
+  - q: "Where does Fabra expose CRS-001 Context Records over HTTP?"
+    a: "The server exposes GET /v1/record/<record_ref>, where record_ref is ctx_<...> or sha256:<record_hash> for content-addressed lookup."
+  - q: "What does FABRA_EVIDENCE_MODE=required do?"
+    a: "It prevents “fake receipts”: if CRS-001 persistence fails, the request fails and no context_id is returned."
+  - q: "How do events and workers update triggered features?"
+    a: "POST /v1/ingest/<event_type> publishes to Redis Streams (fabra:events:<type> and fabra:events:all); a fabra worker process consumes streams and writes updated feature values to the online store."
+  - q: "What’s required for time-travel replay?"
+    a: "Replay re-executes the context function using time-travel reads; it requires historical feature data to be available in the offline store for the requested timestamp."
 ---
 
 # How It Works

@@ -1,0 +1,23 @@
+# Fabra — LLM context
+#
+# Fabra is Python-first infrastructure for inference-time evidence.
+# It produces durable Context Records (CRS-001) you can replay, diff, and verify during incidents.
+#
+# Canonical docs: https://davidahmann.github.io/fabra/
+
+## High-signal pages (human)
+- Quickstart: https://davidahmann.github.io/fabra/docs/quickstart/
+- How it works: https://davidahmann.github.io/fabra/docs/how-it-works/
+- Context Record spec (CRS-001): https://davidahmann.github.io/fabra/docs/context-record-spec/
+- Integrity & verification: https://davidahmann.github.io/fabra/docs/integrity-and-verification/
+- Exporters & adapters: https://davidahmann.github.io/fabra/docs/exporters-and-adapters/
+- Comparisons: https://davidahmann.github.io/fabra/docs/comparisons/
+
+## Context packs (machine-friendly, stable)
+- Product: https://davidahmann.github.io/fabra/llm/product.md
+- Quickstart (concise): https://davidahmann.github.io/fabra/llm/quickstart.md
+- HTTP API: https://davidahmann.github.io/fabra/llm/http-api.md
+- CLI: https://davidahmann.github.io/fabra/llm/cli.md
+- Storage modes: https://davidahmann.github.io/fabra/llm/storage.md
+- Security & privacy: https://davidahmann.github.io/fabra/llm/security-privacy.md
+- Comparisons: https://davidahmann.github.io/fabra/llm/comparisons.md

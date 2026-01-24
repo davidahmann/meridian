@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { navigation } from '@/lib/navigation';
 import { Metadata } from 'next';
+import { canonicalUrl } from '@/lib/site';
 
 export const metadata: Metadata = {
   title: 'Blog - Fabra',
   description: 'Articles about feature stores, context assembly, and AI engineering',
+  alternates: {
+    canonical: canonicalUrl('/blog/'),
+  },
 };
 
 export default function BlogIndexPage() {

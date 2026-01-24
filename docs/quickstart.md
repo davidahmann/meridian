@@ -2,6 +2,19 @@
 title: "How to Build Context Infrastructure in 30 Seconds | Fabra Quickstart"
 description: "Step-by-step guide to installing Fabra context infrastructure for AI applications. Own the write path with lineage and replay. No Docker or Kubernetes required."
 keywords: fabra quickstart, context infrastructure, ai audit trail, python feature store, local feature store, rag quickstart, write path ownership, feature store 30 seconds, rag quickstart python, no docker feature store, feature store without kubernetes, simple ml features
+faq:
+  - q: "Where are Context Records stored by default?"
+    a: "In development, Fabra persists CRS-001 Context Records to DuckDB at ~/.fabra/fabra.duckdb. Override with FABRA_DUCKDB_PATH."
+  - q: "What is the format of a Fabra context_id?"
+    a: "A context_id is a CRS-001 identifier like ctx_<UUIDv7>. Some commands also accept the UUID without the ctx_ prefix."
+  - q: "Does fabra demo require API keys or Docker?"
+    a: "No. fabra demo runs locally, makes a test request, and prints a working context_id without API keys or Docker."
+  - q: "How do I diff two receipts without a running server?"
+    a: "Use fabra context diff <A> <B> --local to diff CRS-001 receipts directly from DuckDB (no server required)."
+  - q: "What happens if evidence persistence fails in production?"
+    a: "In FABRA_ENV=production, Fabra defaults to FABRA_EVIDENCE_MODE=required: the request fails if CRS-001 persistence fails (no context_id returned)."
+  - q: "How do I avoid storing raw prompt/context text?"
+    a: "Set FABRA_RECORD_INCLUDE_CONTENT=0 to persist an empty content string while keeping lineage and integrity hashes for the remaining fields."
 ---
 
 # Quickstart: 30 Seconds to Production-Ready AI Infrastructure

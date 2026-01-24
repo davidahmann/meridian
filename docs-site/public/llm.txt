@@ -1,0 +1,4 @@
+# Alias for tools that look for llm.txt.
+# Canonical is llms.txt.
+
+See: https://davidahmann.github.io/fabra/llms.txt
