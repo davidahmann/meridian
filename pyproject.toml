@@ -1,6 +1,6 @@
 [project]
 name = "fabra_ai"
-version = "2.3.2"
+version = "2.3.3"
 description = "Context infrastructure for AI applications"
 readme = "README.md"
 requires-python = ">=3.10"
