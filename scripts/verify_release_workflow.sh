@@ -36,16 +36,18 @@ echo -e "${GREEN}✓ Version parsing verified${NC}"
 echo -e "\n${BLUE}2. Setting up clean environment...${NC}"
 TMPDIR=$(mktemp -d)
 echo -e "Using temp dir: ${TMPDIR}"
-uv venv "$TMPDIR/.venv"
+# Match .github/workflows/release.yml (Python 3.11)
+uv python install 3.11
+uv venv --python 3.11 "$TMPDIR/.venv"
 source "$TMPDIR/.venv/bin/activate"
 
 echo -e "Installing dependencies..."
-uv pip install -e ".[dev,ui]"
-uv pip install build
+# Use the locked dependency set to avoid "latest dependency" drift in verification.
+uv sync --active --frozen --extra dev --extra ui
 
 # 3. Run Tests (as per workflow: pytest --ignore=tests/ui)
 echo -e "\n${BLUE}3. Running Tests (pytest --ignore=tests/ui)...${NC}"
-if pytest --ignore=tests/ui; then
+if uv run --active pytest --ignore=tests/ui; then
     echo -e "${GREEN}✓ Tests passed${NC}"
 else
     echo -e "${RED}✗ Tests failed${NC}"
@@ -54,7 +56,7 @@ fi
 
 # 4. Build Package
 echo -e "\n${BLUE}4. Building Package...${NC}"
-python -m build --outdir "$TMPDIR/dist"
+uv run --active --with build python -m build --outdir "$TMPDIR/dist"
 
 if [ -f "$TMPDIR/dist/fabra_ai-${PYPROJECT_VERSION}-py3-none-any.whl" ]; then
     echo -e "${GREEN}✓ Wheel created: fabra_ai-${PYPROJECT_VERSION}-py3-none-any.whl${NC}"

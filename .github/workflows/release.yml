@@ -38,10 +38,8 @@ jobs:
 
     - name: Run Tests
       run: |
-        uv venv
-        uv pip install -e ".[dev,ui]"
-        source .venv/bin/activate
-        pytest --ignore=tests/ui
+        uv sync --frozen --extra dev --extra ui
+        uv run pytest --ignore=tests/ui
 
     - name: Build package
       run: uv run --with build python -m build
