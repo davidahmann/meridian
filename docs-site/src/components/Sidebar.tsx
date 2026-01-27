@@ -76,7 +76,7 @@ export default function Sidebar() {
         {/* External Links */}
         <div className="mt-8 pt-8 border-t border-gray-800 px-3">
           <Link
-            href="/llms.txt"
+            href="/llms"
             className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

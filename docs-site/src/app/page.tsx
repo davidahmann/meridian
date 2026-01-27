@@ -45,7 +45,7 @@ export default function Home() {
             Get Started
           </Link>
           <Link
-            href="/llms.txt"
+            href="/llms"
             className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-gray-100 font-semibold rounded-lg border border-gray-700 transition-colors"
           >
             LLM Context
